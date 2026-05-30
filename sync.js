@@ -1,0 +1,276 @@
+// ═══════════════════════════════════════════════════════════════
+// sync.js — Sincronización en tiempo real: Firestore + localStorage
+// Arquitectura: Firestore (nube) ↔ localStorage (cache offline)
+// ═══════════════════════════════════════════════════════════════
+
+(function() {
+
+  // ── ESTADO GLOBAL DE SINCRONIZACIÓN ──
+  let _db = null;
+  let _syncReady = false;
+  let _listeners = [];   // Guardamos los unsubscribers de onSnapshot
+  let _pendingWrites = 0;
+
+  const COLS = {
+    productos: 'inventario_tiaeli',
+    ventas:    'ventas_tiaeli',
+    combos:    'combos_tiaeli',
+    config:    'config_tiaeli'
+  };
+
+  // ── HELPERS DE UI ──
+  function setStatus(state, text) {
+    const dot   = document.getElementById('syncDot');
+    const txt   = document.getElementById('syncText');
+    const label = document.getElementById('syncLabel');
+    if (dot)   dot.className = 'sync-dot ' + state;
+    if (txt)   txt.textContent = text;
+    if (label) label.textContent = state === 'syncing' ? 'Sincronizando...' : 'Sincronizar';
+  }
+
+  function setSpinner(on) {
+    ['syncIcon','syncIconMobile'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) on ? el.classList.add('spinning') : el.classList.remove('spinning');
+    });
+    const btn = document.getElementById('syncBtn');
+    if (btn) on ? btn.classList.add('syncing') : btn.classList.remove('syncing');
+  }
+
+  // ── INICIALIZAR FIREBASE ──
+  window.initFirebase = async function() {
+    try {
+      const cfg = window.firebaseConfig;
+      if (!cfg || !cfg.apiKey || cfg.apiKey === 'TU_API_KEY_AQUI') {
+        setStatus('offline', 'Sin config');
+        console.warn('[Sync] firebase-config.js no configurado.');
+        return;
+      }
+
+      // Inicializar solo si no existe ya la app
+      if (!firebase.apps.length) {
+        firebase.initializeApp(cfg);
+      }
+
+      _db = firebase.firestore();
+
+      // Habilitar persistencia offline (caché en el navegador/celular)
+      try {
+        await _db.enablePersistence({ synchronizeTabs: true });
+        console.log('[Sync] Persistencia offline habilitada ✅');
+      } catch (err) {
+        if (err.code === 'failed-precondition') {
+          console.warn('[Sync] Persistencia solo en 1 tab a la vez.');
+        } else if (err.code === 'unimplemented') {
+          console.warn('[Sync] Este navegador no soporta persistencia offline.');
+        }
+      }
+
+      _syncReady = true;
+      window.db = _db;
+      setStatus('online', 'Conectado ☁️');
+
+      // Escuchar cambios en tiempo real
+      _iniciarListeners();
+
+      console.log('[Sync] Firebase listo ✅');
+    } catch (e) {
+      console.error('[Sync] Error inicializando Firebase:', e);
+      setStatus('error', 'Error');
+      alert("❌ ERROR GRAVE DE CONEXIÓN A FIREBASE:\n\n" + e.message + "\n\nRevisa que los datos en firebase-config.js estén copiados exactamente como te los dio Firebase.");
+    }
+  };
+
+  // ── LISTENERS EN TIEMPO REAL (onSnapshot) ──
+  // Cuando cualquier dispositivo cambia algo → se actualiza aquí automáticamente
+  function _iniciarListeners() {
+    if (!_db) return;
+
+    // Limpiar listeners anteriores
+    _listeners.forEach(unsub => unsub());
+    _listeners = [];
+
+    // ── Productos ──
+    const unsubProductos = _db.collection(COLS.productos)
+      .onSnapshot({ includeMetadataChanges: false }, snap => {
+        const remoto = snap.docs.map(d => d.data());
+        if (window.setProductosGlobal) window.setProductosGlobal(remoto);
+        else window.productos = remoto;
+        
+        localStorage.setItem('tiaeli_v2', JSON.stringify(remoto));
+        if (typeof filterAndRender === 'function') filterAndRender();
+        if (typeof renderDashboard === 'function') renderDashboard();
+        console.log('[Sync] Productos actualizados desde nube:', remoto.length);
+      }, err => {
+        console.error('[Sync] Error listener productos:', err);
+        if (err.code === 'permission-denied') {
+          alert("⚠️ ERROR DE FIREBASE: Tus reglas de seguridad de Firestore han expirado o deniegan el acceso.\n\nVe a tu consola de Firebase > Firestore Database > Reglas (Rules) y cambia la regla a:\nallow read, write: if true;\n\nLuego publica los cambios.");
+        }
+      });
+
+    // ── Ventas ──
+    const unsubVentas = _db.collection(COLS.ventas)
+      .orderBy('fecha', 'desc')
+      .limit(500)
+      .onSnapshot({ includeMetadataChanges: false }, snap => {
+        const remoto = snap.docs.map(d => d.data());
+        if (window.setVentasGlobal) window.setVentasGlobal(remoto);
+        else window.ventas = remoto;
+
+        localStorage.setItem('tiaeli_ventas', JSON.stringify(remoto));
+        if (typeof renderVentasHoy === 'function') renderVentasHoy();
+        if (typeof renderVentasStats === 'function') renderVentasStats();
+        if (typeof renderDashboard === 'function') renderDashboard();
+        console.log('[Sync] Ventas actualizadas desde nube:', remoto.length);
+      }, err => console.error('[Sync] Error listener ventas:', err));
+
+    // ── Combos ──
+    const unsubCombos = _db.collection(COLS.combos)
+      .onSnapshot({ includeMetadataChanges: false }, snap => {
+        const remoto = snap.docs.map(d => d.data());
+        if (window.setCombosGlobal) window.setCombosGlobal(remoto);
+        else window.combos = remoto;
+
+        localStorage.setItem('tiaeli_combos', JSON.stringify(remoto));
+        if (typeof renderCombosManager === 'function') renderCombosManager();
+        if (typeof renderCombosVenta === 'function') renderCombosVenta();
+        console.log('[Sync] Combos actualizados desde nube:', remoto.length);
+      }, err => console.error('[Sync] Error listener combos:', err));
+
+    // ── QRs (Configuración global) ──
+    const unsubConfig = _db.collection(COLS.config).doc('qrs')
+      .onSnapshot({ includeMetadataChanges: false }, snap => {
+        if (!snap.exists) return;
+        const data = snap.data();
+        if (data) {
+          ['eli', 'edwin', 'johan'].forEach(name => {
+            if (data[name]) {
+              localStorage.setItem(`tiaeli_qr_${name}`, data[name]);
+            } else {
+              localStorage.removeItem(`tiaeli_qr_${name}`);
+            }
+          });
+          if (typeof window.initQRPreviews === 'function') window.initQRPreviews();
+        }
+      }, err => console.error('[Sync] Error listener config:', err));
+
+    _listeners.push(unsubProductos, unsubVentas, unsubCombos, unsubConfig);
+    console.log('[Sync] Listeners en tiempo real activos ✅');
+  }
+
+  // ── ESCRIBIR EN FIRESTORE (con fallback a localStorage) ──
+  async function _subirDoc(coleccion, doc) {
+    if (!_db || !doc || !doc.id) return;
+    try {
+      await _db.collection(coleccion).doc(doc.id).set(doc, { merge: true });
+    } catch (e) {
+      console.warn('[Sync] No se pudo subir a Firestore (modo offline). Se guardó en localStorage.', e);
+      if (e.code === 'permission-denied') {
+        toast("Error de Permisos de Firebase. Revisa las 'Reglas' en la consola de Firebase.", "error");
+      }
+      // Firestore automáticamente reintentará cuando vuelva la conexión
+    }
+  }
+
+  async function _eliminarDoc(coleccion, id) {
+    if (!_db || !id) return;
+    try {
+      await _db.collection(coleccion).doc(id).delete();
+    } catch (e) {
+      console.warn('[Sync] No se pudo eliminar en Firestore (modo offline).');
+    }
+  }
+
+  // ── API PÚBLICA ──
+
+  // Guardar/actualizar un producto
+  window.syncSaveProducto = function(producto) {
+    if (!producto || !producto.id) return;
+    _subirDoc(COLS.productos, producto);
+  };
+
+  // Eliminar un producto
+  window.syncDeleteProducto = function(id) {
+    _eliminarDoc(COLS.productos, id);
+  };
+
+  // Guardar/actualizar una venta
+  window.syncSaveVenta = function(venta) {
+    if (!venta || !venta.id) return;
+    _subirDoc(COLS.ventas, venta);
+  };
+
+  // Eliminar una venta
+  window.syncDeleteVenta = function(id) {
+    _eliminarDoc(COLS.ventas, id);
+  };
+
+  // Guardar/actualizar un combo
+  window.syncSaveCombo = function(combo) {
+    if (!combo || !combo.id) return;
+    _subirDoc(COLS.combos, combo);
+  };
+
+  // Eliminar un combo
+  window.syncDeleteCombo = function(id) {
+    _eliminarDoc(COLS.combos, id);
+  };
+
+  // Guardar QR Global
+  window.syncSaveQRsGlobal = function(qrData) {
+    if (!_db) return;
+    try {
+      _db.collection(COLS.config).doc('qrs').set(qrData, { merge: true });
+    } catch(e) {
+      console.warn('[Sync] Offline QR save', e);
+    }
+  };
+
+  // ── SINCRONIZACIÓN MANUAL (botón "Sincronizar") ──
+  window.sincronizar = async function() {
+    if (!_syncReady) {
+      await window.initFirebase();
+      if (!_syncReady) {
+        toast('Firebase no configurado. Configura firebase-config.js', 'error');
+        return;
+      }
+    }
+    setSpinner(true);
+    setStatus('syncing', 'Sincronizando...');
+    try {
+      // Unir todos los elementos a sincronizar
+      const allItems = [];
+      (window.productos || []).forEach(p => allItems.push({ col: COLS.productos, doc: p }));
+      (window.ventas || []).forEach(v => allItems.push({ col: COLS.ventas, doc: v }));
+      (window.combos || []).forEach(c => allItems.push({ col: COLS.combos, doc: c }));
+
+      // Firestore soporta máximo 500 operaciones por batch
+      const chunk = 450;
+      for (let i = 0; i < allItems.length; i += chunk) {
+        const batch = _db.batch();
+        const slice = allItems.slice(i, i + chunk);
+        slice.forEach(item => {
+          batch.set(_db.collection(item.col).doc(item.doc.id), item.doc);
+        });
+        await batch.commit();
+      }
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('es-BO');
+      setStatus('online', '☁️ Sync ' + timeStr);
+      toast('✅ Sincronización completa — todos los dispositivos actualizados', 'success');
+      const info = document.getElementById('headerSyncInfo');
+      if (info) info.textContent = 'Última sync: ' + timeStr;
+    } catch (e) {
+      setStatus('error', 'Error al sync');
+      toast('Error al sincronizar: ' + e.message, 'error');
+    } finally {
+      setSpinner(false);
+    }
+  };
+
+  // Indicador online/offline del navegador
+  window.addEventListener('online',  () => setStatus('online',  '☁️ Online'));
+  window.addEventListener('offline', () => setStatus('offline', '📴 Sin internet'));
+
+})();

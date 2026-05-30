@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#09090b" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>TIA ELI LICORERIA &ndash; Sistema de Inventario</title>
+  <meta name="description" content="Sistema de control de inventario y ventas para TIA ELI LICORERIA." />
+  <link rel="manifest" href="manifest.json?v=6" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=6" />
+</head>
+<body>
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-logo">&#x1F37E;</div>
+      <div class="brand-text">
+        <span class="brand-name">TIA ELI</span>
+        <span class="brand-sub">LICORERIA</span>
+      </div>
+    </div>
+
+    <div class="sync-panel">
+      <button class="sync-btn" id="syncBtn" onclick="sincronizar()" title="Sincronizar con la nube">
+        <svg class="sync-icon" id="syncIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        <span id="syncLabel">Sincronizar</span>
+      </button>
+      <span class="sync-status">
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncText">Local</span>
+      </span>
+    </div>
+
+    <div class="theme-toggle">
+      <span class="theme-toggle-label" id="themeLabel">Modo claro</span>
+      <label class="toggle-switch" title="Cambiar tema">
+        <input type="checkbox" id="themeToggle" onchange="toggleTheme()" />
+        <span class="toggle-track"></span>
+        <span class="toggle-thumb" id="themeThumb">&#9728;</span>
+      </label>
+    </div>
+
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Principal</span>
+      <a href="#" class="nav-item active" data-section="dashboard" id="nav-dashboard">
+        <span class="nav-icon">&#9672;</span><span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-section="inventario" id="nav-inventario">
+        <span class="nav-icon">&#9744;</span><span>Inventario</span>
+      </a>
+      <span class="nav-section-label">Ventas</span>
+      <a href="#" class="nav-item" data-section="pos" id="nav-pos">
+        <span class="nav-icon">🛒</span><span>Registrar Venta</span>
+      </a>
+      <a href="#" class="nav-item" data-section="historial" id="nav-historial">
+        <span class="nav-icon">&#8801;</span><span>Historial</span>
+      </a>
+      <a href="#" class="nav-item" data-section="analytics" id="nav-analytics">
+        <span class="nav-icon">&#x25E0;</span><span>Analíticas</span>
+      </a>
+      <span class="nav-section-label">Gestión</span>
+      <a href="#" class="nav-item" data-section="combos" id="nav-combos">
+        <span class="nav-icon">&#9670;</span><span>Combos</span>
+      </a>
+      <a href="#" class="nav-item" data-section="vencimientos" id="nav-vencimientos">
+        <span class="nav-icon">!</span><span>Vencimientos</span>
+        <span class="nav-badge" id="badge-vencimientos" style="display:none">0</span>
+      </a>
+      <a href="#" class="nav-item" data-section="agregar" id="nav-agregar">
+        <span class="nav-icon">+</span><span>Agregar Producto</span>
+      </a>
+      <a href="#" class="nav-item" data-section="qr" id="nav-qr">
+        <span class="nav-icon">&#9635;</span><span>Gestión de QR</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button class="btn-backup" onclick="exportarDatos()" title="Descargar copia de seguridad">
+          ↓ Exportar datos
+        </button>
+        <label class="btn-backup btn-restore" title="Cargar copia de seguridad">
+          ↑ Importar
+          <input type="file" accept=".json" style="display:none" onchange="importarDatos(event)" />
+        </label>
+      </div>
+      <span class="footer-version">v3.0 &middot; TIA ELI LICORERIA</span>
+    </div>
+  </aside>
+
+  <!-- ══ TOPBAR MOBILE ══ -->
+  <header class="topbar">
+    <button class="menu-toggle" id="menuToggle">&#9776;</button>
+    <div class="topbar-brand">TIA ELI</div>
+    <div class="topbar-right">
+      <button class="sync-btn-mobile" onclick="sincronizar()" title="Sincronizar">
+        <svg class="sync-icon" id="syncIconMobile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="overlay" id="overlay"></div>
+
+  <main class="main-content">
+
+    <!-- ══ DASHBOARD ══ -->
+    <section class="section active" id="section-dashboard">
+      <div class="section-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p class="section-sub">Bienvenida &mdash; TIA ELI LICORERIA</p>
+        </div>
+        <div class="header-sync-info" id="headerSyncInfo"></div>
+      </div>
+
+      <div class="shop-title-container">
+        <h1 id="shop-title" class="shop-title" aria-label="TIA ELI LICORERIA"></h1>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon-wrap">&#x1F4E6;</div><div class="stat-info"><span class="stat-value" id="stat-total">0</span><span class="stat-label">Total Productos</span></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap">&#x2714;</div><div class="stat-info"><span class="stat-value" id="stat-stock">0</span><span class="stat-label">En Stock</span></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap">!</div><div class="stat-info"><span class="stat-value" id="stat-bajo">0</span><span class="stat-label">Stock Bajo</span></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap">&#x23F0;</div><div class="stat-info"><span class="stat-value" id="stat-vence">0</span><span class="stat-label">Por Vencer</span></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap">Bs</div><div class="stat-info"><span class="stat-value" id="stat-valor">0</span><span class="stat-label">Valor Inventario</span></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap">$</div><div class="stat-info"><span class="stat-value" id="stat-ventas-hoy">0</span><span class="stat-label">Ventas Hoy</span></div></div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div><div class="chart-title">Ventas &mdash; &Uacute;ltimos 7 d&iacute;as</div><div class="chart-sub">Total en Bolivianos</div></div>
+            <span class="chart-badge" id="chart-total-badge">Bs. 0</span>
+          </div>
+          <div class="chart-canvas-wrap"><canvas id="chartVentas7d"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div><div class="chart-title">Ventas por Categor&iacute;a</div><div class="chart-sub">Distribuci&oacute;n</div></div>
+          </div>
+          <div class="chart-canvas-wrap"><canvas id="chartCategorias"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Top vendidos + Categorias -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px" id="dashBottom">
+        <div>
+          <div class="section-title">Top Productos Vendidos</div>
+          <div class="top-productos" id="topProductosList">
+            <div class="empty-state" style="padding:20px"><p>Sin ventas aún</p></div>
+          </div>
+        </div>
+        <div>
+          <div class="section-title">Categor&iacute;as</div>
+          <div class="category-grid" id="categoryGrid"></div>
+        </div>
+      </div>
+
+      <div class="alert-section" id="alertSection" style="display:none">
+        <div class="section-title">&#9888; Alertas</div>
+        <div class="alert-list" id="alertList"></div>
+      </div>
+    </section>
+
+    <!-- ══ INVENTARIO ══ -->
+    <section class="section" id="section-inventario">
+      <div class="section-header">
+        <div><h1>Inventario</h1><p class="section-sub">Todos los productos de la licorer&iacute;a</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="exportarInventarioCSV()">Exportar CSV</button>
+          <button class="btn btn-primary btn-sm" id="btnNuevoProducto">+ Nuevo Producto</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">&#128269;</span>
+          <input type="text" id="searchInput" class="search-input" placeholder="Buscar producto..." />
+        </div>
+        <select id="filterCategoria" class="filter-select">
+          <option value="">Todas las categorias</option>
+          <option value="Licores">Licores</option>
+          <option value="Cervezas">Cervezas</option>
+          <option value="Sodas">Sodas</option>
+          <option value="Jugos">Jugos</option>
+          <option value="Galletas">Galletas</option>
+          <option value="Chicles">Chicles</option>
+          <option value="Otros">Otros</option>
+        </select>
+        <select id="filterEstado" class="filter-select">
+          <option value="">Todos los estados</option>
+          <option value="ok">En stock</option>
+          <option value="bajo">Stock bajo</option>
+          <option value="agotado">Agotado</option>
+          <option value="vence-pronto">Vence pronto</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="inv-table">
+          <thead><tr>
+            <th style="width:30px"></th><th>Producto</th><th>Cat.</th><th>Stock (Total)</th>
+            <th>Costo</th><th>Venta</th><th>Ganancia</th>
+            <th>Vencimiento</th><th>Estado</th><th>Acciones</th>
+          </tr></thead>
+          <tbody id="invTableBody"></tbody>
+        </table>
+      </div>
+      <div class="mobile-cards" id="mobileCards"></div>
+    </section>
+
+        <!-- ══ CAJA RÁPIDA (UNIFICADA) ══ -->
+    <section class="section" id="section-pos">
+      <div class="section-header" style="padding: 15px 20px 0;">
+        <div><h1>Registrar Venta</h1><p class="section-sub">Caja rápida para PC y Celular</p></div>
+        <button class="btn btn-secondary" id="btnCierreCaja">Cierre de Caja</button>
+      </div>
+
+      <!-- Filtros y Búsqueda -->
+        <div class="pos-filters-wrap" style="display: flex; gap: 8px; align-items: center; padding: 0 20px 10px; flex-wrap: wrap;">
+          <input type="search" id="posSearchInput" class="pos-shadcn-input" placeholder="Buscar producto..." onkeyup="filterPOSGrid()" style="flex: 1; min-width: 140px;" />
+          <div class="pos-filters" id="posFilters" style="flex: 2; padding: 0; min-width: 200px;">
+            <button class="pos-filter-btn active" onclick="setPOSFilter('Todas')">Todas</button>
+            <button class="pos-filter-btn" onclick="setPOSFilter('Cervezas')">Cervezas</button>
+            <button class="pos-filter-btn" onclick="setPOSFilter('Licores')">Licores</button>
+            <button class="pos-filter-btn" onclick="setPOSFilter('Sodas')">Sodas</button>
+            <button class="pos-filter-btn" onclick="setPOSFilter('Otros')">Otros</button>
+          </div>
+        </div>
+
+      <div style="padding: 0 20px;">
+        <h2 class="section-title" style="margin-top:10px; font-size: 1rem;">Combos disponibles</h2>
+        <div id="combosVentaList" style="margin-bottom: 10px;"></div>
+      </div>
+
+      <div class="pos-container">
+        
+        
+        <!-- Grilla de productos -->
+        <div class="pos-grid" id="posGrid" style="padding: 0 20px;">
+          <!-- Dinámico -->
+        </div>
+
+
+      </div>
+      
+      <div style="padding: 20px 20px 80px;">
+        <h2 class="section-title">Ventas de hoy</h2>
+        <div id="ventasHoyList" class="ventas-hoy-list"></div>
+      </div>
+    </section>
+
+    <!-- ══ HISTORIAL ══ -->
+    <section class="section" id="section-historial">
+      <div class="section-header">
+        <div><h1>Historial de Ventas</h1><p class="section-sub">Todas las ventas registradas</p></div>
+        <button class="btn btn-secondary" id="btnExportCSV">Exportar CSV</button>
+      </div>
+      <div class="toolbar">
+        <div class="search-wrap"><span class="search-icon">&#128269;</span><input type="text" id="hSearch" class="search-input" placeholder="Buscar producto..." /></div>
+        <input type="date" id="hFechaDesde" class="filter-select" />
+        <input type="date" id="hFechaHasta" class="filter-select" />
+        <select id="hPago" class="filter-select"><option value="">Todos los pagos</option><option value="efectivo">Efectivo</option><option value="qr">QR</option><option value="transferencia">Transferencia</option></select>
+        <button class="btn btn-secondary" id="btnFiltrarHistorial">Filtrar</button>
+      </div>
+      <div class="historial-resumen" id="histResumen"></div>
+      <div class="table-wrap" style="margin-top:14px">
+        <table class="inv-table">
+          <thead><tr><th>Fecha/Hora</th><th>Producto</th><th>Cant.</th><th>Precio</th><th>Desc.</th><th>Total</th><th>Pago</th><th>Ganancia</th><th>Nota</th><th></th></tr></thead>
+          <tbody id="histTableBody"></tbody>
+        </table>
+      </div>
+      <div class="mobile-cards" id="histMobileCards"></div>
+    </section>
+
+    <!-- ══ ANALYTICS ══ -->
+    <section class="section" id="section-analytics">
+      <div class="section-header">
+        <div><h1>Anal&iacute;ticas</h1><p class="section-sub">Estad&iacute;sticas detalladas de tu licorer&iacute;a</p></div>
+      </div>
+      <div class="stats-grid" style="margin-bottom:22px">
+        <div class="stat-card"><div class="stat-icon-wrap">Bs</div><div class="stat-info"><span class="stat-value" id="an-total">0</span><span class="stat-label">Total vendido (todo)</span></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap">G</div><div class="stat-info"><span class="stat-value" id="an-ganancia">0</span><span class="stat-label">Ganancia total</span></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap">#</div><div class="stat-info"><span class="stat-value" id="an-txns">0</span><span class="stat-label">Transacciones</span></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap">x</div><div class="stat-info"><span class="stat-value" id="an-avg">0</span><span class="stat-label">Ticket promedio</span></div></div>
+      </div>
+      <div class="analytics-grid">
+        <div class="analytics-card">
+          <div class="chart-header"><div><div class="chart-title">Ventas &mdash; &Uacute;ltimos 30 d&iacute;as</div></div></div>
+          <div class="chart-canvas-wrap tall"><canvas id="chartVentas30d"></canvas></div>
+        </div>
+        <div class="analytics-card">
+          <div class="chart-header"><div><div class="chart-title">Hora pico de ventas</div></div></div>
+          <div class="chart-canvas-wrap tall"><canvas id="chartHoras"></canvas></div>
+        </div>
+        <div class="analytics-card">
+          <div class="chart-header"><div><div class="chart-title">Forma de pago</div></div></div>
+          <div class="chart-canvas-wrap"><canvas id="chartPagos"></canvas></div>
+        </div>
+        <div class="analytics-card">
+          <div class="chart-header"><div><div class="chart-title">Ganancia por categor&iacute;a</div></div></div>
+          <div class="chart-canvas-wrap"><canvas id="chartGanCat"></canvas></div>
+        </div>
+        <div class="analytics-card full">
+          <div class="chart-header"><div><div class="chart-title">Top 10 productos m&aacute;s vendidos</div></div></div>
+          <div id="anTopProd"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ COMBOS MANAGER ══ -->
+    <section class="section" id="section-combos">
+      <div class="section-header">
+        <div><h1>Gestionar Combos</h1><p class="section-sub">Crea y edita combos de productos</p></div>
+        <button class="btn btn-primary" id="btnNuevoCombo">+ Nuevo Combo</button>
+      </div>
+      <div class="combos-grid" id="combosManagerList"></div>
+    </section>
+
+    <!-- ══ VENCIMIENTOS ══ -->
+    <section class="section" id="section-vencimientos">
+      <div class="section-header">
+        <div><h1>Control de Vencimientos</h1><p class="section-sub">Productos pr&oacute;ximos a vencer</p></div>
+      </div>
+      <div class="vencimiento-tabs">
+        <button class="vtab active" data-dias="7">7 d&iacute;as</button>
+        <button class="vtab" data-dias="15">15 d&iacute;as</button>
+        <button class="vtab" data-dias="30">30 d&iacute;as</button>
+        <button class="vtab" data-dias="9999">Todos</button>
+      </div>
+      <div class="vencimiento-list" id="vencimientoList"></div>
+    </section>
+
+    <!-- ══ AGREGAR PRODUCTO ══ -->
+    <section class="section" id="section-agregar">
+      <div class="section-header">
+        <div><h1 id="formTitle">+ Agregar Producto</h1><p class="section-sub">Completa los datos del nuevo producto</p></div>
+      </div>
+      <div class="form-card">
+        <form id="productForm" novalidate>
+          <input type="hidden" id="editId" />
+          <div class="form-grid">
+            <div class="form-group"><label>Nombre del Producto *</label><input type="text" id="fNombre" class="form-input" placeholder="Ej: Ron Bacard&iacute; 750ml" required /></div>
+            <div class="form-group"><label>Categor&iacute;a *</label>
+              <select id="fCategoria" class="form-input" required>
+                <option value="">Seleccionar...</option>
+                <option value="Licores">Licores</option>
+                <option value="Cervezas">Cervezas</option>
+                <option value="Sodas">Sodas</option>
+                <option value="Jugos">Jugos</option>
+                <option value="Galletas">Galletas</option>
+                <option value="Chicles">Chicles</option>
+                <option value="Otros">Otros</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Marca / Presentaci&oacute;n</label><input type="text" id="fMarca" class="form-input" placeholder="Ej: 1 litro, 750ml..." /></div>
+            <div class="form-group"><label>Unidad</label>
+              <select id="fUnidad" class="form-input">
+                <option value="unidad">Unidad</option><option value="botella">Botella</option>
+                <option value="lata">Lata</option><option value="paquete">Paquete</option>
+                <option value="caja">Caja</option><option value="litro">Litro</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Stock M&iacute;nimo</label><input type="number" id="fStockMin" class="form-input" value="3" min="0" /></div>
+            <div class="form-group"><label>Precio Venta (Bs.) *</label><input type="number" id="fVenta" class="form-input" placeholder="0.00" min="0" step="0.01" required /></div>
+            <div class="form-group form-group-full">
+              <label>Lotes de Inventario</label>
+              <div class="form-lotes-container">
+                <div id="lotesFormList"></div>
+                <button type="button" class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="agregarLoteUI()">+ Agregar Lote</button>
+              </div>
+            </div>
+            <div class="form-group"><label>Proveedor</label><input type="text" id="fProveedor" class="form-input" placeholder="Nombre del proveedor" /></div>
+            <div class="form-group form-group-full">
+              <label>Foto del Producto</label>
+              <div class="photo-upload-wrap">
+                <div class="photo-preview" id="photoPreview">
+                  <span>Toca para subir foto</span>
+                  <input type="file" id="fFoto" accept="image/*" onchange="handlePhotoUpload(this)" />
+                </div>
+              </div>
+            </div>
+            <div class="form-group form-group-full"><label>Notas</label><textarea id="fNota" class="form-input form-textarea" placeholder="Observaciones..."></textarea></div>
+          </div>
+          <div class="margen-preview" id="margenPreview" style="display:none">
+            <div class="margen-item"><span>Ganancia por unidad:</span><span id="prevGanancia" class="margen-value">Bs. 0.00</span></div>
+            <div class="margen-item"><span>Margen:</span><span id="prevMargen" class="margen-value">0%</span></div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="btnCancelForm">Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="btnSubmitForm">
+              <span class="btn-spinner" id="btnSpinner" style="display:none"></span>
+              <span id="btnSubmitText">Guardar Producto</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ══ GESTION DE QR ══ -->
+    <section class="section" id="section-qr">
+      <div class="section-header">
+        <div><h1>Gestión de QR</h1><p class="section-sub">Sube los códigos QR para recibir pagos</p></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;">
+        <!-- QR ELI -->
+        <div class="caja-card" style="text-align:center">
+          <h3 style="margin-bottom:15px;color:var(--text)">QR ELI</h3>
+          <div class="photo-upload-wrap" style="margin:0 auto 15px auto">
+            <div class="photo-preview" id="qrPreviewEli" style="height:200px">
+              <span>Subir QR</span>
+              <input type="file" accept="image/*" onchange="handleQRUpload(this, 'eli')" />
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="clearQR('eli')">Eliminar QR</button>
+        </div>
+        <!-- QR EDWIN -->
+        <div class="caja-card" style="text-align:center">
+          <h3 style="margin-bottom:15px;color:var(--text)">QR EDWIN</h3>
+          <div class="photo-upload-wrap" style="margin:0 auto 15px auto">
+            <div class="photo-preview" id="qrPreviewEdwin" style="height:200px">
+              <span>Subir QR</span>
+              <input type="file" accept="image/*" onchange="handleQRUpload(this, 'edwin')" />
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="clearQR('edwin')">Eliminar QR</button>
+        </div>
+        <!-- QR JOHAN -->
+        <div class="caja-card" style="text-align:center">
+          <h3 style="margin-bottom:15px;color:var(--text)">QR JOHAN</h3>
+          <div class="photo-upload-wrap" style="margin:0 auto 15px auto">
+            <div class="photo-preview" id="qrPreviewJohan" style="height:200px">
+              <span>Subir QR</span>
+              <input type="file" accept="image/*" onchange="handleQRUpload(this, 'johan')" />
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="clearQR('johan')">Eliminar QR</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="posFloatingElements" style="display: none;">
+    <!-- FAB Menu para el Carrito -->
+    <button id="posFabBtn" class="pos-fab-btn" onclick="togglePosCart()">
+      <span class="pos-fab-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+      </span>
+      <span class="pos-fab-badge" id="posFabBadge" style="display:none">0</span>
+    </button>
+
+    <!-- Carrito Flotante Inferior -->
+    <div class="pos-cart" id="posCartContainer">
+      <div class="pos-cart-items" id="posCartItems">
+        <!-- Dinámico -->
+      </div>
+      <div class="pos-cart-footer">
+        <div class="pos-cart-total" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+          <button class="btn-icon danger" onclick="clearPOSCart()" title="Vaciar Carrito" style="width: 40px; height: 40px; border-radius: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </button>
+          <div>Total: <span id="posTotalAmount">Bs. 0.00</span></div>
+        </div>
+        <div class="pos-payment-methods">
+          <button class="pos-pay-btn active" id="posPayCash" onclick="setPOSPayment('efectivo')">Efectivo</button>
+          <button class="pos-pay-btn" id="posPayQR" onclick="setPOSPayment('qr')">QR</button>
+        </div>
+        
+        <div id="posQROptions" style="display:none; gap: 6px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="showQR('eli')">QR ELI</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="showQR('edwin')">QR EDWIN</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="showQR('johan')">QR JOHAN</button>
+        </div>
+
+        <button class="pos-checkout-btn" id="posCheckoutBtn" onclick="checkoutPOS()">REGISTRAR VENTA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL MOSTRAR QR ══ -->
+  <div class="modal-overlay" id="qrOverlay" style="display:none">
+    <div class="modal" style="text-align:center;max-width:400px">
+      <div class="modal-header">
+        <h3 id="qrModalTitle">QR de Pago</h3>
+        <button class="modal-close" onclick="document.getElementById('qrOverlay').style.display='none'">&times;</button>
+      </div>
+      <div class="modal-body">
+        <img id="qrModalImage" src="" style="max-width:100%;border-radius:12px;margin-bottom:15px;display:none" />
+        <p id="qrModalEmpty" style="color:var(--text2);padding:30px 0;display:none">No se ha subido el código QR aún.</p>
+        <button class="btn btn-primary" style="width:100%" onclick="document.getElementById('qrOverlay').style.display='none'">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL UNIFICAR PRODUCTO ══ -->
+  <div class="modal-overlay" id="unificarOverlay" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Producto Existente Detectado</h3>
+        <button class="modal-close" onclick="document.getElementById('unificarOverlay').style.display='none'">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.9rem;margin-bottom:15px">Ya existe un producto con este nombre/categoría en tu inventario. En lugar de crear un producto duplicado, puedes agregar este nuevo stock como un nuevo <b>Lote</b> al producto existente.</p>
+        <div class="caja-card" id="unificarInfo" style="text-align:left;margin-bottom:15px"></div>
+        <div class="form-actions">
+          <button class="btn btn-secondary" id="unificarCancelBtn">Crear de todos modos (duplicar)</button>
+          <button class="btn btn-success" id="unificarConfirmBtn">Sí, agregar como nuevo lote</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL DETALLE ══ -->
+  <div class="modal-overlay" id="modalOverlay" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Detalle</h3>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL OFERTA ══ -->
+  <div class="modal-overlay" id="ofertaOverlay" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Poner en Oferta</h3>
+        <button class="modal-close" id="ofertaClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="ofertaInfo" class="oferta-info"></div>
+        <div class="form-group" style="margin-top:1rem"><label>Nuevo Precio de Oferta (Bs.)</label><input type="number" id="ofertaPrecio" class="form-input" step="0.01" /></div>
+        <div class="form-actions" style="margin-top:1rem">
+          <button class="btn btn-secondary" id="ofertaCancelBtn">Cancelar</button>
+          <button class="btn btn-warning" id="ofertaConfirmBtn">Aplicar Oferta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL CIERRE DE CAJA ══ -->
+  <div class="modal-overlay" id="cajaOverlay" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Cierre de Caja &mdash; <span id="cajaFecha"></span></h3>
+        <button class="modal-close" id="cajaClose">&times;</button>
+      </div>
+      <div class="modal-body" id="cajaBody"></div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL NUEVO COMBO ══ -->
+  <div class="modal-overlay" id="comboModalOverlay" style="display:none">
+    <div class="modal" style="max-width:600px">
+      <div class="modal-header">
+        <h3 id="comboModalTitle">Nuevo Combo</h3>
+        <button class="modal-close" id="comboModalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group" style="margin-bottom:12px"><label>Nombre del Combo *</label><input type="text" id="cmNombre" class="form-input" placeholder="Ej: Combo Verano" /></div>
+        <div class="form-group" style="margin-bottom:12px"><label>Descripci&oacute;n</label><input type="text" id="cmDesc" class="form-input" placeholder="Descripci&oacute;n del combo" /></div>
+        <div class="form-group" style="margin-bottom:16px"><label>Precio de venta sugerido (Bs.)</label><input type="number" id="cmPrecio" class="form-input" placeholder="0.00" step="0.01" /></div>
+        <div class="section-title" style="margin-bottom:10px">Componentes</div>
+        <div class="search-wrap" style="margin-bottom: 12px; position: relative; overflow: visible;">
+          <span class="search-icon">&#128269;</span>
+          <input type="text" id="cmSearchInput" class="search-input" placeholder="Buscar producto para agregar al combo..." autocomplete="off" />
+          <div id="cmSearchResults" style="display:none; position:absolute; top:100%; left:0; right:0; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); max-height:200px; overflow-y:auto; z-index:1000; box-shadow:var(--shadow-md);"></div>
+        </div>
+        <div id="cmComponentes" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+        <div class="form-actions" style="margin-top:18px">
+          <button class="btn btn-secondary" id="comboModalCancel">Cancelar</button>
+          <button class="btn btn-primary" id="comboModalSave">Guardar Combo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TOAST ══ -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ══ PWA INSTALL BANNER ══ -->
+  <div class="pwa-banner" id="pwaBanner">
+    <span style="font-weight:600">Instalar como App</span>
+    <span style="font-size:.78rem;color:var(--text2)">Accede m&aacute;s r&aacute;pido desde tu pantalla de inicio</span>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-primary btn-sm" id="pwaBannerInstall">Instalar</button>
+      <button class="btn btn-secondary btn-sm" id="pwaBannerClose">Ahora no</button>
+    </div>
+  </div>
+
+  <!-- ══ SCRIPTS ══ -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="firebase-config.js?v=6"></script>
+  <script src="sync.js?v=6"></script>
+  <script src="app.js?v=6"></script>
+  <script src="charts.js?v=6"></script>
+  <script src="ventas.js?v=6"></script>
+  <script src="extras.js?v=6"></script>
+  <script>
+    // Iniciar Firebase + listeners en tiempo real al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.initFirebase) window.initFirebase();
+    });
+  </script>
+</body>
+</html>
