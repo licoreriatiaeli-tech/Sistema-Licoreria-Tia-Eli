@@ -28,144 +28,42 @@ function saveCombos() {
 }
 window.saveCombos = saveCombos;
 
-function nowLocal() {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 16);
-}
-
-// ── PACK SIZES ──
-function getPackSizes(p) {
-  const nom = p.nombre.toLowerCase();
-  const cat = (p.categoria || '').toLowerCase();
-  if (nom.includes('corona')) return [{id:'unidad',label:'Unidad',mult:1}, {id:'caja',label:'Caja (24 uds)',mult:24}];
-  if (cat==='cervezas'||nom.includes('cerveza')||nom.includes('pilsener')||nom.includes('paceña')||nom.includes('huari')) return [{id:'unidad',label:'Unidad',mult:1}, {id:'paquete',label:'Paquete (12 uds)',mult:12}];
-  if (p.packs && p.packs.length) return p.packs;
-  return [{id:'unidad',label:'Unidad',mult:1}];
-}
-
-let selectedPack = {id:'unidad', mult:1, label:'Unidad'};
-
-function renderPackSizes(p) {
-  const wrap = document.getElementById('vPackWrap');
-  if (!wrap) return;
-  const packs = getPackSizes(p);
-  if (packs.length <= 1) { wrap.style.display='none'; selectedPack=packs[0]; return; }
-  selectedPack = packs[0];
-  wrap.style.display = 'block';
-  wrap.innerHTML = '<label class="pack-label">Presentación de venta</label><div class="pack-btns">' +
-    packs.map(pk => `<button type="button" class="pack-btn${pk.id==='unidad'?' active':''}" data-pack='${JSON.stringify(pk)}'>${pk.label}</button>`).join('') + '</div>';
-  wrap.querySelectorAll('.pack-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectedPack = JSON.parse(btn.dataset.pack);
-      wrap.querySelectorAll('.pack-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      calcVentaPreview();
-    });
-  });
-}
-
-// ── POBLAR SELECT ──
-function poblarSelectProductos() {
-  const sel = document.getElementById('vProducto');
-  if (!sel) return;
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">Seleccionar producto...</option>';
-  const grupos = {};
-  [...(window.productos||[])].sort((a,b)=>a.categoria.localeCompare(b.categoria)||a.nombre.localeCompare(b.nombre)).forEach(p => {
-    if (!grupos[p.categoria]) grupos[p.categoria]=[];
-    grupos[p.categoria].push(p);
-  });
-  Object.entries(grupos).forEach(([cat,items]) => {
-    const og = document.createElement('optgroup'); og.label=cat;
-    items.forEach(p => {
-      const opt = document.createElement('option'); opt.value=p.id;
-      opt.textContent = p.nombre+(p.marca?' — '+p.marca:'')+' ['+p.stock+']';
-      if (p.stock===0) { opt.textContent+=' ⚠ SIN STOCK'; opt.style.color='var(--red)'; }
-      og.appendChild(opt);
-    });
-    sel.appendChild(og);
-  });
-  if (cur) sel.value=cur;
-}
-window.poblarSelectProductos = poblarSelectProductos;
-
-// ── PRODUCT SELECTION (solo si existe el form antiguo) ──
-(function() {
-  const vProducto = document.getElementById('vProducto');
-  if (!vProducto) return; // El formulario antiguo ya no existe en el HTML
-  
-  vProducto.addEventListener('change', function() {
-    const p = (window.productos||[]).find(x=>x.id===this.value);
-    const info = document.getElementById('vStockInfo');
-    const bar = document.getElementById('vStockBar');
-    selectedPack={id:'unidad',mult:1,label:'Unidad'};
-    if (p) {
-      renderPackSizes(p);
-      const pv = p.enOferta ? p.precioOferta : p.venta;
-      const stockColor = p.stock===0?'var(--red)':p.stock<=p.stockMin?'var(--orange)':'var(--green)';
-      const cantLotes = (p.lotes||[]).filter(l=>l.cantidad>0).length;
-      let vencHtml = '';
-      if (p.vencimiento) {
-        const dias = Math.ceil((new Date(p.vencimiento) - new Date()) / 86400000);
-        const colorV = dias<=7 ? 'var(--red)' : dias<=15 ? 'var(--orange)' : 'var(--text2)';
-        vencHtml = `&nbsp; Próx. vencimiento: <b style="color:${colorV}">${new Date(p.vencimiento).toLocaleDateString('es-BO')}</b>`;
+function migrarFechasVentas() {
+  let migrados = false;
+  ventas.forEach(v => {
+    if (typeof v.fecha === 'string') {
+      const str = v.fecha;
+      const [datePart, timePart] = str.split('T');
+      if (datePart && timePart) {
+        const [y, m, d] = datePart.split('-').map(Number);
+        const [h, min, s = '0'] = timePart.split(':').map(Number);
+        v.fecha = new Date(y, m - 1, d, h, min, s).getTime();
+      } else {
+        v.fecha = new Date(str).getTime();
       }
-      if (bar) bar.innerHTML = `<b>${p.nombre}${p.marca?' — '+p.marca:''}</b> &nbsp; Stock Total: <b style="color:${stockColor}">${p.stock} ${p.unidad}</b>${vencHtml} &nbsp; Lotes: <b>${cantLotes}</b><br><small style="color:var(--text3);margin-top:5px;display:block">ℹ️ Al vender, se descontará automáticamente del lote que venza más pronto (FEFO).</small>`;
-      if (info) info.style.display='block';
-      const vPrecio = document.getElementById('vPrecio');
-      if (pv>0 && vPrecio) vPrecio.value=pv.toFixed(2);
-      calcVentaPreview();
-    } else {
-      if (info) info.style.display='none';
-      const w=document.getElementById('vPackWrap'); if(w)w.style.display='none';
+      migrados = true;
     }
   });
-})();
+  if (migrados) saveVentas();
+}
+migrarFechasVentas();
 
-// ── CALC PREVIEW ──
-function calcVentaPreview() {
-  const pidEl = document.getElementById('vProducto');
-  if (!pidEl) return;
-  const pid = pidEl.value;
-  const cantEl = document.getElementById('vCantidad');
-  const precioEl = document.getElementById('vPrecio');
-  if (!cantEl || !precioEl) return;
-  const cant = (parseInt(cantEl.value)||0)*(selectedPack.mult||1);
-  const precio = parseFloat(precioEl.value)||0;
-  const descPct = parseFloat(document.getElementById('vDescPct')?.value)||0;
-  const descBs = parseFloat(document.getElementById('vDescBs')?.value)||0;
-  const p = (window.productos||[]).find(x=>x.id===pid);
-  const preview = document.getElementById('ventaPreview');
-  if (!preview) return;
-  if (p && cant>0 && precio>0) {
-    const subtotal = cant*precio;
-    const descMonto = descBs>0 ? descBs : (descPct>0 ? subtotal*(descPct/100) : 0);
-    const total = Math.max(0, subtotal-descMonto);
-    const ganancia = (precio-p.costo)*cant - descMonto;
-    const vpSub = document.getElementById('vp-subtotal');
-    if (vpSub) vpSub.textContent = 'Bs.'+subtotal.toFixed(2)+(selectedPack.mult>1?' ('+cant+' uds)':'');
-    const descRow = document.getElementById('vp-desc-row');
-    const descEl = document.getElementById('vp-desc');
-    if (descMonto>0 && descRow && descEl) { descRow.style.display='flex'; descEl.textContent='-Bs.'+descMonto.toFixed(2); } else if(descRow) descRow.style.display='none';
-    const vpTotal = document.getElementById('vp-total');
-    if (vpTotal) vpTotal.textContent = 'Bs.'+total.toFixed(2);
-    const gEl=document.getElementById('vp-ganancia');
-    if (gEl) { gEl.textContent='Bs.'+ganancia.toFixed(2); gEl.style.color=ganancia>=0?'var(--green)':'var(--red)'; }
-    preview.style.display='block';
-  } else preview.style.display='none';
+function nowLocal() {
+  return Date.now();
 }
 
-['vCantidad','vPrecio','vDescPct','vDescBs'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',calcVentaPreview);});
+
+
 
 // ── DESCONTAR STOCK FEFO ──
+// Retorna { lotesAfectados, noCumplido } donde noCumplido > 0 = stock insuficiente
 function descontarStockFEFO(productoId, cantidadVendida) {
   const producto = window.productos.find(p => p.id === productoId);
-  if (!producto || !producto.lotes) return [];
+  if (!producto || !producto.lotes) return { lotesAfectados: [], noCumplido: cantidadVendida };
 
   // Ordenar lotes por vencimiento (FEFO)
   const lotesOrdenados = producto.lotes
-    .filter(lote => lote.cantidad > 0)
+    .filter(lote => lote && lote.cantidad > 0)
     .sort((a, b) => {
       if (!a.vencimiento) return 1; if (!b.vencimiento) return -1;
       return new Date(a.vencimiento) - new Date(b.vencimiento);
@@ -197,7 +95,7 @@ function descontarStockFEFO(productoId, cantidadVendida) {
   } else {
     producto.vencimiento = null;
   }
-  
+
   // Recalcular costo promedio
   const activosCosto = producto.lotes.filter(l => l.cantidad > 0);
   if (activosCosto.length) {
@@ -205,99 +103,17 @@ function descontarStockFEFO(productoId, cantidadVendida) {
   }
 
   if (window.syncSaveProducto) window.syncSaveProducto(producto);
-  return lotesAfectados;
+  return { lotesAfectados, noCumplido: restante };
 }
 
-// ── SUBMIT VENTA (solo si existe el form antiguo) ──
-(function() {
-  const ventaForm = document.getElementById('ventaForm');
-  if (!ventaForm) return; // El formulario antiguo ya no existe
 
-  ventaForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const pid = document.getElementById('vProducto').value;
-    const cantInput = parseInt(document.getElementById('vCantidad').value)||0;
-    const cant = cantInput*(selectedPack.mult||1);
-    const precio = parseFloat(document.getElementById('vPrecio').value)||0;
-    const pago = document.getElementById('vPago').value;
-    const fechaInput = nowLocal();
-    const nota = '';
-    const descPct = parseFloat(document.getElementById('vDescPct')?.value)||0;
-    const descBs = parseFloat(document.getElementById('vDescBs')?.value)||0;
-    const p = (window.productos||[]).find(x=>x.id===pid);
 
-    if (!p) { toast('Selecciona un producto','error'); return; }
-    if (cant<=0) { toast('Cantidad inválida','error'); return; }
-    if (precio<=0) { toast('Precio inválido','error'); return; }
-    if (cant>p.stock) { toast('Stock insuficiente. Disponible: '+p.stock+(selectedPack.mult>1?' (necesitas '+cant+')':''),'error'); return; }
-
-    const btnSpinner = document.getElementById('btnVentaSpinner');
-    const btnText = document.getElementById('btnVentaText');
-    if (btnSpinner) btnSpinner.style.display='inline-block';
-    if (btnText) btnText.textContent='Registrando...';
-
-    const lotesAfectados = descontarStockFEFO(p.id, cant);
-    const costoTotal = lotesAfectados.reduce((s, l) => s + (l.cantidadDescontada * l.costoUnitario), 0);
-
-    const subtotal = cant*precio;
-    const descMonto = descBs>0?descBs:(descPct>0?subtotal*(descPct/100):0);
-    const total = Math.max(0,subtotal-descMonto);
-    const ganancia = total - costoTotal;
-
-    save(); // guardar cambios en productos
-
-    const venta = {
-      id:genId(), tipo:'individual',
-      productoId:p.id, productoNombre:p.nombre, productomarca:p.marca||'',
-      categoria:p.categoria, cantidad:cant,
-      cantidadPacks:cantInput, packLabel:selectedPack.id!=='unidad'?selectedPack.label:'',
-      precioUnit:precio, subtotal, descuento:descMonto, total, costo:costoTotal,
-      ganancia, pago, nota, fecha:fechaInput||nowLocal(), fechaRegistro:new Date().toISOString(),
-      lotesAfectados
-    };
-
-    ventas.unshift(venta);
-    saveVentas();
-
-    renderVentasStats();
-    renderVentasHoy();
-    renderDashboard();
-    if (window.renderAllCharts) renderAllCharts();
-
-    if (window.animateValueElement) {
-      ['stat-stock', 'stat-bajo', 'stat-vence', 'stat-valor', 'stat-ventas-hoy', 'vstat-total', 'vstat-efectivo', 'vstat-qr', 'vp-ganancia'].forEach(id => {
-        let el = document.getElementById(id);
-        if (el) window.animateValueElement(el.parentElement);
-      });
-    }
-
-    if (btnSpinner) btnSpinner.style.display='none';
-    if (btnText) btnText.textContent='Registrar Venta';
-    ventaForm.reset();
-    const vStockInfo = document.getElementById('vStockInfo');
-    if (vStockInfo) vStockInfo.style.display='none';
-    const vPackWrap = document.getElementById('vPackWrap');
-    if (vPackWrap) vPackWrap.style.display='none';
-    const ventaPreview = document.getElementById('ventaPreview');
-    if (ventaPreview) ventaPreview.style.display='none';
-    selectedPack = { mult: 1, label: '' };
-
-    if (window.lanzarConfetti) lanzarConfetti();
-    toast('Venta registrada \u2014 Bs.'+total.toFixed(2),'success');
-    if (window.syncSaveVenta) { window.syncSaveVenta(venta); }
-  });
-})();
-
-// Botón cancelar venta (solo si existe)
-(function() {
-  const btn = document.getElementById('btnVentaCancelar');
-  if (btn) btn.addEventListener('click', () => navegarA('inventario'));
-})();
 
 // ── STATS HOY ──
 function renderVentasStats() {
-  const hoy=new Date();hoy.setHours(0,0,0,0);
-  const vh=(window.ventas||[]).filter(v=>new Date(v.fecha)>=hoy);
+  const hoy = new Date(); hoy.setHours(0,0,0,0); const hoyTs = hoy.getTime();
+  const manana = new Date(hoy); manana.setDate(manana.getDate() + 1); const mananaTs = manana.getTime();
+  const vh=(window.ventas||[]).filter(v => typeof v.fecha === 'number' ? (v.fecha >= hoyTs && v.fecha < mananaTs) : new Date(v.fecha) >= hoy);
   const total=vh.reduce((s,v)=>s+v.total,0);
   const ef=vh.filter(v=>v.pago==='efectivo').reduce((s,v)=>s+v.total,0);
   const qr=vh.filter(v=>v.pago!=='efectivo').reduce((s,v)=>s+v.total,0);
@@ -315,31 +131,34 @@ function pagoBadge(pago){const c=pago==='efectivo'?'pago-efectivo':pago==='qr'?'
 
 // ── VENTAS HOY LIST ──
 function renderVentasHoy() {
-  const hoy=new Date();hoy.setHours(0,0,0,0);
-  const list=(window.ventas||[]).filter(v=>new Date(v.fecha)>=hoy);
+  const hoy = new Date(); hoy.setHours(0,0,0,0); const hoyTs = hoy.getTime();
+  const manana = new Date(hoy); manana.setDate(manana.getDate() + 1); const mananaTs = manana.getTime();
+  const list=(window.ventas||[]).filter(v => typeof v.fecha === 'number' ? (v.fecha >= hoyTs && v.fecha < mananaTs) : new Date(v.fecha) >= hoy);
   const cont=document.getElementById('ventasHoyList');if(!cont)return;
   if(!list.length){cont.innerHTML='<div class="empty-state" style="padding:22px"><span class="es-icon">&#8212;</span><p>Sin ventas hoy todav\u00eda.</p></div>';return;}
   cont.innerHTML=list.map(v=>{
-    const hora=new Date(v.fecha).toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'});
-    const etq=v.tipo==='combo'?'<span class="combo-tag">COMBO</span>':(v.packLabel?'<span class="pack-tag">'+v.packLabel+'</span>':'');
-    const desc=v.tipo==='combo'?(v.nota||''):(v.packLabel?v.cantidadPacks+' '+v.packLabel+' \u00b7 '+v.cantidad+' uds':v.cantidad+' unid');
-    const descLine=v.descuento>0?` <small style="color:var(--red)">(-Bs.${v.descuento.toFixed(2)})</small>`:'';
+    const hora=new Date(typeof v.fecha === 'number' ? v.fecha : v.fecha).toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'});
+    const etq=v.tipo==='combo'?'<span class="combo-tag">COMBO</span>':(v.packLabel?'<span class="pack-tag">'+escHTML(v.packLabel)+'</span>':'');
+    const desc=v.tipo==='combo'?(escHTML(v.nota||'')):(v.packLabel?escHTML(v.cantidadPacks+' '+v.packLabel+' · '+v.cantidad+' uds'):v.cantidad+' unid');
+    const descLine=v.descuento>0?`<small style="color:var(--red)">(-Bs.${v.descuento.toFixed(2)})</small>`:'';
     let lotesInfo = '';
     if (v.lotesAfectados && v.lotesAfectados.length) {
-      lotesInfo = '<ul class="lotes-afectados-list">' + v.lotesAfectados.map(la => `<li>Lote ${la.loteIndex+1} (${la.cantidadDescontada} ud) ${la.vencimiento?'— '+la.vencimiento:''}</li>`).join('') + '</ul>';
+      lotesInfo = '<ul class="lotes-afectados-list">' + v.lotesAfectados.map(la => `<li>Lote ${la.loteIndex+1} (${la.cantidadDescontada} ud) ${la.vencimiento?escHTML('— '+la.vencimiento):''}</li>`).join('') + '</ul>';
     }
+    const safePN = escHTML(v.productoNombre || '(sin nombre)');
+    const safeNota = v.nota && v.tipo !== 'combo' ? escHTML(v.nota) : '';
     return `<div class="venta-card">
       <div class="venta-card-left">
-        <div class="venta-card-nombre">${v.productoNombre} ${etq}</div>
-        <div class="venta-card-meta"><span>${hora}</span><span>${desc}</span>${pagoBadge(v.pago)}${v.nota&&v.tipo!=='combo'?'<span>'+v.nota+'</span>':''}</div>
+        <div class="venta-card-nombre">${safePN} ${etq}</div>
+        <div class="venta-card-meta"><span>${hora}</span><span>${desc}</span>${pagoBadge(v.pago)}${safeNota ? '<span>'+safeNota+'</span>' : ''}</div>
         ${lotesInfo}
       </div>
       <div class="venta-card-total">
-        <div class="venta-card-monto">Bs.${v.total.toFixed(2)}${descLine}</div>
+        <div class="venta-card-monto">Bs.${v.total.toFixed(2)} ${descLine}</div>
         <div style="font-size:.72rem;color:${v.ganancia>=0?'var(--green)':'var(--red)'}">G: Bs.${v.ganancia.toFixed(2)}</div>
       </div>
-      <button class="btn-icon danger" onclick="eliminarVenta('${v.id}')" title="Eliminar">\u2715</button>
-    </div>`;
+      <button class="btn-icon danger" onclick="eliminarVenta('${v.id}')" title="Eliminar">✕</button>
+   </div>`;
   }).join('');
 }
 window.renderVentasHoy = renderVentasHoy;
@@ -387,43 +206,8 @@ function renderCombosVenta() {
 }
 window.renderCombosVenta = renderCombosVenta;
 
-function venderCombo(comboId) {
-  const c=(window.combos||[]).find(x=>x.id===comboId);if(!c)return;
-  const precio=parseFloat(document.getElementById('cprecio-'+comboId)?.value)||0;
-  const cantCombos=parseInt(document.getElementById('ccant-'+comboId)?.value)||1;
-  const pago=document.getElementById('cpago-'+comboId)?.value||'efectivo';
-  if(precio<=0){toast('Ingresa el precio del combo','error');return;}
-  
-  for(const comp of c.componentes){const p=(window.productos||[]).find(x=>x.id===comp.productoId);if(!p){toast('Producto "'+comp.nombreRef+'" no encontrado','error');return;}if(p.stock<comp.cantidad*cantCombos){toast('Stock insuficiente de '+p.nombre,'error');return;}}
-  
-  let costoTotalCombo = 0;
-  const lotesAfectadosTodos = [];
 
-  c.componentes.forEach(comp => {
-    const cantNecesaria = comp.cantidad * cantCombos;
-    const laf = descontarStockFEFO(comp.productoId, cantNecesaria);
-    const costoComp = laf.reduce((s,l)=>s+(l.cantidadDescontada*l.costoUnitario), 0);
-    costoTotalCombo += costoComp;
-    lotesAfectadosTodos.push(...laf);
-  });
-  save();
 
-  const v={id:genId(),tipo:'combo',comboId:c.id,comboNombre:c.nombre,productoNombre:c.nombre,productomarca:'',categoria:'Combo',cantidad:cantCombos,cantidadPacks:cantCombos,packLabel:'',precioUnit:precio,subtotal:precio*cantCombos,descuento:0,total:precio*cantCombos,costo:costoTotalCombo,ganancia:(precio*cantCombos)-costoTotalCombo,pago,nota:c.descripcion||'',fecha:nowLocal(),fechaRegistro:new Date().toISOString(), lotesAfectados: lotesAfectadosTodos};
-  ventas.unshift(v);saveVentas();
-  renderCombosVenta();renderVentasStats();renderVentasHoy();renderDashboard();
-  if(window.renderAllCharts)renderAllCharts();
-  
-  if (window.animateValueElement) {
-    ['stat-stock', 'stat-bajo', 'stat-vence', 'stat-valor', 'stat-ventas-hoy', 'vstat-total', 'vstat-efectivo', 'vstat-qr'].forEach(id => {
-      let el = document.getElementById(id);
-    });
-  }
-
-  if(window.lanzarConfetti)lanzarConfetti();
-  toast('Combo vendido: '+cantCombos+' \u00d7 '+c.nombre+' \u2014 Bs.'+v.total.toFixed(2),'success');
-  if(window.syncSaveVenta) window.syncSaveVenta(v);
-}
-window.venderCombo = venderCombo;
 
 // \u2500\u2500 HISTORIAL \u2500\u2500
 function renderHistorial() {
@@ -433,8 +217,14 @@ function renderHistorial() {
   const pago=document.getElementById('hPago')?.value;
   let lista=[...(window.ventas||[])];
   if(q)lista=lista.filter(v=>v.productoNombre.toLowerCase().includes(q));
-  if(desde)lista=lista.filter(v=>v.fecha>=desde);
-  if(hasta)lista=lista.filter(v=>v.fecha<=hasta+'T23:59');
+  if(desde) {
+    const d = new Date(desde + 'T00:00:00').getTime();
+    lista = lista.filter(v => (typeof v.fecha === 'number' ? v.fecha : new Date(v.fecha).getTime()) >= d);
+  }
+  if(hasta) {
+    const d = new Date(hasta + 'T23:59:59').getTime();
+    lista = lista.filter(v => (typeof v.fecha === 'number' ? v.fecha : new Date(v.fecha).getTime()) <= d);
+  }
   if(pago)lista=lista.filter(v=>v.pago===pago);
   const tv=lista.reduce((s,v)=>s+v.total,0),tg=lista.reduce((s,v)=>s+v.ganancia,0);
   const ef=lista.filter(v=>v.pago==='efectivo').reduce((s,v)=>s+v.total,0);
@@ -467,7 +257,7 @@ function renderHistorial() {
   
   let mobileHtml = [];
   tbody.innerHTML = lista.map((v, i) => {
-    const fd=new Date(v.fecha);const fs=fd.toLocaleDateString('es-BO')+' '+fd.toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'});
+    const fd=new Date(typeof v.fecha === 'number' ? v.fecha : v.fecha);const fs=fd.toLocaleDateString('es-BO')+' '+fd.toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'});
     const etq=v.tipo==='combo'?' <span class="combo-tag">COMBO</span>':(v.packLabel?' <span class="pack-tag">'+v.packLabel+'</span>':'');
     let lotesInfo = '';
     if (v.lotesAfectados && v.lotesAfectados.length) {
@@ -506,7 +296,7 @@ function renderHistorial() {
       </div>
     `);
 
-    return `<tr><td style="font-size:.76rem;color:var(--text2);white-space:nowrap">${fs}</td><td><div class="prod-name">${v.productoNombre}${etq}</div>${lotesInfo}</td><td><b>${v.cantidad}</b></td><td class="price-cost">Bs.${v.precioUnit.toFixed(2)}</td><td style="color:var(--red)">${v.descuento>0?'-Bs.'+v.descuento.toFixed(2):'-'}</td><td class="price-venta"><b>Bs.${v.total.toFixed(2)}</b></td><td>${pagoBadge(v.pago)}</td><td class="price-ganancia ${v.ganancia>=0?'pos':'neg'}">Bs.${v.ganancia.toFixed(2)}</td><td style="color:var(--text3);font-size:.76rem;max-width:110px">${v.nota||'-'}</td><td><button class="btn-icon danger" onclick="eliminarVenta('${v.id}')">\u2715</button></td></tr>`;
+    return `<tr><td style="font-size:.76rem;color:var(--text2);white-space:nowrap">${fs}</td><td><div class="prod-name">${v.productoNombre}${etq}</div>${lotesInfo}</td><td><b>${v.cantidad}</b></td><td class="price-cost">Bs.${(v.precioUnit||v.total).toFixed(2)}</td><td style="color:var(--red)">${v.descuento>0?'-Bs.'+v.descuento.toFixed(2):'-'}</td><td class="price-venta"><b>Bs.${v.total.toFixed(2)}</b></td><td>${pagoBadge(v.pago)}</td><td class="price-ganancia ${v.ganancia>=0?'pos':'neg'}">Bs.${v.ganancia.toFixed(2)}</td><td style="color:var(--text3);font-size:.76rem;max-width:110px">${v.nota||'-'}</td><td><button class="btn-icon danger" onclick="eliminarVenta('${v.id}')">\u2715</button></td></tr>`;
   }).join('');
   
   if (mobileCards) mobileCards.innerHTML = mobileHtml.join('');
@@ -516,15 +306,10 @@ window.renderHistorial = renderHistorial;
 function exportarVentas() {
   if(!(window.ventas||[]).length){toast('No hay ventas','warning');return;}
   const h='Fecha,Tipo,Producto,Presentacion,Cantidad,PrecioUnit,Subtotal,Descuento,Total,Costo,Ganancia,Pago,Nota\n';
-  const r=(window.ventas||[]).map(v=>[v.fecha,v.tipo||'individual',v.productoNombre,v.packLabel||'Unidad',v.cantidad,v.precioUnit,v.subtotal||v.total,v.descuento||0,v.total,v.costo,v.ganancia,v.pago,v.nota||''].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const r=(window.ventas||[]).map(v=>[new Date(typeof v.fecha === 'number' ? v.fecha : v.fecha).toISOString(),v.tipo||'individual',v.productoNombre,v.packLabel||'Unidad',v.cantidad,v.precioUnit,v.subtotal||v.total,v.descuento||0,v.total,v.costo,v.ganancia,v.pago,v.nota||''].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');
   const blob=new Blob(['\uFEFF'+h+r],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ventas_tiaeli_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(url);
   toast('CSV exportado','success');
-}
-
-// ── SEED ──
-function seedCombos() {
-  if((window.combos||[]).length>0)return;
 }
 
 // ── BIND ──
@@ -533,7 +318,6 @@ document.getElementById('btnExportCSV')?.addEventListener('click',exportarVentas
 document.getElementById('hSearch')?.addEventListener('input',renderHistorial);
 
 // ── INIT ──
-seedCombos();
 renderVentasStats();
 
 // ═══════════════════════════════════════════
@@ -610,7 +394,15 @@ window.addToPOS = function(pid) {
   const p = productos.find(x => x.id === pid);
   if (!p) return;
 
+  const stockDisp = getStockTotal(p);
+  if (stockDisp <= 0) { toast('Producto agotado', 'warning'); return; }
+
   const existing = posCart.find(item => item.id === pid);
+  const cantActual = existing ? existing.cant : 0;
+  if (cantActual + 1 > stockDisp) {
+    toast('Stock disponible: ' + stockDisp, 'warning');
+    return;
+  }
   if (existing) {
     existing.cant++;
   } else {
@@ -622,11 +414,27 @@ window.addToPOS = function(pid) {
 window.updatePOSQty = function(pid, delta) {
   const item = posCart.find(x => x.id === pid);
   if (!item) return;
-  
+
   const nuevo = item.cant + delta;
   if (nuevo <= 0) {
     posCart = posCart.filter(x => x.id !== pid);
   } else {
+    let stockMax = 9999;
+    if (item.p.isCombo && item.p.comboRef) {
+      item.p.comboRef.componentes.forEach(comp => {
+        const pr = productos.find(px => px.id === comp.productoId);
+        if (!pr) { stockMax = 0; return; }
+        const st = getStockTotal(pr);
+        const posib = Math.floor(st / comp.cantidad);
+        if (posib < stockMax) stockMax = posib;
+      });
+    } else {
+      stockMax = getStockTotal(item.p);
+    }
+    if (nuevo > stockMax) {
+      toast(stockMax > 0 ? 'Stock disponible: ' + stockMax : 'Producto agotado', 'warning');
+      return;
+    }
     item.cant = nuevo;
   }
   updatePOSCart();
@@ -719,7 +527,7 @@ window.updatePOSCart = function() {
 
 window.checkoutPOS = function() {
   if (posCart.length === 0) return;
-  
+
   const btn = document.getElementById('posCheckoutBtn');
   if (btn) {
     btn.innerText = 'Procesando...';
@@ -729,44 +537,77 @@ window.checkoutPOS = function() {
   const fechaVenta = new Date().toISOString();
 
   try {
+    // ── Pre-validación de stock para cada item del carrito ──
+    for (const item of posCart) {
+      if (item.p.isCombo && item.p.comboRef) {
+        for (const comp of item.p.comboRef.componentes) {
+          const pr = productos.find(x => x.id === comp.productoId);
+          if (!pr) {
+            toast('Producto del combo ya no existe', 'error');
+            return;
+          }
+          const disp = getStockTotal(pr);
+          const req = comp.cantidad * item.cant;
+          if (disp < req) {
+            const nombre = pr.nombre || 'producto';
+            toast(`Stock insuficiente de ${nombre} para el combo`, 'error');
+            return;
+          }
+        }
+      } else {
+        const disp = getStockTotal(item.p);
+        if (disp < item.cant) {
+          toast(`Stock insuficiente de ${item.p.nombre}`, 'error');
+          return;
+        }
+      }
+    }
+
     const ventasRegistradas = [];
-    
+
     posCart.forEach(item => {
       const p = item.p;
       const cant = item.cant;
       const precio = item.precio;
       const subtotal = cant * precio;
       const total = subtotal;
-      
+
       if (p.isCombo) {
         const combo = p.comboRef;
         let lotesAfectadosTotales = [];
         let costoTotal = 0;
-        
+
         combo.componentes.forEach(cItem => {
           const reqCant = cItem.cantidad * cant;
-          const lotesAf = descontarStockFEFO(cItem.productoId, reqCant);
-          costoTotal += lotesAf.reduce((s, l) => s + (l.cantidadDescontada * l.costoUnitario), 0);
-          lotesAf.forEach(l => {
-            l.comboItemNombre = productos.find(x => x.id === cItem.productoId)?.nombre || '';
+          const { lotesAfectados, noCumplido } = descontarStockFEFO(cItem.productoId, reqCant);
+          if (noCumplido > 0) {
+            console.warn('FEFO: no se pudo descontar', noCumplido, 'uds de', cItem.productoId);
+          }
+          costoTotal += lotesAfectados.reduce((s, l) => s + (l.cantidadDescontada * l.costoUnitario), 0);
+          const productoNombre = productos.find(x => x.id === cItem.productoId)?.nombre || '';
+          lotesAfectados.forEach(l => {
+            l.comboItemNombre = productoNombre;
             lotesAfectadosTotales.push(l);
           });
         });
-        
+
         const venta = {
           id: genId(), tipo: 'combo',
           productoId: combo.id, productoNombre: p.nombre, productomarca: '',
           categoria: 'Combo', cantidad: cant,
           cantidadPacks: 1, packLabel: '',
           precioUnit: precio, subtotal, descuento: 0, total, costo: costoTotal,
-          ganancia: total - costoTotal, pago: posPaymentMethod, nota: 'Combo desde Caja Rápida', 
+          ganancia: total - costoTotal, pago: posPaymentMethod, nota: 'Combo desde Caja Rápida',
           fecha: nowLocal(), fechaRegistro: fechaVenta,
           lotesAfectados: lotesAfectadosTotales
         };
         ventas.unshift(venta);
         ventasRegistradas.push(venta);
       } else {
-        const lotesAfectados = descontarStockFEFO(p.id, cant);
+        const { lotesAfectados, noCumplido } = descontarStockFEFO(p.id, cant);
+        if (noCumplido > 0) {
+          console.warn('FEFO: no se pudo descontar', noCumplido, 'uds de', p.id);
+        }
         const costoTotal = lotesAfectados.reduce((s, l) => s + (l.cantidadDescontada * l.costoUnitario), 0);
         const ganancia = total - costoTotal;
 
@@ -776,7 +617,7 @@ window.checkoutPOS = function() {
           categoria: p.categoria, cantidad: cant,
           cantidadPacks: 1, packLabel: '',
           precioUnit: precio, subtotal, descuento: 0, total, costo: costoTotal,
-          ganancia, pago: posPaymentMethod, nota: 'Venta desde Caja Rápida', 
+          ganancia, pago: posPaymentMethod, nota: 'Venta desde Caja Rápida',
           fecha: nowLocal(), fechaRegistro: fechaVenta,
           lotesAfectados
         };
@@ -787,7 +628,7 @@ window.checkoutPOS = function() {
 
     save();
     saveVentas();
-    
+
     // Sync a Firebase
     if (window.syncSaveVenta) {
       ventasRegistradas.forEach(v => window.syncSaveVenta(v));
@@ -795,17 +636,17 @@ window.checkoutPOS = function() {
 
     if (window.lanzarConfetti) lanzarConfetti();
     toast('¡Venta Registrada Exitosamente!', 'success');
-    
+
     // Limpiar carrito
     posCart = [];
     updatePOSCart();
     renderPOSProducts();
     renderCombosVenta();
-    
+
     renderVentasStats();
     renderVentasHoy();
     renderDashboard();
-    
+
     if (window.renderAllCharts) renderAllCharts();
 
   } catch (err) {
@@ -822,9 +663,21 @@ window.checkoutPOS = function() {
 window.addComboToPOS = function(cId) {
   const c = window.combos.find(x => x.id === cId);
   if (!c) return;
-  
+
+  let minStock = 9999;
+  c.componentes.forEach(comp => {
+    const pr = productos.find(px => px.id === comp.productoId);
+    if (!pr) { minStock = 0; return; }
+    const st = getStockTotal(pr);
+    const posib = Math.floor(st / comp.cantidad);
+    if (posib < minStock) minStock = posib;
+  });
+
+  if (minStock <= 0) { toast('Stock insuficiente para este combo', 'warning'); return; }
+
   const existing = posCart.find(x => x.id === 'combo_'+c.id);
   if (existing) {
+    if (existing.cant + 1 > minStock) { toast('Stock disponible: ' + minStock, 'warning'); return; }
     existing.cant++;
   } else {
     posCart.push({

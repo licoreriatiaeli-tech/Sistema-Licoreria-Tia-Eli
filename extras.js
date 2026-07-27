@@ -57,27 +57,27 @@ window.initOdometers = function(delay = 250) {
 // ═══════════════════════════════════════════
 
 // ── THEME ──
-function toggleTheme() {
-  const isDark = document.documentElement.dataset.theme === 'dark';
-  const newTheme = isDark ? 'light' : 'dark';
+function applyTheme(newTheme) {
   document.documentElement.dataset.theme = newTheme;
   localStorage.setItem('tiaeli_theme', newTheme);
+  const chk = document.getElementById('themeToggle');
+  if (chk) chk.checked = newTheme === 'dark';
   const label = document.getElementById('themeLabel');
   const thumb = document.getElementById('themeThumb');
   if (label) label.textContent = newTheme === 'dark' ? 'Modo oscuro' : 'Modo claro';
   if (thumb) thumb.textContent = newTheme === 'dark' ? '☾' : '☼';
   document.dispatchEvent(new CustomEvent('themeChanged'));
 }
+window.applyTheme = applyTheme;
+
+function toggleTheme() {
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  applyTheme(isDark ? 'light' : 'dark');
+}
 
 function initTheme() {
   const saved = localStorage.getItem('tiaeli_theme') || 'light';
-  document.documentElement.dataset.theme = saved;
-  const chk = document.getElementById('themeToggle');
-  if (chk) chk.checked = saved === 'dark';
-  const label = document.getElementById('themeLabel');
-  const thumb = document.getElementById('themeThumb');
-  if (label) label.textContent = saved === 'dark' ? 'Modo oscuro' : 'Modo claro';
-  if (thumb) thumb.textContent = saved === 'dark' ? '☾' : '☼';
+  applyTheme(saved);
 }
 initTheme();
 
@@ -122,20 +122,66 @@ function lanzarConfetti() {
 // ── PHOTO UPLOAD ──
 let currentPhotoBase64 = null;
 
-function handlePhotoUpload(input) {
+// Límite seguro para Firestore (1MB doc - overhead base64 ≈ 750KB binario)
+const PHOTO_MAX_BYTES = 800 * 1024;
+const PHOTO_MAX_RAW = 3 * 1024 * 1024;
+
+// Comprime una imagen usando canvas. Devuelve dataURL o null si no se pudo.
+function compressImage(file, maxBytes, maxWidth = 1200) {
+  return new Promise((resolve, reject) => {
+    if (!file.type || !file.type.startsWith('image/')) {
+      reject(new Error('El archivo no es una imagen'));
+      return;
+    }
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+    reader.onload = e => {
+      img.onerror = () => reject(new Error('Imagen corrupta'));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth) {
+          height = Math.round(height * (maxWidth / width));
+          width = maxWidth;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('Canvas no disponible')); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        // Probar calidades descendentes hasta caber en maxBytes
+        const qualities = [0.82, 0.7, 0.6, 0.45, 0.3];
+        const tryEnc = (i) => {
+          if (i >= qualities.length) { resolve(canvas.toDataURL('image/jpeg', 0.2)); return; }
+          const dataUrl = canvas.toDataURL('image/jpeg', qualities[i]);
+          const size = Math.ceil((dataUrl.length - 'data:image/jpeg;base64,'.length) * 3 / 4);
+          if (size <= maxBytes || qualities[i] <= 0.2) resolve(dataUrl);
+          else tryEnc(i + 1);
+        };
+        tryEnc(0);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handlePhotoUpload(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
-  if (file.size > 3 * 1024 * 1024) { toast('La foto no debe superar 3MB', 'error'); return; }
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    currentPhotoBase64 = e.target.result;
+  if (file.size > PHOTO_MAX_RAW) { toast('La foto no debe superar 3MB antes de comprimir', 'error'); return; }
+  try {
+    currentPhotoBase64 = await compressImage(file, PHOTO_MAX_BYTES);
     const preview = document.getElementById('photoPreview');
     if (preview) {
       preview.innerHTML = `<img src="${currentPhotoBase64}" style="width:100%;height:100%;object-fit:cover;border-radius:7px" /><input type="file" id="fFoto" accept="image/*" onchange="handlePhotoUpload(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer" />`;
     }
     toast('Foto cargada', 'success');
-  };
-  reader.readAsDataURL(file);
+  } catch (err) {
+    toast('Error al procesar foto: ' + err.message, 'error');
+    currentPhotoBase64 = null;
+  }
 }
 
 function resetPhoto() {
@@ -150,8 +196,9 @@ function resetPhoto() {
 function abrirCierreCaja() {
   const overlay = document.getElementById('cajaOverlay');
   if (!overlay) return;
-  const hoy = new Date(); hoy.setHours(0,0,0,0);
-  const ventasHoy = (window.ventas || []).filter(v => new Date(v.fecha) >= hoy);
+  const hoy = new Date(); hoy.setHours(0,0,0,0); const hoyTs = hoy.getTime();
+  const manana = new Date(hoy); manana.setDate(manana.getDate() + 1); const mananaTs = manana.getTime();
+  const ventasHoy = (window.ventas || []).filter(v => typeof v.fecha === 'number' ? (v.fecha >= hoyTs && v.fecha < mananaTs) : new Date(v.fecha) >= hoy);
   const total = ventasHoy.reduce((s,v)=>s+v.total,0);
   const ganancia = ventasHoy.reduce((s,v)=>s+v.ganancia,0);
   const efectivo = ventasHoy.filter(v=>v.pago==='efectivo').reduce((s,v)=>s+v.total,0);
@@ -377,7 +424,6 @@ document.getElementById('comboModalSave').addEventListener('click', () => {
     window.combos.unshift({id:genId(),nombre,descripcion:desc,precioVenta:precio,activo:true,componentes:validos});
   }
   if (typeof setCombosGlobal === 'function') setCombosGlobal(window.combos);
-  if (typeof setCombosGlobal === 'function') setCombosGlobal(window.combos);
   if (typeof saveCombos === 'function') saveCombos();
   document.getElementById('comboModalOverlay').style.display='none';
   renderCombosManager();
@@ -455,6 +501,20 @@ setTimeout(() => {
   renderCombosManager();
 }, 500);
 
+// ── LOCALSTORAGE WARNING ──
+function checkStorageQuota() {
+  try {
+    let total = 0;
+    for (let key in localStorage) {
+      if (localStorage.hasOwnProperty(key)) total += localStorage[key].length * 2;
+    }
+    if (total > 4 * 1024 * 1024) {
+      console.warn('[Storage] Uso de localStorage: ' + (total / 1024 / 1024).toFixed(1) + 'MB — cerca del límite de 5-10MB');
+    }
+  } catch(e) { /* ignore */ }
+}
+setTimeout(checkStorageQuota, 3000);
+
 // ── SERVICE WORKER (KILL SWITCH) ──
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(function(registrations) {
@@ -510,6 +570,20 @@ window.importarDatos = function(event) {
       // Validar que es un backup válido del sistema
       if (!datos.productos && !datos.ventas) {
         toast('❌ Archivo inválido. Usa un backup exportado desde este sistema.', 'error');
+        return;
+      }
+
+      // Validar estructura de productos
+      const productosInvalidos = (datos.productos || []).filter(p => !p.nombre || !p.categoria);
+      if (productosInvalidos.length > 0) {
+        toast('❌ Backup corrupto: ' + productosInvalidos.length + ' producto(s) sin nombre o categoría.', 'error');
+        return;
+      }
+
+      // Validar estructura de ventas
+      const ventasInvalidas = (datos.ventas || []).filter(v => !v.productoNombre || v.total === undefined);
+      if (ventasInvalidas.length > 0) {
+        toast('❌ Backup corrupto: ' + ventasInvalidas.length + ' venta(s) inválidas.', 'error');
         return;
       }
 
@@ -572,28 +646,39 @@ window.importarDatos = function(event) {
 
 const QR_NAMES = ['eli', 'edwin', 'johan'];
 
-window.handleQRUpload = function(input, name) {
+window.handleQRUpload = async function(input, name) {
   const file = input.files[0];
   if (!file) return;
+  if (!file.type || !file.type.startsWith('image/')) {
+    toast('El archivo no es una imagen', 'error');
+    input.value = '';
+    return;
+  }
+  if (file.size > 3 * 1024 * 1024) {
+    toast('El QR no debe superar 3MB', 'error');
+    input.value = '';
+    return;
+  }
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const base64 = e.target.result;
+  try {
+    const base64 = await compressImage(file, PHOTO_MAX_BYTES, 800);
     localStorage.setItem(`tiaeli_qr_${name}`, base64);
-    
+
     if (window.syncSaveQRsGlobal) {
       window.syncSaveQRsGlobal({ [name]: base64 });
     }
 
-    // Update preview in UI
     const previewDiv = document.getElementById(`qrPreview${name.charAt(0).toUpperCase() + name.slice(1)}`);
     if (previewDiv) {
       previewDiv.innerHTML = `<img src="${base64}" style="max-width:100%;max-height:100%;border-radius:8px;" />
                               <input type="file" accept="image/*" onchange="handleQRUpload(this, '${name}')" />`;
     }
     toast(`QR de ${name.toUpperCase()} guardado y sincronizado.`, 'success');
-  };
-  reader.readAsDataURL(file);
+  } catch (err) {
+    toast('Error al procesar QR: ' + err.message, 'error');
+  } finally {
+    input.value = '';
+  }
 };
 
 window.clearQR = function(name) {

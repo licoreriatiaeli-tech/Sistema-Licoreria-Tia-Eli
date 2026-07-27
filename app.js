@@ -2,6 +2,29 @@
 // app.js — Core inventory logic v4 (Lotes & FEFO)
 // ═══════════════════════════════════════════
 
+// ==== UTILS GLOBALES ====
+function escHTML(s){
+  if(s==null||s===undefined) return "";
+  return String(s)
+    .replace(/&/g, String.fromCharCode(38,97,109,112,59))
+    .replace(/</g, String.fromCharCode(38,108,116,59))
+    .replace(/>/g, String.fromCharCode(38,103,116,59))
+    .replace(/"/g, String.fromCharCode(38,113,117,111,116,59))
+    .replace(/\x27/g, String.fromCharCode(38,35,51,57,59));
+}
+function safeNum(v, fb){ var n = Number(v); return Number.isFinite(n) ? n : (fb === undefined ? 0 : fb); }
+function safeArr(v){ return Array.isArray(v) ? v : []; }
+function csvSafe(v){
+  var s = String(v == null ? "" : v);
+  return /^[=+\-@\t\r]/.test(s) ? String.fromCharCode(39) + s : s;
+}
+function _safeImg(f){ return (f && typeof f === "string" && /^data:image\//.test(f)) ? f : ""; }
+window.escHTML = escHTML;
+window.safeNum = safeNum;
+window.safeArr = safeArr;
+window.csvSafe = csvSafe;
+window._safeImg = _safeImg;
+
 let productos = JSON.parse(localStorage.getItem('tiaeli_v2') || '[]');
 window.productos = productos;
 window.setProductosGlobal = function(nuevos) {
@@ -16,24 +39,27 @@ function genId() { return Date.now().toString(36) + Math.random().toString(36).s
 
 // ── UTILS LOTES ──
 function getStockTotal(p) {
-  if (!p.lotes) return p.stock || 0;
-  return p.lotes.reduce((sum, l) => sum + l.cantidad, 0);
+  if (!p) return 0;
+  if (!p.lotes || !Array.isArray(p.lotes)) return safeNum(p.stock);
+  return p.lotes.reduce((sum, l) => sum + safeNum(l && l.cantidad), 0);
 }
 
 function getVencimientoMasCercano(p) {
-  if (!p.lotes || p.lotes.length === 0) return p.vencimiento || null;
-  const activos = p.lotes.filter(l => l.cantidad > 0 && l.vencimiento);
+  if (!p) return null;
+  if (!p.lotes || !Array.isArray(p.lotes) || p.lotes.length === 0) return p.vencimiento || null;
+  const activos = p.lotes.filter(l => l && safeNum(l.cantidad) > 0 && l.vencimiento);
   if (!activos.length) return null;
-  activos.sort((a,b) => new Date(a.vencimiento) - new Date(b.vencimiento));
+  activos.sort((a, b) => new Date(a.vencimiento) - new Date(b.vencimiento));
   return activos[0].vencimiento;
 }
 
 function getCostoPromedio(p) {
-  if (!p.lotes || p.lotes.length === 0) return p.costo || 0;
-  const activos = p.lotes.filter(l => l.cantidad > 0);
-  if (!activos.length) return p.costo || 0;
-  const totalValor = activos.reduce((s,l) => s + (l.cantidad * (l.costo||0)), 0);
-  const totalStock = activos.reduce((s,l) => s + l.cantidad, 0);
+  if (!p) return 0;
+  if (!p.lotes || !Array.isArray(p.lotes) || p.lotes.length === 0) return safeNum(p.costo);
+  const activos = p.lotes.filter(l => l && safeNum(l.cantidad) > 0);
+  if (!activos.length) return safeNum(p.costo);
+  const totalValor = activos.reduce((s, l) => s + (safeNum(l.cantidad) * safeNum(l.costo)), 0);
+  const totalStock = activos.reduce((s, l) => s + safeNum(l.cantidad), 0);
   return totalStock > 0 ? totalValor / totalStock : 0;
 }
 
@@ -309,7 +335,7 @@ function renderTabla(list) {
 
   let mobileHtml = [];
   tbody.innerHTML = list.map((p, i) => {
-    const pv = p.enOferta ? p.precioOferta : p.venta;
+    const pv = (p.enOferta && safeNum(p.precioOferta) > 0) ? p.precioOferta : p.venta;
     const costoProm = getCostoPromedio(p);
     const gan = pv - costoProm;
     let estadoBadge = p.stock === 0 ? '<span class="badge badge-agotado">Agotado</span>' : p.stock <= p.stockMin ? '<span class="badge badge-bajo">Stock bajo</span>' : '<span class="badge badge-ok">OK</span>';

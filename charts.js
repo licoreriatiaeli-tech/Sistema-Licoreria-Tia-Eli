@@ -43,7 +43,7 @@ function renderChart7d() {
     const dn = new Date(d); dn.setDate(dn.getDate() + 1);
     const label = d.toLocaleDateString('es-BO', { weekday: 'short', day: 'numeric' });
     const total = (window.ventas || []).filter(v => {
-      const vd = new Date(v.fecha); return vd >= d && vd < dn;
+      const vd = new Date(typeof v.fecha === 'number' ? v.fecha : v.fecha); return vd >= d && vd < dn;
     }).reduce((s, v) => s + v.total, 0);
     days.push(label); totals.push(parseFloat(total.toFixed(2)));
   }
@@ -112,7 +112,7 @@ function renderChart30d() {
     const d = new Date(); d.setDate(d.getDate() - i); d.setHours(0,0,0,0);
     const dn = new Date(d); dn.setDate(dn.getDate() + 1);
     const label = d.getDate() + '/' + (d.getMonth() + 1);
-    const total = (window.ventas || []).filter(v => { const vd = new Date(v.fecha); return vd >= d && vd < dn; }).reduce((s, v) => s + v.total, 0);
+    const total = (window.ventas || []).filter(v => { const vd = new Date(typeof v.fecha === 'number' ? v.fecha : v.fecha); return vd >= d && vd < dn; }).reduce((s, v) => s + v.total, 0);
     days.push(label); totals.push(parseFloat(total.toFixed(2)));
   }
   chartInstances['c30d'] = new Chart(ctx, {
@@ -142,7 +142,7 @@ function renderChartHoras() {
   const ctx = document.getElementById('chartHoras');
   if (!ctx) return;
   const hours = Array(24).fill(0);
-  (window.ventas || []).forEach(v => { const h = new Date(v.fecha).getHours(); hours[h] += v.total; });
+  (window.ventas || []).forEach(v => { const h = new Date(typeof v.fecha === 'number' ? v.fecha : v.fecha).getHours(); hours[h] += v.total; });
   const labels = hours.map((_, i) => i + 'h');
   chartInstances['choras'] = new Chart(ctx, {
     type: 'bar',

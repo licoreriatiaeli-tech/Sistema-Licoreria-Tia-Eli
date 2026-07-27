@@ -10,6 +10,7 @@
   let _syncReady = false;
   let _listeners = [];   // Guardamos los unsubscribers de onSnapshot
   let _pendingWrites = 0;
+  let _renderTimerP, _renderTimerV, _renderTimerC;
 
   const COLS = {
     productos: 'inventario_tiaeli',
@@ -98,8 +99,11 @@
         else window.productos = remoto;
         
         localStorage.setItem('tiaeli_v2', JSON.stringify(remoto));
-        if (typeof filterAndRender === 'function') filterAndRender();
-        if (typeof renderDashboard === 'function') renderDashboard();
+        if (_renderTimerP) clearTimeout(_renderTimerP);
+        _renderTimerP = setTimeout(() => {
+          if (typeof filterAndRender === 'function') filterAndRender();
+          if (typeof renderDashboard === 'function') renderDashboard();
+        }, 150);
         console.log('[Sync] Productos actualizados desde nube:', remoto.length);
       }, err => {
         console.error('[Sync] Error listener productos:', err);
@@ -111,16 +115,19 @@
     // ── Ventas ──
     const unsubVentas = _db.collection(COLS.ventas)
       .orderBy('fecha', 'desc')
-      .limit(500)
+      .limit(5000)
       .onSnapshot({ includeMetadataChanges: false }, snap => {
         const remoto = snap.docs.map(d => d.data());
         if (window.setVentasGlobal) window.setVentasGlobal(remoto);
         else window.ventas = remoto;
 
         localStorage.setItem('tiaeli_ventas', JSON.stringify(remoto));
-        if (typeof renderVentasHoy === 'function') renderVentasHoy();
-        if (typeof renderVentasStats === 'function') renderVentasStats();
-        if (typeof renderDashboard === 'function') renderDashboard();
+        if (_renderTimerV) clearTimeout(_renderTimerV);
+        _renderTimerV = setTimeout(() => {
+          if (typeof renderVentasHoy === 'function') renderVentasHoy();
+          if (typeof renderVentasStats === 'function') renderVentasStats();
+          if (typeof renderDashboard === 'function') renderDashboard();
+        }, 150);
         console.log('[Sync] Ventas actualizadas desde nube:', remoto.length);
       }, err => console.error('[Sync] Error listener ventas:', err));
 
@@ -132,8 +139,11 @@
         else window.combos = remoto;
 
         localStorage.setItem('tiaeli_combos', JSON.stringify(remoto));
-        if (typeof renderCombosManager === 'function') renderCombosManager();
-        if (typeof renderCombosVenta === 'function') renderCombosVenta();
+        if (_renderTimerC) clearTimeout(_renderTimerC);
+        _renderTimerC = setTimeout(() => {
+          if (typeof renderCombosManager === 'function') renderCombosManager();
+          if (typeof renderCombosVenta === 'function') renderCombosVenta();
+        }, 150);
         console.log('[Sync] Combos actualizados desde nube:', remoto.length);
       }, err => console.error('[Sync] Error listener combos:', err));
 
