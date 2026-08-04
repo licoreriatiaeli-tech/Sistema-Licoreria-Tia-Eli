@@ -154,10 +154,14 @@ function compressImage(file, maxBytes, maxWidth = 1200) {
         const qualities = [0.82, 0.7, 0.6, 0.45, 0.3];
         const tryEnc = (i) => {
           if (i >= qualities.length) { resolve(canvas.toDataURL('image/jpeg', 0.2)); return; }
-          const dataUrl = canvas.toDataURL('image/jpeg', qualities[i]);
-          const size = Math.ceil((dataUrl.length - 'data:image/jpeg;base64,'.length) * 3 / 4);
-          if (size <= maxBytes || qualities[i] <= 0.2) resolve(dataUrl);
-          else tryEnc(i + 1);
+          try {
+            const dataUrl = canvas.toDataURL('image/jpeg', qualities[i]);
+            const size = Math.ceil((dataUrl.length - 'data:image/jpeg;base64,'.length) * 3 / 4);
+            if (size <= maxBytes || qualities[i] <= 0.2) resolve(dataUrl);
+            else tryEnc(i + 1);
+          } catch (err) {
+            reject(new Error('Error comprimiendo: ' + err.message));
+          }
         };
         tryEnc(0);
       };
@@ -198,7 +202,10 @@ function abrirCierreCaja() {
   if (!overlay) return;
   const hoy = new Date(); hoy.setHours(0,0,0,0); const hoyTs = hoy.getTime();
   const manana = new Date(hoy); manana.setDate(manana.getDate() + 1); const mananaTs = manana.getTime();
-  const ventasHoy = (window.ventas || []).filter(v => typeof v.fecha === 'number' ? (v.fecha >= hoyTs && v.fecha < mananaTs) : new Date(v.fecha) >= hoy);
+  const ventasHoy = (window.ventas || []).filter(v => {
+    const vFecha = typeof v.fecha === 'number' ? v.fecha : new Date(v.fecha).getTime();
+    return vFecha >= hoyTs && vFecha < mananaTs;
+  });
   const total = ventasHoy.reduce((s,v)=>s+v.total,0);
   const ganancia = ventasHoy.reduce((s,v)=>s+v.ganancia,0);
   const efectivo = ventasHoy.filter(v=>v.pago==='efectivo').reduce((s,v)=>s+v.total,0);
@@ -213,7 +220,7 @@ function abrirCierreCaja() {
   body.innerHTML = `
     <div class="caja-grid">
       <div class="caja-card"><div class="caja-val">Bs. ${total.toFixed(2)}</div><div class="caja-lbl">Total vendido</div></div>
-      <div class="caja-card"><div class="caja-val" style="color:var(--green)">Bs. ${ganancia.toFixed(2)}</div><div class="caja-lbl">Ganancia neta</div></div>
+      <div class="caja-card"><div class="caja-val" style="color:${ganancia>=0?'var(--green)':'var(--red)'}">Bs. ${ganancia.toFixed(2)}</div><div class="caja-lbl">Ganancia neta ${ganancia<0?'⚠️ PÉRDIDA':''}</div></div>
       <div class="caja-card"><div class="caja-val">${ventasHoy.length}</div><div class="caja-lbl">Transacciones</div></div>
       <div class="caja-card"><div class="caja-val">${ventasHoy.length>0?'Bs. '+(total/ventasHoy.length).toFixed(2):'-'}</div><div class="caja-lbl">Ticket promedio</div></div>
     </div>
@@ -515,14 +522,9 @@ function checkStorageQuota() {
 }
 setTimeout(checkStorageQuota, 3000);
 
-// ── SERVICE WORKER (KILL SWITCH) ──
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function(registrations) {
-    for(let registration of registrations) {
-      registration.unregister();
-    }
-  });
-}
+// ── SERVICE WORKER (PWA) ──
+// Service Worker se registra automáticamente desde index.html si está disponible
+// No desregistramos para permitir funcionalidad offline
 
 // ── PREMIUM ANIMATIONS ──
 window.animateValueElement = function(el) {
@@ -587,39 +589,88 @@ window.importarDatos = function(event) {
         return;
       }
 
+      // Check for duplicate IDs in backup
+      const checkDupes = (arr, label) => {
+        const seen = new Set();
+        const dupes = arr.filter(item => {
+          if (seen.has(item.id)) return true;
+          seen.add(item.id);
+          return false;
+        });
+        return dupes.length;
+      };
+      
+      const dupeProds = checkDupes(datos.productos || [], 'productos');
+      const dupeVentas = checkDupes(datos.ventas || [], 'ventas');
+      const dupeCombos = checkDupes(datos.combos || [], 'combos');
+      
+      if (dupeProds || dupeVentas || dupeCombos) {
+        toast('❌ Backup tiene IDs duplicados: ' + dupeProds + ' productos, ' + dupeVentas + ' ventas, ' + dupeCombos + ' combos.', 'error');
+        return;
+      }
+
       const totalP = (datos.productos || []).length;
       const totalV = (datos.ventas || []).length;
       const totalC = (datos.combos || []).length;
 
-      if (!confirm(`¿Importar este backup?\n\n📦 ${totalP} productos\n💰 ${totalV} ventas\n🎁 ${totalC} combos\n\nFecha del backup: ${datos.fecha ? new Date(datos.fecha).toLocaleString('es-BO') : 'desconocida'}\n\n⚠️ Los datos actuales serán reemplazados.`)) {
+      if (!confirm(`¿Importar este backup?\n\n📦 ${totalP} productos\n💰 ${totalV} ventas\n🎁 ${totalC} combos\n\nFecha del backup: ${datos.fecha ? new Date(datos.fecha).toLocaleString('es-BO') : 'desconocida'}\n\n⚠️ Se fusionará con datos actuales (no reemplaza).`)) {
         event.target.value = '';
         return;
       }
 
-      // Restaurar en localStorage
-      if (datos.productos) {
-        localStorage.setItem('tiaeli_v2', JSON.stringify(datos.productos));
-        window.productos = datos.productos;
-      }
-      if (datos.ventas) {
-        localStorage.setItem('tiaeli_ventas', JSON.stringify(datos.ventas));
-        window.ventas = datos.ventas;
-      }
-      if (datos.combos) {
-        localStorage.setItem('tiaeli_combos', JSON.stringify(datos.combos));
-        window.combos = datos.combos;
+      // MERGE instead of replace - preserve local changes not in backup
+      function mergeArrays(local, remote, idKey = 'id') {
+        const localMap = new Map(local.map(item => [item[idKey], item]));
+        const remoteMap = new Map(remote.map(item => [item[idKey], item]));
+        
+        // Add new items from remote
+        remote.forEach(item => {
+          if (!localMap.has(item[idKey])) {
+            localMap.set(item[idKey], item);
+          }
+        });
+        
+        // Keep local items not in remote (preserve unsynced changes)
+        return Array.from(localMap.values());
       }
 
-      // Subir a Firestore si está conectado
-      if (window.syncSaveProducto) {
-        (datos.productos || []).forEach(p => window.syncSaveProducto(p));
+      // Merge productos
+      if (datos.productos) {
+        const mergedProductos = mergeArrays(window.productos || [], datos.productos);
+        localStorage.setItem('tiaeli_v2', JSON.stringify(mergedProductos));
+        window.productos = mergedProductos;
+        if (window.setProductosGlobal) window.setProductosGlobal(mergedProductos);
       }
-      if (window.syncSaveVenta) {
-        (datos.ventas || []).forEach(v => window.syncSaveVenta(v));
+
+      // Merge ventas
+      if (datos.ventas) {
+        const mergedVentas = mergeArrays(window.ventas || [], datos.ventas);
+        localStorage.setItem('tiaeli_ventas', JSON.stringify(mergedVentas));
+        window.ventas = mergedVentas;
+        if (window.setVentasGlobal) window.setVentasGlobal(mergedVentas);
       }
-      if (window.syncSaveCombo) {
-        (datos.combos || []).forEach(c => window.syncSaveCombo(c));
+
+      // Merge combos
+      if (datos.combos) {
+        const mergedCombos = mergeArrays(window.combos || [], datos.combos);
+        localStorage.setItem('tiaeli_combos', JSON.stringify(mergedCombos));
+        window.combos = mergedCombos;
+        if (window.setCombosGlobal) window.setCombosGlobal(mergedCombos);
       }
+
+      // Sync to Firestore if connected (with proper await)
+      const syncPromises = [];
+      if (window.syncSaveProducto && datos.productos) {
+        datos.productos.forEach(p => syncPromises.push(window.syncSaveProducto(p)));
+      }
+      if (window.syncSaveVenta && datos.ventas) {
+        datos.ventas.forEach(v => syncPromises.push(window.syncSaveVenta(v)));
+      }
+      if (window.syncSaveCombo && datos.combos) {
+        datos.combos.forEach(c => syncPromises.push(window.syncSaveCombo(c)));
+      }
+      
+      Promise.all(syncPromises).catch(err => console.warn('Sync partial:', err));
 
       // Re-renderizar todo
       if (typeof filterAndRender === 'function') filterAndRender();
@@ -631,7 +682,7 @@ window.importarDatos = function(event) {
       if (window.renderCategoryGrid) renderCategoryGrid();
       if (window.renderCombosManager) renderCombosManager();
 
-      toast(`✅ Importación completada: ${totalP} productos, ${totalV} ventas`, 'success');
+      toast(`✅ Importación completada: ${totalP} productos, ${totalV} ventas fusionados`, 'success');
       event.target.value = ''; // Reset input
 
     } catch (err) {

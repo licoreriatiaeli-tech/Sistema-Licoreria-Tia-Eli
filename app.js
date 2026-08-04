@@ -25,7 +25,14 @@ window.safeArr = safeArr;
 window.csvSafe = csvSafe;
 window._safeImg = _safeImg;
 
-let productos = JSON.parse(localStorage.getItem('tiaeli_v2') || '[]');
+let productos = [];
+try {
+  productos = JSON.parse(localStorage.getItem('tiaeli_v2') || '[]');
+} catch (e) {
+  console.warn('localStorage corrupto, reseteando:', e);
+  localStorage.removeItem('tiaeli_v2');
+  productos = [];
+}
 window.productos = productos;
 window.setProductosGlobal = function(nuevos) {
   productos = nuevos;
@@ -147,6 +154,8 @@ function navegarA(sectionId) {
       if (cartContainer) cartContainer.classList.remove('open');
       if (fabBtn) fabBtn.classList.remove('open');
     }
+ 
+ 
   }
 
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -163,7 +172,7 @@ document.querySelectorAll('.nav-item').forEach(n => {
     e.preventDefault();
     const sec = n.dataset.section;
     
-    // 1. DIBUJAR LOS DATOS (Oculto)
+    // 1. RENDER DATA FIRST (before navigation)
     if (sec === 'dashboard') { renderDashboard(); if(window.renderAllCharts) renderAllCharts(); if(window.renderCategoryGrid) renderCategoryGrid(); }
     if (sec === 'inventario') { renderTabla(); }
     if (sec === 'ventas') { if(typeof poblarSelectProductos==='function') poblarSelectProductos(); if(typeof renderVentasStats==='function') renderVentasStats(); if(typeof renderVentasHoy==='function') renderVentasHoy(); if(typeof renderCombosVenta==='function') renderCombosVenta(); }
@@ -174,8 +183,8 @@ document.querySelectorAll('.nav-item').forEach(n => {
     if (sec === 'vencimientos') renderVencimientos(7);
     if (sec === 'agregar') { resetProductForm(); }
     
-    // 2. MOSTRAR LA SECCIÓN DESPUÉS (Previene parpadeo)
-    setTimeout(() => { navegarA(sec); }, 10);
+    // 2. NAVIGATE AFTER (single call, no setTimeout)
+    navegarA(sec);
   });
 });
 
@@ -517,7 +526,8 @@ document.getElementById('productForm').addEventListener('submit', function(e) {
     // Check if product exists to unify
     const match = productos.find(p => p.nombre.toLowerCase()===nombre.toLowerCase() && p.categoria===categoria && (p.marca||'').toLowerCase()===(data.marca||'').toLowerCase());
     if (match) {
-      tempProductData = data; existingProductMatch = match;
+      tempProductData = JSON.parse(JSON.stringify(data)); // deep clone
+      existingProductMatch = match;
       const mInfo = document.getElementById('unificarInfo');
       mInfo.innerHTML = `<div><b>${match.nombre}</b></div><div style="font-size:0.8rem;color:var(--text3)">Stock actual: ${match.stock} uds · Lotes: ${match.lotes.length}</div>`;
       document.getElementById('unificarOverlay').style.display='flex';
@@ -552,10 +562,13 @@ document.getElementById('unificarCancelBtn')?.addEventListener('click', () => {
 document.getElementById('unificarConfirmBtn')?.addEventListener('click', () => {
   document.getElementById('unificarOverlay').style.display='none';
   if(existingProductMatch && tempProductData) {
-    existingProductMatch.lotes = [...(existingProductMatch.lotes||[]), ...tempProductData.lotes];
+    // Deep clone lotes to avoid shared references
+    const newLotes = JSON.parse(JSON.stringify(tempProductData.lotes));
+    existingProductMatch.lotes = [...(existingProductMatch.lotes||[]), ...newLotes];
     existingProductMatch.stock = getStockTotal(existingProductMatch);
     existingProductMatch.vencimiento = getVencimientoMasCercano(existingProductMatch);
     existingProductMatch.costo = getCostoPromedio(existingProductMatch);
+    existingProductMatch.updatedAt = Date.now();
     save(); toast('Lotes agregados al producto existente', 'success');
     renderDashboard(); navegarA('inventario'); filterAndRender();
     if (window.syncSaveProducto) window.syncSaveProducto(existingProductMatch);
@@ -572,7 +585,9 @@ function editarProducto(id) {
   document.getElementById('fProveedor').value = p.proveedor || ''; document.getElementById('fNota').value = p.nota || '';
   document.getElementById('formTitle').textContent = 'Editar: ' + p.nombre; document.getElementById('btnSubmitText').textContent = 'Guardar Cambios';
   
-  if(p.lotes && p.lotes.length) { formLotes = p.lotes.map(l=>({...l})); } else { formLotes = [{id:genId(),cantidad:p.stock||0,costo:p.costo||0,vencimiento:p.vencimiento||'',fechaIngreso:new Date().toISOString().slice(0,10),nota:''}]; }
+  // Deep clone lotes to avoid shared references
+  if(p.lotes && p.lotes.length) { formLotes = JSON.parse(JSON.stringify(p.lotes)); } 
+  else { formLotes = [{id:genId(),cantidad:p.stock||0,costo:p.costo||0,vencimiento:p.vencimiento||'',fechaIngreso:new Date().toISOString().slice(0,10),nota:''}]; }
   renderFormLotes();
 
   if (p.foto) { window.currentPhotoBase64 = p.foto; const prev = document.getElementById('photoPreview'); if (prev) prev.innerHTML = `<img src="${p.foto}" style="width:100%;height:100%;object-fit:cover;border-radius:7px" /><input type="file" id="fFoto" accept="image/*" onchange="handlePhotoUpload(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer" />`; }
@@ -663,10 +678,11 @@ renderTabla();
 
 document.addEventListener('DOMContentLoaded', () => {
   if (window.innerWidth <= 768) {
-    navegarA('pos');
+    // On mobile, start at POS - render data first
     if (typeof window.initPOS === 'function') window.initPOS();
+    navegarA('pos');
   } else {
-    // Ya está activo el dashboard por HTML, pero aseguramos
+    // Desktop: dashboard is already active in HTML, just ensure
     navegarA('dashboard');
   }
 });

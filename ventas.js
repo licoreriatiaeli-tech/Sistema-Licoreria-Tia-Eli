@@ -28,6 +28,12 @@ function saveCombos() {
 }
 window.saveCombos = saveCombos;
 
+// Expose saveProducto from app.js for checkoutPOS
+window.saveProductos = function() {
+  localStorage.setItem('tiaeli_v2', JSON.stringify(window.productos));
+  window.productos = window.productos;
+};
+
 function migrarFechasVentas() {
   let migrados = false;
   ventas.forEach(v => {
@@ -355,7 +361,11 @@ window.renderPOSProducts = function() {
   const cat = posFilter || 'Todas';
   if (cat !== 'Todas') {
     if (cat === 'Otros') {
-      filtrados = filtrados.filter(p => p.categoria === 'Jugos' || p.categoria === 'Galletas' || p.categoria === 'Chicles' || p.categoria === 'Otros');
+      // Get all categories from products, exclude main ones
+      const mainCats = ['Cervezas', 'Licores', 'Sodas'];
+      const allCats = [...new Set(filtrados.map(p => p.categoria))];
+      const otherCats = allCats.filter(c => !mainCats.includes(c));
+      filtrados = filtrados.filter(p => otherCats.includes(p.categoria));
     } else {
       filtrados = filtrados.filter(p => p.categoria === cat);
     }
@@ -626,8 +636,8 @@ window.checkoutPOS = function() {
       }
     });
 
-    save();
     saveVentas();
+    window.saveProductos();
 
     // Sync a Firebase
     if (window.syncSaveVenta) {

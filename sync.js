@@ -11,6 +11,7 @@
   let _listeners = [];   // Guardamos los unsubscribers de onSnapshot
   let _pendingWrites = 0;
   let _renderTimerP, _renderTimerV, _renderTimerC;
+  let _localChanges = new Map(); // Track local changes by id: { data, timestamp, type }
 
   const COLS = {
     productos: 'inventario_tiaeli',
@@ -91,14 +92,57 @@
     _listeners.forEach(unsub => unsub());
     _listeners = [];
 
+    // Helper: Smart merge remote data with local pending changes
+    function smartMerge(collection, remoteArray, setterFn) {
+      const local = (window.productos || []); // fallback
+      const merged = remoteArray.map(remoteDoc => {
+        const key = `${collection}:${remoteDoc.id}`;
+        const localChange = _localChanges.get(key);
+        
+        if (localChange && localChange.type !== 'delete') {
+          // Local has newer changes - use local but keep remote timestamp if newer
+          const localData = localChange.data;
+          const remoteUpdated = remoteDoc.updatedAt || remoteDoc.fechaRegistro || 0;
+          const localUpdated = localData.updatedAt || localData.fechaRegistro || 0;
+          
+          if (localUpdated >= remoteUpdated) {
+            // Local is newer or same - keep local
+            return localData;
+          }
+          // Remote is newer - merge remote but preserve local unsynced fields
+          return { ...remoteDoc, ...localData, updatedAt: Math.max(remoteUpdated, localUpdated) };
+        }
+        return remoteDoc;
+      });
+      
+      // Add locally created items not yet in remote
+      _localChanges.forEach((change, key) => {
+        if (key.startsWith(collection + ':') && change.type === 'create') {
+          const exists = merged.some(d => d.id === change.data.id);
+          if (!exists) merged.push(change.data);
+        }
+      });
+      
+      // Remove locally deleted items
+      const filtered = merged.filter(doc => {
+        const key = `${collection}:${doc.id}`;
+        const localChange = _localChanges.get(key);
+        return !(localChange && localChange.type === 'delete');
+      });
+      
+      setterFn(filtered);
+      localStorage.setItem(`tiaeli_${collection.replace('_tiaeli', '')}`, JSON.stringify(filtered));
+    }
+
     // ── Productos ──
     const unsubProductos = _db.collection(COLS.productos)
       .onSnapshot({ includeMetadataChanges: false }, snap => {
         const remoto = snap.docs.map(d => d.data());
-        if (window.setProductosGlobal) window.setProductosGlobal(remoto);
-        else window.productos = remoto;
+        smartMerge(COLS.productos, remoto, (merged) => {
+          if (window.setProductosGlobal) window.setProductosGlobal(merged);
+          else window.productos = merged;
+        });
         
-        localStorage.setItem('tiaeli_v2', JSON.stringify(remoto));
         if (_renderTimerP) clearTimeout(_renderTimerP);
         _renderTimerP = setTimeout(() => {
           if (typeof filterAndRender === 'function') filterAndRender();
@@ -118,10 +162,11 @@
       .limit(5000)
       .onSnapshot({ includeMetadataChanges: false }, snap => {
         const remoto = snap.docs.map(d => d.data());
-        if (window.setVentasGlobal) window.setVentasGlobal(remoto);
-        else window.ventas = remoto;
+        smartMerge(COLS.ventas, remoto, (merged) => {
+          if (window.setVentasGlobal) window.setVentasGlobal(merged);
+          else window.ventas = merged;
+        });
 
-        localStorage.setItem('tiaeli_ventas', JSON.stringify(remoto));
         if (_renderTimerV) clearTimeout(_renderTimerV);
         _renderTimerV = setTimeout(() => {
           if (typeof renderVentasHoy === 'function') renderVentasHoy();
@@ -135,10 +180,11 @@
     const unsubCombos = _db.collection(COLS.combos)
       .onSnapshot({ includeMetadataChanges: false }, snap => {
         const remoto = snap.docs.map(d => d.data());
-        if (window.setCombosGlobal) window.setCombosGlobal(remoto);
-        else window.combos = remoto;
+        smartMerge(COLS.combos, remoto, (merged) => {
+          if (window.setCombosGlobal) window.setCombosGlobal(merged);
+          else window.combos = merged;
+        });
 
-        localStorage.setItem('tiaeli_combos', JSON.stringify(remoto));
         if (_renderTimerC) clearTimeout(_renderTimerC);
         _renderTimerC = setTimeout(() => {
           if (typeof renderCombosManager === 'function') renderCombosManager();
@@ -193,36 +239,55 @@
 
   // ── API PÚBLICA ──
 
+  // Track local change for conflict resolution
+  function _trackLocalChange(collection, doc, type) {
+    if (!doc || !doc.id) return;
+    _localChanges.set(`${collection}:${doc.id}`, {
+      data: JSON.parse(JSON.stringify(doc)), // deep clone
+      timestamp: Date.now(),
+      type: type // 'create' | 'update' | 'delete'
+    });
+  }
+
   // Guardar/actualizar un producto
   window.syncSaveProducto = function(producto) {
     if (!producto || !producto.id) return;
+    _trackLocalChange(COLS.productos, producto, 'update');
     _subirDoc(COLS.productos, producto);
   };
 
   // Eliminar un producto
   window.syncDeleteProducto = function(id) {
+    if (!id) return;
+    _trackLocalChange(COLS.productos, { id }, 'delete');
     _eliminarDoc(COLS.productos, id);
   };
 
   // Guardar/actualizar una venta
   window.syncSaveVenta = function(venta) {
     if (!venta || !venta.id) return;
+    _trackLocalChange(COLS.ventas, venta, 'update');
     _subirDoc(COLS.ventas, venta);
   };
 
   // Eliminar una venta
   window.syncDeleteVenta = function(id) {
+    if (!id) return;
+    _trackLocalChange(COLS.ventas, { id }, 'delete');
     _eliminarDoc(COLS.ventas, id);
   };
 
   // Guardar/actualizar un combo
   window.syncSaveCombo = function(combo) {
     if (!combo || !combo.id) return;
+    _trackLocalChange(COLS.combos, combo, 'update');
     _subirDoc(COLS.combos, combo);
   };
 
   // Eliminar un combo
   window.syncDeleteCombo = function(id) {
+    if (!id) return;
+    _trackLocalChange(COLS.combos, { id }, 'delete');
     _eliminarDoc(COLS.combos, id);
   };
 
@@ -250,9 +315,9 @@
     try {
       // Unir todos los elementos a sincronizar
       const allItems = [];
-      (window.productos || []).forEach(p => allItems.push({ col: COLS.productos, doc: p }));
-      (window.ventas || []).forEach(v => allItems.push({ col: COLS.ventas, doc: v }));
-      (window.combos || []).forEach(c => allItems.push({ col: COLS.combos, doc: c }));
+      (window.productos || []).forEach(p => allItems.push({ col: COLS.productos, doc: { ...p, updatedAt: p.updatedAt || Date.now() } }));
+      (window.ventas || []).forEach(v => allItems.push({ col: COLS.ventas, doc: { ...v, updatedAt: v.updatedAt || v.fechaRegistro || Date.now() } }));
+      (window.combos || []).forEach(c => allItems.push({ col: COLS.combos, doc: { ...c, updatedAt: c.updatedAt || Date.now() } }));
 
       // Firestore soporta máximo 500 operaciones por batch
       const chunk = 450;
@@ -260,10 +325,13 @@
         const batch = _db.batch();
         const slice = allItems.slice(i, i + chunk);
         slice.forEach(item => {
-          batch.set(_db.collection(item.col).doc(item.doc.id), item.doc);
+          batch.set(_db.collection(item.col).doc(item.doc.id), item.doc, { merge: true });
         });
         await batch.commit();
       }
+
+      // Clear local changes tracking after successful sync
+      _localChanges.clear();
 
       const now = new Date();
       const timeStr = now.toLocaleTimeString('es-BO');
