@@ -38,15 +38,6 @@
       <span id="syncText">Conectado</span>
     </div>
 
-    <div class="theme-toggle">
-      <span class="theme-toggle-label" id="themeLabel">Modo claro</span>
-      <label class="toggle-switch" title="Cambiar tema">
-        <input type="checkbox" id="themeToggle" onchange="toggleTheme()" />
-        <span class="toggle-track"></span>
-        <span class="toggle-thumb" id="themeThumb">&#9728;</span>
-      </label>
-    </div>
-
 <nav class="sidebar-nav">
       <span class="nav-section-label">Principal</span>
       <a href="#" class="nav-item active" data-section="dashboard" id="nav-dashboard">
@@ -91,16 +82,29 @@
 
     <div class="sidebar-footer">
       <div id="userChip" class="user-chip" onclick="mostrarLogin(true)" title="Cambiar usuario" style="display:none"></div>
+
+      <div class="theme-toggle-footer" title="Cambiar tema">
+        <label class="theme-toggle-switch" onclick="toggleTheme()" style="cursor:pointer">
+          <input type="checkbox" id="themeToggleFooter" onchange="toggleTheme()" style="display:none" />
+          <span class="theme-toggle-track">
+            <span class="theme-toggle-thumb" id="themeThumbFooter">
+              <i data-lucide="sun" class="theme-icon-sun"></i>
+              <i data-lucide="moon" class="theme-icon-moon"></i>
+            </span>
+          </span>
+        </label>
+      </div>
+
       <div style="display:flex;gap:6px;margin-top:10px">
         <button class="btn-backup" onclick="exportarDatos()" title="Descargar copia de seguridad">
-          ↓ Exportar datos
+          <i data-lucide="download"></i> Exportar
         </button>
         <label class="btn-backup btn-restore" title="Cargar copia de seguridad">
-          ↑ Importar
+          <i data-lucide="upload"></i> Importar
           <input type="file" accept=".json" style="display:none" onchange="importarDatos(event)" />
         </label>
       </div>
-      <span class="footer-version">v3.0 &middot; TIA ELI LICORERIA</span>
+      <span class="footer-version">v4.0 &middot; TIA ELI LICORERIA</span>
     </div>
   </aside>
 
@@ -551,6 +555,17 @@
         </div>
 
         <button class="pos-checkout-btn" id="posCheckoutBtn" onclick="checkoutPOS()">REGISTRAR VENTA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LOGIN OVERLAY ══ -->
+  <div class="modal-overlay" id="loginOverlay" style="display:none">
+    <div class="modal" style="max-width:360px;text-align:center">
+      <div class="modal-header"><h3>¿Quién está atendiendo?</h3></div>
+      <div class="modal-body">
+        <div class="login-users" id="loginUsers"></div>
+        <p style="font-size:.75rem;color:var(--text3);margin-top:14px">Elige tu nombre para firmar cada movimiento</p>
       </div>
     </div>
   </div>

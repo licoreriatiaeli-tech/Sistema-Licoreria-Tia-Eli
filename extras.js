@@ -60,8 +60,11 @@ window.initOdometers = function(delay = 250) {
 function applyTheme(newTheme) {
   document.documentElement.dataset.theme = newTheme;
   localStorage.setItem('tiaeli_theme', newTheme);
-  const chk = document.getElementById('themeToggle');
-  if (chk) chk.checked = newTheme === 'dark';
+  // Update both theme toggles (top sidebar and footer)
+  const chk1 = document.getElementById('themeToggle');
+  const chk2 = document.getElementById('themeToggleFooter');
+  if (chk1) chk1.checked = newTheme === 'dark';
+  if (chk2) chk2.checked = newTheme === 'dark';
   const label = document.getElementById('themeLabel');
   const thumb = document.getElementById('themeThumb');
   if (label) label.textContent = newTheme === 'dark' ? 'Modo oscuro' : 'Modo claro';
