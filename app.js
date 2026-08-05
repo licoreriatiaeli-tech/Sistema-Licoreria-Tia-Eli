@@ -150,9 +150,7 @@ function navegarA(sectionId) {
       posFloating.style.display = 'none';
       // Also close the cart if navigating away
       const cartContainer = document.getElementById('posCartContainer');
-      const fabBtn = document.getElementById('posFabBtn');
       if (cartContainer) cartContainer.classList.remove('open');
-      if (fabBtn) fabBtn.classList.remove('open');
     }
  
  
@@ -182,6 +180,8 @@ document.querySelectorAll('.nav-item').forEach(n => {
     if (sec === 'combos') { if(window.renderCombosManager) renderCombosManager(); }
     if (sec === 'vencimientos') renderVencimientos(7);
     if (sec === 'agregar') { resetProductForm(); }
+    if (sec === 'fiados') { if(typeof renderFiados==='function') renderFiados(); }
+    if (sec === 'actividad') { if(typeof renderActividad==='function') renderActividad(); }
     
     // 2. NAVIGATE AFTER (single call, no setTimeout)
     navegarA(sec);
@@ -202,6 +202,21 @@ function renderDashboard() {
   const bajo = productos.filter(p => p.stock > 0 && p.stock <= p.stockMin).length;
   const valor = productos.reduce((s, p) => s + (p.lotes||[]).reduce((s2,l)=>s2+(l.cantidad*(l.costo||0)),0), 0);
   const ventasHoy = (window.ventas || []).filter(v => new Date(v.fecha) >= hoy).reduce((s,v)=>s+v.total,0);
+
+  // Fiados pendientes
+  let fiadosPendiente = 0;
+  let clientesConDeuda = 0;
+  if (window.clientes && window.fiados && window.pagos) {
+    window.clientes.forEach(c => {
+      const totalFiados = (window.fiados || []).filter(f => f.clienteId === c.id).reduce((s, f) => s + (f.monto || 0), 0);
+      const totalPagos = (window.pagos || []).filter(p => p.clienteId === c.id).reduce((s, p) => s + (p.monto || 0), 0);
+      const saldo = totalFiados - totalPagos;
+      if (saldo > 0.01) {
+        fiadosPendiente += saldo;
+        clientesConDeuda++;
+      }
+    });
+  }
 
   // Vencimientos por lotes, no solo productos
   let lotesVenc = 0;
@@ -228,11 +243,14 @@ function renderDashboard() {
   anim('stat-vence', lotesVenc, '', '', 0);
   anim('stat-valor', valor, 'Bs.', '', 0);
   anim('stat-ventas-hoy', ventasHoy, 'Bs.', '', 0);
+  anim('stat-fiados', fiadosPendiente, 'Bs.', '', 2);
   if (window.initOdometers) window.initOdometers();
   if (window.playTitleAnimation) window.playTitleAnimation();
 
   const badge = document.getElementById('badge-vencimientos');
   if (badge) { if (lotesVenc > 0) { badge.textContent = lotesVenc; badge.style.display = 'inline'; } else badge.style.display = 'none'; }
+  const badgeFiados = document.getElementById('badge-fiados');
+  if (badgeFiados) { if (clientesConDeuda > 0) { badgeFiados.textContent = clientesConDeuda; badgeFiados.style.display = 'inline-flex'; } else badgeFiados.style.display = 'none'; }
 
   const alerts = [];
   const agotados = productos.filter(p => p.stock === 0);
@@ -243,6 +261,8 @@ function renderDashboard() {
   if (agotados.length) alerts.push({cls:'alert-red', icon:'✕', title:`${agotados.length} producto${agotados.length>1?'s':''} sin stock`, text:agotados.slice(0,3).map(p=>p.nombre).join(', ')+(agotados.length>3?'..':'')});
   if (bajosItems.length) alerts.push({cls:'alert-orange', icon:'!', title:`${bajosItems.length} con stock bajo`, text:bajosItems.slice(0,3).map(p=>p.nombre+' ('+p.stock+')').join(', ')});
   if (lotesProx.length) alerts.push({cls:'alert-yellow', icon:'⏰', title:`${lotesProx.length} lotes vencen en 7 días`, text:lotesProx.slice(0,3).join(', ')});
+  // Alerta fiados
+  if (clientesConDeuda > 0) alerts.push({cls:'alert-orange', icon:'📒', title:`${clientesConDeuda} cliente${clientesConDeuda>1?'s':''} con fiados pendientes`, text:`Total por cobrar: Bs. ${fiadosPendiente.toFixed(2)}`});
 
   const alertSection = document.getElementById('alertSection'); const alertList = document.getElementById('alertList');
   if (alertSection && alertList) { alertSection.style.display = alerts.length ? 'block' : 'none'; alertList.innerHTML = alerts.map(a => `<div class="alert-item ${a.cls}"><span class="alert-icon">${a.icon}</span><div class="alert-text"><strong>${a.title}</strong><span>${a.text}</span></div></div>`).join(''); }
@@ -405,11 +425,13 @@ function renderTabla(list) {
           <div class="mobile-card-field"><span>Vence</span><span>${vencBadge}</span></div>
         </div>
         ${mobileLotesHtml}
-        <div class="mobile-card-actions" style="display:flex; gap:6px; margin-top:12px;">
-          ${p.lotes && p.lotes.length > 0 ? `<button class="btn btn-secondary btn-sm" onclick="document.getElementById('mob-lotes-${p.id}').style.display = document.getElementById('mob-lotes-${p.id}').style.display === 'none' ? 'block' : 'none'">Lotes</button>` : ''}
-          <button class="btn btn-secondary btn-sm" style="flex:1" onclick="editarProducto('${p.id}')">Editar</button>
-          <button class="btn btn-secondary btn-sm warn" onclick="abrirOferta('${p.id}')">%</button>
-          <button class="btn btn-secondary btn-sm danger" onclick="eliminarProducto('${p.id}')">✕</button>
+        <div class="mobile-card-actions" style="display:flex; gap:6px; margin-top:12px; align-items:center;">
+          ${p.lotes && p.lotes.length > 0 ? `<button class="btn btn-secondary btn-sm" onclick="document.getElementById('mob-lotes-${p.id}').style.display = document.getElementById('mob-lotes-${p.id}').style.display === 'none' ? 'block' : 'none'"><i data-lucide="layers"></i> Lotes</button>` : ''}
+          <button class="btn-icon entrada" onclick="abrirEntrada('${p.id}')" title="Registrar Entrada (+ Stock)"><i data-lucide="package-plus"></i></button>
+          <button class="btn-icon salida" onclick="abrirSalida('${p.id}')" title="Registrar Salida (- Stock)"><i data-lucide="package-minus"></i></button>
+          <button class="btn-icon" onclick="editarProducto('${p.id}')" title="Editar producto"><i data-lucide="pencil"></i></button>
+          <button class="btn-icon warn" onclick="abrirOferta('${p.id}')" title="Poner en oferta"><i data-lucide="star"></i></button>
+          <button class="btn-icon danger" onclick="eliminarProducto('${p.id}')" title="Eliminar producto"><i data-lucide="trash-2"></i></button>
         </div>
       </div>
     `);
@@ -433,9 +455,11 @@ function renderTabla(list) {
       <td>${vencBadge}</td>
       <td><span class="value-animated" id="val-est-${p.id}">${estadoBadge}</span></td>
       <td><div class="action-btns">
-        <button class="btn-icon" onclick="editarProducto('${p.id}')" title="Editar">✎</button>
-        <button class="btn-icon warn" onclick="abrirOferta('${p.id}')" title="Oferta">%</button>
-        <button class="btn-icon danger" onclick="eliminarProducto('${p.id}')" title="Eliminar">✕</button>
+        <button class="btn-icon entrada" onclick="abrirEntrada('${p.id}')" title="Registrar Entrada (+ Stock)"><i data-lucide="package-plus"></i></button>
+        <button class="btn-icon salida" onclick="abrirSalida('${p.id}')" title="Registrar Salida (- Stock)"><i data-lucide="package-minus"></i></button>
+        <button class="btn-icon" onclick="editarProducto('${p.id}')" title="Editar producto"><i data-lucide="pencil"></i></button>
+        <button class="btn-icon warn" onclick="abrirOferta('${p.id}')" title="Poner en oferta"><i data-lucide="star"></i></button>
+        <button class="btn-icon danger" onclick="eliminarProducto('${p.id}')" title="Eliminar producto"><i data-lucide="trash-2"></i></button>
       </div></td>
     </tr>
     <tr class="lote-row" id="lotes-row-${p.id}">
@@ -455,6 +479,9 @@ function renderTabla(list) {
   if (window.initOdometers) window.initOdometers();
   if (mobileCards) {
     mobileCards.innerHTML = mobileHtml.join('');
+  }
+  if (window.lucide && window.lucide.createIcons) {
+    window.lucide.createIcons();
   }
 }
 

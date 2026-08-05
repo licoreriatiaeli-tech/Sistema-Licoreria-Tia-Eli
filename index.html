@@ -14,6 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css?v=6" />
+  <script src="lucide.min.js?v=7" defer></script>
 </head>
 <body>
 
@@ -25,20 +26,16 @@
         <span class="brand-name">TIA ELI</span>
         <span class="brand-sub">LICORERIA</span>
       </div>
-    </div>
-
-    <div class="sync-panel">
-      <button class="sync-btn" id="syncBtn" onclick="sincronizar()" title="Sincronizar con la nube">
+      <button class="sync-btn-icon" id="syncBtn" onclick="sincronizar()" title="Sincronizar con la nube">
         <svg class="sync-icon" id="syncIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
           <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
         </svg>
-        <span id="syncLabel">Sincronizar</span>
       </button>
-      <span class="sync-status">
-        <span class="sync-dot" id="syncDot"></span>
-        <span id="syncText">Local</span>
-      </span>
+    </div>
+    <div class="sync-status-bar">
+      <span class="sync-dot" id="syncDot"></span>
+      <span id="syncText">Conectado</span>
     </div>
 
     <div class="theme-toggle">
@@ -50,42 +47,51 @@
       </label>
     </div>
 
-    <nav class="sidebar-nav">
+<nav class="sidebar-nav">
       <span class="nav-section-label">Principal</span>
       <a href="#" class="nav-item active" data-section="dashboard" id="nav-dashboard">
-        <span class="nav-icon">&#9672;</span><span>Dashboard</span>
+        <i class="nav-icon" data-lucide="home"></i><span>Dashboard</span>
       </a>
       <a href="#" class="nav-item" data-section="inventario" id="nav-inventario">
-        <span class="nav-icon">&#9744;</span><span>Inventario</span>
+        <i class="nav-icon" data-lucide="box"></i><span>Inventario</span>
       </a>
       <span class="nav-section-label">Ventas</span>
       <a href="#" class="nav-item" data-section="pos" id="nav-pos">
-        <span class="nav-icon">🛒</span><span>Registrar Venta</span>
+        <i class="nav-icon" data-lucide="shopping-cart"></i><span>Registrar Venta</span>
       </a>
       <a href="#" class="nav-item" data-section="historial" id="nav-historial">
-        <span class="nav-icon">&#8801;</span><span>Historial</span>
+        <i class="nav-icon" data-lucide="history"></i><span>Historial</span>
       </a>
       <a href="#" class="nav-item" data-section="analytics" id="nav-analytics">
-        <span class="nav-icon">&#x25E0;</span><span>Analíticas</span>
+        <i class="nav-icon" data-lucide="bar-chart-3"></i><span>Analíticas</span>
       </a>
       <span class="nav-section-label">Gestión</span>
       <a href="#" class="nav-item" data-section="combos" id="nav-combos">
-        <span class="nav-icon">&#9670;</span><span>Combos</span>
+        <i class="nav-icon" data-lucide="gift"></i><span>Combos</span>
       </a>
       <a href="#" class="nav-item" data-section="vencimientos" id="nav-vencimientos">
-        <span class="nav-icon">!</span><span>Vencimientos</span>
+        <i class="nav-icon" data-lucide="calendar-clock"></i><span>Vencimientos</span>
         <span class="nav-badge" id="badge-vencimientos" style="display:none">0</span>
       </a>
       <a href="#" class="nav-item" data-section="agregar" id="nav-agregar">
-        <span class="nav-icon">+</span><span>Agregar Producto</span>
+        <i class="nav-icon" data-lucide="plus-circle"></i><span>Agregar Producto</span>
       </a>
       <a href="#" class="nav-item" data-section="qr" id="nav-qr">
-        <span class="nav-icon">&#9635;</span><span>Gestión de QR</span>
+        <i class="nav-icon" data-lucide="qr-code"></i><span>Gestión de QR</span>
+      </a>
+      <span class="nav-section-label">Personal</span>
+      <a href="#" class="nav-item" data-section="fiados" id="nav-fiados">
+        <i class="nav-icon" data-lucide="hand-coins"></i><span>Fiados</span>
+        <span class="nav-badge" id="badge-fiados" style="display:none">0</span>
+      </a>
+      <a href="#" class="nav-item" data-section="actividad" id="nav-actividad">
+        <i class="nav-icon" data-lucide="activity"></i><span>Registro de Actividad</span>
       </a>
     </nav>
 
     <div class="sidebar-footer">
-      <div style="display:flex;gap:6px;margin-bottom:10px">
+      <div id="userChip" class="user-chip" onclick="mostrarLogin(true)" title="Cambiar usuario" style="display:none"></div>
+      <div style="display:flex;gap:6px;margin-top:10px">
         <button class="btn-backup" onclick="exportarDatos()" title="Descargar copia de seguridad">
           ↓ Exportar datos
         </button>
@@ -100,9 +106,10 @@
 
   <!-- ══ TOPBAR MOBILE ══ -->
   <header class="topbar">
-    <button class="menu-toggle" id="menuToggle">&#9776;</button>
+    <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú"><i data-lucide="menu"></i></button>
     <div class="topbar-brand">TIA ELI</div>
     <div class="topbar-right">
+      <div id="userChipMobile" class="user-chip" style="display:none; margin-right:8px" onclick="mostrarLogin(true)" title="Cambiar usuario"></div>
       <button class="sync-btn-mobile" onclick="sincronizar()" title="Sincronizar">
         <svg class="sync-icon" id="syncIconMobile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
@@ -137,6 +144,7 @@
         <div class="stat-card"><div class="stat-icon-wrap">&#x23F0;</div><div class="stat-info"><span class="stat-value" id="stat-vence">0</span><span class="stat-label">Por Vencer</span></div></div>
         <div class="stat-card"><div class="stat-icon-wrap">Bs</div><div class="stat-info"><span class="stat-value" id="stat-valor">0</span><span class="stat-label">Valor Inventario</span></div></div>
         <div class="stat-card"><div class="stat-icon-wrap">$</div><div class="stat-info"><span class="stat-value" id="stat-ventas-hoy">0</span><span class="stat-label">Ventas Hoy</span></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap">📒</div><div class="stat-info"><span class="stat-value" id="stat-fiados">Bs. 0.00</span><span class="stat-label">Fiados Pendientes</span></div></div>
       </div>
 
       <!-- Charts -->
@@ -451,18 +459,67 @@
       </div>
     </section>
 
+    <!-- ══ SECCION FIADOS ══ -->
+    <section class="section" id="section-fiados">
+      <div class="section-header">
+        <div><h1>Fiados</h1><p class="section-sub">Gestión de créditos y cobros a clientes</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="abrirFiadoModal()">+ Nuevo Fiado</button>
+        </div>
+      </div>
+      <!-- Stats -->
+      <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px">
+        <div class="stat-card"><div class="stat-icon-wrap">💰</div><div class="stat-info"><span class="stat-value" id="fiadoTotalPendiente">Bs. 0.00</span><span class="stat-label">Pendiente</span></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap">✅</div><div class="stat-info"><span class="stat-value" id="fiadoTotalCobrado">Bs. 0.00</span><span class="stat-label">Cobrado</span></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap">👥</div><div class="stat-info"><span class="stat-value" id="fiadoClientesDeuda">0</span><span class="stat-label">Con deuda</span></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap">📒</div><div class="stat-info"><span class="stat-value" id="fiadoTotalFiados">0</span><span class="stat-label">Total fiados</span></div></div>
+      </div>
+      <!-- Buscador -->
+      <div class="search-bar" style="margin-bottom:16px">
+        <input type="text" id="fiadoSearch" class="form-input" placeholder="Buscar cliente..." oninput="filtrarFiados()" />
+      </div>
+      <!-- Lista de clientes -->
+      <div class="fiado-clientes" id="fiadoClientesList"></div>
+    </section>
+
+    <!-- ══ SECCION ACTIVIDAD ══ -->
+    <section class="section" id="section-actividad">
+      <div class="section-header">
+        <div><h1>Registro de Actividad</h1><p class="section-sub">Trazabilidad de todas las acciones del sistema</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="exportarActividadCSV()">💾 Exportar CSV</button>
+        </div>
+      </div>
+      <!-- Filtros -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px">
+        <div class="form-group">
+          <label>Tipo</label>
+          <select id="actFiltroTipo" class="form-input" onchange="filtrarActividad()">
+            <option value="">Todos los tipos</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Usuario</label>
+          <select id="actFiltroUsuario" class="form-input" onchange="filtrarActividad()">
+            <option value="">Todos los usuarios</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Desde</label>
+          <input type="date" id="actFiltroDesde" class="form-input" onchange="filtrarActividad()" />
+        </div>
+        <div class="form-group">
+          <label>Hasta</label>
+          <input type="date" id="actFiltroHasta" class="form-input" onchange="filtrarActividad()" />
+        </div>
+      </div>
+      <!-- Lista de actividad -->
+      <div class="actividad-list" id="actividadList"></div>
+    </section>
+
   </main>
 
   <div id="posFloatingElements" style="display: none;">
-    <!-- FAB Menu para el Carrito -->
-    <button id="posFabBtn" class="pos-fab-btn" onclick="togglePosCart()">
-      <span class="pos-fab-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-        </svg>
-      </span>
-      <span class="pos-fab-badge" id="posFabBadge" style="display:none">0</span>
-    </button>
 
     <!-- Carrito Flotante Inferior -->
     <div class="pos-cart" id="posCartContainer">
@@ -597,6 +654,223 @@
     </div>
   </div>
 
+  <!-- ══ MODAL ENTRADA (agregar stock) ══ -->
+  <div class="modal-overlay" id="entradaOverlay" style="display:none">
+    <div class="modal" style="max-width:460px">
+      <div class="modal-header"><h3 id="entradaModalTitle">Registrar Entrada</h3><button class="modal-close" onclick="document.getElementById('entradaOverlay').style.display='none'">&times;</button></div>
+      <div class="modal-body">
+        <input type="hidden" id="entradaProductoId" />
+        <!-- Info del producto -->
+        <div class="entrada-info-card">
+          <div class="entrada-info-row">
+            <span class="entrada-info-label">Producto</span>
+            <span class="entrada-info-value" id="entradaProductoNombre2"></span>
+          </div>
+          <div class="entrada-info-row">
+            <span class="entrada-info-label">Stock actual</span>
+            <span class="entrada-info-value entrada-stock-badge" id="entradaStockActual2"></span>
+          </div>
+        </div>
+        <input type="hidden" id="entradaProductoNombre" />
+        <input type="hidden" id="entradaStockActual" />
+        <!-- Campos requeridos -->
+        <div class="entrada-section">
+          <div class="entrada-section-title">📦 Datos de la entrada</div>
+          <div class="entrada-fields-grid">
+            <div class="form-group">
+              <label>Cantidad a agregar <span class="required">*</span></label>
+              <input type="number" id="entradaCantidad" class="form-input" min="1" step="1" placeholder="Ej: 24" />
+            </div>
+            <div class="form-group">
+              <label>Costo unitario (Bs.) <span class="required">*</span></label>
+              <input type="number" id="entradaCosto" class="form-input" min="0" step="0.01" placeholder="Ej: 5.50" />
+            </div>
+          </div>
+        </div>
+        <!-- Resumen de costos -->
+        <div class="entrada-resumen" id="entradaResumen" style="display:none">
+          <div class="entrada-resumen-row">
+            <span>Costo unitario</span>
+            <span id="entradaResumenUnit">Bs. 0.00</span>
+          </div>
+          <div class="entrada-resumen-row">
+            <span>Cantidad</span>
+            <span id="entradaResumenQty">0</span>
+          </div>
+          <div class="entrada-resumen-divider"></div>
+          <div class="entrada-resumen-row entrada-resumen-total">
+            <span>💰 Total inversión</span>
+            <span id="entradaResumenTotal">Bs. 0.00</span>
+          </div>
+        </div>
+        <!-- Campos opcionales -->
+        <div class="entrada-section entrada-section-optional">
+          <div class="entrada-section-title">📋 Información adicional <span class="opcional-tag">Opcional</span></div>
+          <div class="form-group"><label>Fecha de vencimiento</label><input type="date" id="entradaVencimiento" class="form-input" /></div>
+          <div class="form-group"><label>Proveedor</label><input type="text" id="entradaProveedor" class="form-input" placeholder="Nombre del proveedor" /></div>
+          <div class="form-group"><label>Nota</label><textarea id="entradaNota" class="form-input form-textarea" placeholder="Observaciones adicionales..." rows="2"></textarea></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-secondary" onclick="document.getElementById('entradaOverlay').style.display='none'">Cancelar</button>
+          <button class="btn btn-success" onclick="confirmarEntrada()">✅ Registrar Entrada</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL SALIDA (reducir stock) ══ -->
+  <div class="modal-overlay" id="salidaOverlay" style="display:none">
+    <div class="modal" style="max-width:460px">
+      <div class="modal-header"><h3 id="salidaModalTitle">Registrar Salida</h3><button class="modal-close" onclick="document.getElementById('salidaOverlay').style.display='none'">&times;</button></div>
+      <div class="modal-body">
+        <input type="hidden" id="salidaProductoId" />
+        <div class="entrada-info-card">
+          <div class="entrada-info-row">
+            <span class="entrada-info-label">Producto</span>
+            <span class="entrada-info-value" id="salidaProductoNombre"></span>
+          </div>
+          <div class="entrada-info-row">
+            <span class="entrada-info-label">Stock disponible</span>
+            <span class="entrada-info-value entrada-stock-badge" id="salidaStockDisp"></span>
+          </div>
+        </div>
+        <div class="entrada-section">
+          <div class="entrada-section-title">📦 Datos de la salida</div>
+          <div class="entrada-fields-grid">
+            <div class="form-group">
+              <label>Cantidad a retirar <span class="required">*</span></label>
+              <input type="number" id="salidaCantidad" class="form-input" min="1" step="1" placeholder="Ej: 5" />
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:10px">
+            <label>Motivo</label>
+            <select id="salidaMotivo" class="form-input">
+              <option value="personal">Uso personal</option>
+              <option value="danado">Dañado / Vencido</option>
+              <option value="muestra">Muestra / Regalo</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-top:10px">
+            <label>Nota</label>
+            <textarea id="salidaNota" class="form-input form-textarea" placeholder="Observaciones..." rows="2"></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-secondary" onclick="document.getElementById('salidaOverlay').style.display='none'">Cancelar</button>
+          <button class="btn btn-danger" onclick="confirmarSalida()">✅ Registrar Salida</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL NUEVO FIADO ══ -->
+  <div class="modal-overlay" id="fiadoOverlay" style="display:none">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header"><h3 id="fiadoModalTitle">Nuevo Fiado</h3><button class="modal-close" onclick="cerrarFiadoModal()">&times;</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nombre del cliente <span class="required">*</span></label>
+          <input type="text" id="fiadoClienteNombre" class="form-input" placeholder="Ej: Juan Pérez" />
+        </div>
+        <div class="entrada-section" style="margin-top:14px">
+          <div class="entrada-section-title">🛒 Agregar productos</div>
+          <div class="form-group" style="position:relative">
+            <label>Buscar producto del inventario</label>
+            <input type="text" id="fiadoProductoNombre" class="form-input" placeholder="Escribí para buscar..." oninput="buscarProductoFiadoSimple(this.value)" autocomplete="off" />
+            <div id="fiadoProductoSugerencias" style="display:none"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+            <div class="form-group"><label>Precio (Bs.)</label><input type="number" id="fiadoProductoPrecio" class="form-input" min="0" step="0.01" placeholder="0.00" /></div>
+            <div class="form-group"><label>Cantidad</label><input type="number" id="fiadoProductoCantidad" class="form-input" min="1" value="1" /></div>
+          </div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:6px;width:100%" onclick="agregarProductoFiadoLibre()">+ Agregar producto libre</button>
+        </div>
+        <!-- Items agregados -->
+        <div id="fiadoItemsList" style="margin-top:12px"></div>
+        <!-- Total -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding:12px;background:var(--bg3);border-radius:var(--radius-sm)">
+          <span style="font-weight:700;color:var(--text)">TOTAL:</span>
+          <span id="fiadoTotalDisplay" style="font-weight:800;font-size:1.2rem;color:var(--red);font-family:'Outfit',sans-serif">Bs. 0.00</span>
+        </div>
+        <div class="form-actions" style="margin-top:16px">
+          <button class="btn btn-secondary" onclick="cerrarFiadoModal()">Cancelar</button>
+          <button class="btn btn-primary" onclick="guardarFiado()">✅ Guardar Fiado</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL COBRAR / ABONAR ══ -->
+  <div class="modal-overlay" id="cobrarOverlay" style="display:none">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header"><h3 id="cobrarModalTitle">Cobrar</h3><button class="modal-close" onclick="cerrarCobrarModal()">&times;</button></div>
+      <div class="modal-body">
+        <input type="hidden" id="cobrarClienteId" />
+        <div class="entrada-info-card">
+          <div class="entrada-info-row">
+            <span class="entrada-info-label">Cliente</span>
+            <span class="entrada-info-value" id="cobrarClienteNombre"></span>
+          </div>
+          <div class="entrada-info-row">
+            <span class="entrada-info-label">Saldo</span>
+            <span class="entrada-info-value" id="cobrarSaldoTexto" style="color:var(--red);font-weight:700"></span>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:14px">
+          <label>Monto a cobrar (Bs.) <span class="required">*</span></label>
+          <input type="number" id="cobrarMonto" class="form-input" min="0.01" step="0.01" />
+        </div>
+        <div class="form-group" style="margin-top:10px">
+          <label>Método de pago</label>
+          <select id="cobrarMetodo" class="form-input">
+            <option value="efectivo">💵 Efectivo</option>
+            <option value="qr">📱 QR</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-top:10px">
+          <label>Nota</label>
+          <input type="text" id="cobrarNota" class="form-input" placeholder="Observación opcional" />
+        </div>
+        <div class="form-actions" style="margin-top:16px">
+          <button class="btn btn-secondary" onclick="cerrarCobrarModal()">Cancelar</button>
+          <button class="btn btn-success" onclick="registrarPago()">✅ Registrar Cobro</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL EXPEDIENTE CLIENTE ══ -->
+  <div class="modal-overlay" id="expedienteOverlay" style="display:none">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-header"><h3 id="expedienteModalTitle">Expediente</h3><button class="modal-close" onclick="cerrarExpedienteModal()">&times;</button></div>
+      <div class="modal-body">
+        <div class="entrada-info-card" style="margin-bottom:14px">
+          <div class="entrada-info-row">
+            <span class="entrada-info-label">Cliente</span>
+            <span class="entrada-info-value" id="expClienteNombre" style="font-weight:700"></span>
+          </div>
+          <div class="entrada-info-row">
+            <span class="entrada-info-label">Teléfono</span>
+            <span class="entrada-info-value" id="expClienteTelefono"></span>
+          </div>
+          <div class="entrada-info-row">
+            <span class="entrada-info-label">Saldo</span>
+            <span id="expSaldoTotal"></span>
+          </div>
+        </div>
+        <div class="entrada-section">
+          <div class="entrada-section-title">📒 Fiados</div>
+          <div id="expFiadosList"></div>
+        </div>
+        <div class="entrada-section" style="margin-top:12px">
+          <div class="entrada-section-title">💰 Abonos</div>
+          <div id="expPagosList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ TOAST ══ -->
   <div class="toast" id="toast"></div>
 
@@ -615,15 +889,25 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="firebase-config.js?v=6" defer></script>
-  <script src="sync.js?v=6" defer></script>
-  <script src="app.js?v=6" defer></script>
-  <script src="charts.js?v=6" defer></script>
-  <script src="ventas.js?v=6" defer></script>
-  <script src="extras.js?v=6" defer></script>
+  <script src="lucide.min.js?v=7" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="firebase-config.js?v=7" defer></script>
+  <script src="sync.js?v=7" defer></script>
+  <script src="app.js?v=7" defer></script>
+  <script src="charts.js?v=7" defer></script>
+  <script src="ventas.js?v=7" defer></script>
+  <script src="extras.js?v=7" defer></script>
+  <script src="gestion.js?v=7" defer></script>
   <script>
     // Iniciar Firebase + listeners en tiempo real al cargar la página
     document.addEventListener('DOMContentLoaded', function() {
+      if (window.lucide && window.lucide.createIcons) {
+        window.lucide.createIcons();
+      }
       if (window.initFirebase) window.initFirebase();
+      if (window.initGestion) window.initGestion();
     });
   </script>
 </body>

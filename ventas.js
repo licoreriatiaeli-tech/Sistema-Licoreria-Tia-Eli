@@ -19,6 +19,7 @@ function saveVentas() {
   localStorage.setItem('tiaeli_ventas', JSON.stringify(ventas));
   window.ventas = ventas;
 }
+window.saveVentas = saveVentas;
 function saveCombos() {
   localStorage.setItem('tiaeli_combos', JSON.stringify(combos));
   window.combos = combos;
@@ -144,8 +145,8 @@ function renderVentasHoy() {
   if(!list.length){cont.innerHTML='<div class="empty-state" style="padding:22px"><span class="es-icon">&#8212;</span><p>Sin ventas hoy todav\u00eda.</p></div>';return;}
   cont.innerHTML=list.map(v=>{
     const hora=new Date(typeof v.fecha === 'number' ? v.fecha : v.fecha).toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'});
-    const etq=v.tipo==='combo'?'<span class="combo-tag">COMBO</span>':(v.packLabel?'<span class="pack-tag">'+escHTML(v.packLabel)+'</span>':'');
-    const desc=v.tipo==='combo'?(escHTML(v.nota||'')):(v.packLabel?escHTML(v.cantidadPacks+' '+v.packLabel+' · '+v.cantidad+' uds'):v.cantidad+' unid');
+    const etq=v.tipo==='combo'?'<span class="combo-tag">COMBO</span>':(v.packLabel?'<span class="pack-tag">'+escHTML(v.packLabel)+'</span>':(v.presentacion?'<span class="pack-tag">'+escHTML(v.presentacion)+'</span>':''));
+    const desc=v.tipo==='combo'?(escHTML(v.nota||'')):(v.packLabel?escHTML(v.cantidadPacks+' '+v.packLabel+' · '+v.cantidad+' uds'):(v.presentacion ? escHTML(v.cantidad + ' x ' + v.presentacion) : v.cantidad+' unid'));
     const descLine=v.descuento>0?`<small style="color:var(--red)">(-Bs.${v.descuento.toFixed(2)})</small>`:'';
     let lotesInfo = '';
     if (v.lotesAfectados && v.lotesAfectados.length) {
@@ -198,7 +199,7 @@ function renderCombosVenta() {
       const st = getStockTotal(p);
       const posib = Math.floor(st / i.cantidad);
       if(posib<maxCombos) maxCombos=posib;
-      return `<span style="font-size:0.7rem;color:var(--text3);">${p.nombre} &times;${i.cantidad}</span>`;
+      return `<span style="font-size:0.7rem;color:var(--text3);">${p.nombre}${p.presentacion?' '+p.presentacion:''} &times;${i.cantidad}</span>`;
     }).join('<br>');
     
     const isOut = maxCombos <= 0;
@@ -264,7 +265,7 @@ function renderHistorial() {
   let mobileHtml = [];
   tbody.innerHTML = lista.map((v, i) => {
     const fd=new Date(typeof v.fecha === 'number' ? v.fecha : v.fecha);const fs=fd.toLocaleDateString('es-BO')+' '+fd.toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'});
-    const etq=v.tipo==='combo'?' <span class="combo-tag">COMBO</span>':(v.packLabel?' <span class="pack-tag">'+v.packLabel+'</span>':'');
+    const etq=v.tipo==='combo'?' <span class="combo-tag">COMBO</span>':(v.packLabel?' <span class="pack-tag">'+v.packLabel+'</span>':(v.presentacion?' <span class="pack-tag">'+escHTML(v.presentacion)+'</span>':''));
     let lotesInfo = '';
     if (v.lotesAfectados && v.lotesAfectados.length) {
       lotesInfo = '<ul class="lotes-afectados-list">' + v.lotesAfectados.map(la => `<li>Lote ${la.loteIndex+1} (${la.cantidadDescontada} ud) ${la.vencimiento?'- '+la.vencimiento:''}</li>`).join('') + '</ul>';
@@ -311,8 +312,8 @@ window.renderHistorial = renderHistorial;
 
 function exportarVentas() {
   if(!(window.ventas||[]).length){toast('No hay ventas','warning');return;}
-  const h='Fecha,Tipo,Producto,Presentacion,Cantidad,PrecioUnit,Subtotal,Descuento,Total,Costo,Ganancia,Pago,Nota\n';
-  const r=(window.ventas||[]).map(v=>[new Date(typeof v.fecha === 'number' ? v.fecha : v.fecha).toISOString(),v.tipo||'individual',v.productoNombre,v.packLabel||'Unidad',v.cantidad,v.precioUnit,v.subtotal||v.total,v.descuento||0,v.total,v.costo,v.ganancia,v.pago,v.nota||''].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');
+   const h='Fecha,Tipo,Producto,Presentacion,Cantidad,PrecioUnit,Subtotal,Descuento,Total,Costo,Ganancia,Pago,Nota\n';
+   const r=(window.ventas||[]).map(v=>[new Date(typeof v.fecha === 'number' ? v.fecha : v.fecha).toISOString(),v.tipo||'individual',v.productoNombre,v.presentacion||v.packLabel||'Unidad',v.cantidad,v.precioUnit,v.subtotal||v.total,v.descuento||0,v.total,v.costo,v.ganancia,v.pago,v.nota||''].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');
   const blob=new Blob(['\uFEFF'+h+r],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ventas_tiaeli_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(url);
   toast('CSV exportado','success');
@@ -376,20 +377,24 @@ window.renderPOSProducts = function() {
   if (searchInput && searchInput.value.trim()) {
     const q = searchInput.value.toLowerCase().trim();
     filtrados = filtrados.filter(p => {
-      const nom = String(p.nombre || '').toLowerCase();
+     const nom = String(p.nombre || '').toLowerCase();
       const mar = String(p.marca || '').toLowerCase();
-      return nom.includes(q) || mar.includes(q);
+      const pre = String(p.presentacion || '').toLowerCase();
+      return nom.includes(q) || mar.includes(q) || pre.includes(q);
     });
   }
 
   // Ordenar alfabéticamente
   filtrados.sort((a,b) => a.nombre.localeCompare(b.nombre));
 
-  grid.innerHTML = filtrados.length ? filtrados.map(p => {
+   grid.innerHTML = filtrados.length ? filtrados.map(p => {
     const stock = getStockTotal(p);
     const outOfStock = stock <= 0 ? 'out-of-stock' : '';
+    const presentacion = p.presentacion ? escHTML(p.presentacion) : '';
+    const marca = p.marca ? escHTML(p.marca) : '';
     return `<div class="pos-card ${outOfStock}" onclick="addToPOS('${p.id}')">
               <div class="pos-card-name">${p.nombre}</div>
+              ${presentacion || marca ? '<div class="pos-card-sub">' + [marca, presentacion].filter(Boolean).join(' / ') + '</div>' : ''}
               <div class="pos-card-price">Bs. ${(p.venta || 0).toFixed(2)}</div>
               <div class="pos-card-stock">${stock > 0 ? stock + ' disp.' : 'Agotado'}</div>
             </div>`;
@@ -464,13 +469,11 @@ window.setPOSPayment = function(method) {
 
 window.togglePosCart = function() {
   const cart = document.getElementById('posCartContainer');
-  const fabBtn = document.getElementById('posFabBtn');
   if (posCart.length === 0) {
     toast('El carrito está vacío', 'info');
     return;
   }
   if (cart) cart.classList.toggle('open');
-  if (fabBtn) fabBtn.classList.toggle('open');
 };
 
 window.clearPOSCart = function() {
@@ -484,31 +487,16 @@ window.updatePOSCart = function() {
   const container = document.getElementById('posCartItems');
   const totalAmount = document.getElementById('posTotalAmount');
   const btnCheckout = document.getElementById('posCheckoutBtn');
-  const badge = document.getElementById('posFabBadge');
   if (!container) return;
-
-  const totalItems = posCart.reduce((s, item) => s + item.cant, 0);
-  if (badge) {
-    if (totalItems > 0) {
-      badge.style.display = 'flex';
-      badge.innerText = totalItems;
-    } else {
-      badge.style.display = 'none';
-      badge.innerText = '0';
-    }
-  }
 
   if (posCart.length === 0) {
     container.innerHTML = '<div style="text-align:center;color:var(--text3);padding:20px;">Carrito vacío</div>';
     if (totalAmount) totalAmount.innerText = 'Bs. 0.00';
     if (btnCheckout) btnCheckout.disabled = true;
     
-    // Si el carrito está vacío y está abierto, lo cerramos
     const cartContainer = document.getElementById('posCartContainer');
-    const fabBtn = document.getElementById('posFabBtn');
     if (cartContainer && cartContainer.classList.contains('open')) {
       cartContainer.classList.remove('open');
-      if (fabBtn) fabBtn.classList.remove('open');
     }
     return;
   }
@@ -516,12 +504,13 @@ window.updatePOSCart = function() {
   if (btnCheckout) btnCheckout.disabled = false;
   let total = 0;
 
-  container.innerHTML = posCart.map(item => {
+   container.innerHTML = posCart.map(item => {
     const subtotal = item.cant * item.precio;
     total += subtotal;
+    const present = item.p.presentacion || '';
     return `<div class="pos-cart-item">
               <div class="pos-cart-item-info">
-                <div class="pos-cart-item-name">${item.p.nombre}</div>
+                <div class="pos-cart-item-name">${item.p.nombre}${present?' <small style="color:var(--text3);font-size:0.7rem">'+present+'</small>':''}</div>
                 <div class="pos-cart-item-price">Bs. ${item.precio.toFixed(2)} c/u</div>
               </div>
               <div class="pos-cart-item-controls">
@@ -533,6 +522,7 @@ window.updatePOSCart = function() {
   }).join('');
 
   if (totalAmount) totalAmount.innerText = `Bs. ${total.toFixed(2)}`;
+
 };
 
 window.checkoutPOS = function() {
@@ -621,16 +611,17 @@ window.checkoutPOS = function() {
         const costoTotal = lotesAfectados.reduce((s, l) => s + (l.cantidadDescontada * l.costoUnitario), 0);
         const ganancia = total - costoTotal;
 
-        const venta = {
-          id: genId(), tipo: 'individual',
-          productoId: p.id, productoNombre: p.nombre, productomarca: p.marca||'',
-          categoria: p.categoria, cantidad: cant,
-          cantidadPacks: 1, packLabel: '',
-          precioUnit: precio, subtotal, descuento: 0, total, costo: costoTotal,
-          ganancia, pago: posPaymentMethod, nota: 'Venta desde Caja Rápida',
-          fecha: nowLocal(), fechaRegistro: fechaVenta,
-          lotesAfectados
-        };
+         const venta = {
+           id: genId(), tipo: 'individual',
+           productoId: p.id, productoNombre: p.nombre, productomarca: p.marca||'',
+           presentacion: p.presentacion || '',
+           categoria: p.categoria, cantidad: cant,
+           cantidadPacks: 1, packLabel: '',
+           precioUnit: precio, subtotal, descuento: 0, total, costo: costoTotal,
+           ganancia, pago: posPaymentMethod, nota: 'Venta desde Caja Rápida',
+           fecha: nowLocal(), fechaRegistro: fechaVenta,
+           lotesAfectados
+         };
         ventas.unshift(venta);
         ventasRegistradas.push(venta);
       }
@@ -699,4 +690,25 @@ window.addComboToPOS = function(cId) {
   }
   updatePOSCart();
   toast('Combo agregado al carrito', 'success');
+};
+
+window.filterPOSGrid = function() {
+  const query = (document.getElementById('posSearchInput').value || '').toLowerCase();
+  const filterCat = window.currentPOSFilter || 'Todas';
+  const prods = window.productos || [];
+  const grid = document.getElementById('posGrid');
+  if (!grid) return;
+  grid.innerHTML = prods.filter(p => {
+    const matchCat = filterCat === 'Todas' || p.categoria === filterCat;
+    const matchQ = p.nombre.toLowerCase().includes(query) || (p.marca && p.marca.toLowerCase().includes(query));
+    return matchCat && matchQ;
+  }).map(p => {
+    const stockMsg = p.stock > 0 ? `Stock: ${p.stock}` : `Agotado`;
+    const cl = p.stock > 0 ? 'pos-card' : 'pos-card out-of-stock';
+    return `<div class="${cl}" onclick="addPOSCart('${p.id}')">
+      <div class="pos-card-name">${p.nombre}</div>
+      <div class="pos-card-price">Bs. ${p.venta.toFixed(2)}</div>
+      <div class="pos-card-stock">${stockMsg}</div>
+    </div>`;
+  }).join('');
 };

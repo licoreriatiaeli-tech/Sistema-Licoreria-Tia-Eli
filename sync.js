@@ -17,7 +17,12 @@
     productos: 'inventario_tiaeli',
     ventas:    'ventas_tiaeli',
     combos:    'combos_tiaeli',
-    config:    'config_tiaeli'
+    config:    'config_tiaeli',
+    clientes:  'clientes_tiaeli',
+    fiados:    'fiados_tiaeli',
+    pagos:     'pagos_fiados_tiaeli',
+    salidas:   'salidas_tiaeli',
+    entradas:  'entradas_tiaeli'
   };
 
   // ── HELPERS DE UI ──
@@ -130,9 +135,21 @@
         return !(localChange && localChange.type === 'delete');
       });
       
-      setterFn(filtered);
-      localStorage.setItem(`tiaeli_${collection.replace('_tiaeli', '')}`, JSON.stringify(filtered));
-    }
+       setterFn(filtered);
+       // Map Firestore collection name to localStorage key
+       const LS_KEYS = {
+         [COLS.productos]: 'tiaeli_v2',
+         [COLS.ventas]:    'tiaeli_ventas',
+         [COLS.combos]:    'tiaeli_combos',
+         [COLS.clientes]:  'tiaeli_clientes',
+         [COLS.fiados]:    'tiaeli_fiados',
+         [COLS.pagos]:     'tiaeli_pagos',
+         [COLS.salidas]:   'tiaeli_salidas',
+         [COLS.entradas]:  'tiaeli_entradas'
+       };
+       const lsKey = LS_KEYS[collection];
+       if (lsKey) localStorage.setItem(lsKey, JSON.stringify(filtered));
+     }
 
     // ── Productos ──
     const unsubProductos = _db.collection(COLS.productos)
@@ -193,6 +210,63 @@
         console.log('[Sync] Combos actualizados desde nube:', remoto.length);
       }, err => console.error('[Sync] Error listener combos:', err));
 
+    // ── Clientes ──
+    const unsubClientes = _db.collection(COLS.clientes)
+      .onSnapshot({ includeMetadataChanges: false }, snap => {
+        const remoto = snap.docs.map(d => d.data());
+        smartMerge(COLS.clientes, remoto, (merged) => {
+          if (window.setClientesGlobal) window.setClientesGlobal(merged);
+          else window.clientes = merged;
+        });
+        if (typeof renderFiados === 'function') renderFiados();
+        console.log('[Sync] Clientes actualizados desde nube:', remoto.length);
+      }, err => console.error('[Sync] Error listener clientes:', err));
+
+    // ── Fiados ──
+    const unsubFiados = _db.collection(COLS.fiados)
+      .onSnapshot({ includeMetadataChanges: false }, snap => {
+        const remoto = snap.docs.map(d => d.data());
+        smartMerge(COLS.fiados, remoto, (merged) => {
+          if (window.setFiadosGlobal) window.setFiadosGlobal(merged);
+          else window.fiados = merged;
+        });
+        if (typeof renderFiados === 'function') renderFiados();
+        console.log('[Sync] Fiados actualizados desde nube:', remoto.length);
+      }, err => console.error('[Sync] Error listener fiados:', err));
+
+    // ── Pagos ──
+    const unsubPagos = _db.collection(COLS.pagos)
+      .onSnapshot({ includeMetadataChanges: false }, snap => {
+        const remoto = snap.docs.map(d => d.data());
+        smartMerge(COLS.pagos, remoto, (merged) => {
+          if (window.setPagosGlobal) window.setPagosGlobal(merged);
+          else window.pagos = merged;
+        });
+        if (typeof renderFiados === 'function') renderFiados();
+        console.log('[Sync] Pagos actualizados desde nube:', remoto.length);
+      }, err => console.error('[Sync] Error listener pagos:', err));
+
+    // ── Salidas ──
+    const unsubSalidas = _db.collection(COLS.salidas)
+      .onSnapshot({ includeMetadataChanges: false }, snap => {
+        const remoto = snap.docs.map(d => d.data());
+        smartMerge(COLS.salidas, remoto, (merged) => {
+          // Salidas se guardan solo en localStorage (no hay array global)
+          localStorage.setItem('tiaeli_salidas', JSON.stringify(merged));
+        });
+        console.log('[Sync] Salidas actualizadas desde nube:', remoto.length);
+      }, err => console.error('[Sync] Error listener salidas:', err));
+
+    // ── Entradas ──
+    const unsubEntradas = _db.collection(COLS.entradas)
+      .onSnapshot({ includeMetadataChanges: false }, snap => {
+        const remoto = snap.docs.map(d => d.data());
+        smartMerge(COLS.entradas, remoto, (merged) => {
+          localStorage.setItem('tiaeli_entradas', JSON.stringify(merged));
+        });
+        console.log('[Sync] Entradas actualizadas desde nube:', remoto.length);
+      }, err => console.error('[Sync] Error listener entradas:', err));
+
     // ── QRs (Configuración global) ──
     const unsubConfig = _db.collection(COLS.config).doc('qrs')
       .onSnapshot({ includeMetadataChanges: false }, snap => {
@@ -210,7 +284,7 @@
         }
       }, err => console.error('[Sync] Error listener config:', err));
 
-    _listeners.push(unsubProductos, unsubVentas, unsubCombos, unsubConfig);
+    _listeners.push(unsubProductos, unsubVentas, unsubCombos, unsubClientes, unsubFiados, unsubPagos, unsubSalidas, unsubEntradas, unsubConfig);
     console.log('[Sync] Listeners en tiempo real activos ✅');
   }
 
@@ -291,6 +365,66 @@
     _eliminarDoc(COLS.combos, id);
   };
 
+  // ── Clientes ──
+  window.syncSaveCliente = function(cliente) {
+    if (!cliente || !cliente.id) return;
+    _trackLocalChange(COLS.clientes, cliente, 'update');
+    _subirDoc(COLS.clientes, cliente);
+  };
+  window.syncDeleteCliente = function(id) {
+    if (!id) return;
+    _trackLocalChange(COLS.clientes, { id }, 'delete');
+    _eliminarDoc(COLS.clientes, id);
+  };
+
+  // ── Fiados ──
+  window.syncSaveFiado = function(fiado) {
+    if (!fiado || !fiado.id) return;
+    _trackLocalChange(COLS.fiados, fiado, 'update');
+    _subirDoc(COLS.fiados, fiado);
+  };
+  window.syncDeleteFiado = function(id) {
+    if (!id) return;
+    _trackLocalChange(COLS.fiados, { id }, 'delete');
+    _eliminarDoc(COLS.fiados, id);
+  };
+
+  // ── Pagos ──
+  window.syncSavePago = function(pago) {
+    if (!pago || !pago.id) return;
+    _trackLocalChange(COLS.pagos, pago, 'update');
+    _subirDoc(COLS.pagos, pago);
+  };
+  window.syncDeletePago = function(id) {
+    if (!id) return;
+    _trackLocalChange(COLS.pagos, { id }, 'delete');
+    _eliminarDoc(COLS.pagos, id);
+  };
+
+  // ── Salidas ──
+  window.syncSaveSalida = function(salida) {
+    if (!salida || !salida.id) return;
+    _trackLocalChange(COLS.salidas, salida, 'update');
+    _subirDoc(COLS.salidas, salida);
+  };
+  window.syncDeleteSalida = function(id) {
+    if (!id) return;
+    _trackLocalChange(COLS.salidas, { id }, 'delete');
+    _eliminarDoc(COLS.salidas, id);
+  };
+
+  // ── Entradas ──
+  window.syncSaveEntrada = function(entrada) {
+    if (!entrada || !entrada.id) return;
+    _trackLocalChange(COLS.entradas, entrada, 'update');
+    _subirDoc(COLS.entradas, entrada);
+  };
+  window.syncDeleteEntrada = function(id) {
+    if (!id) return;
+    _trackLocalChange(COLS.entradas, { id }, 'delete');
+    _eliminarDoc(COLS.entradas, id);
+  };
+
   // Guardar QR Global
   window.syncSaveQRsGlobal = function(qrData) {
     if (!_db) return;
@@ -318,6 +452,14 @@
       (window.productos || []).forEach(p => allItems.push({ col: COLS.productos, doc: { ...p, updatedAt: p.updatedAt || Date.now() } }));
       (window.ventas || []).forEach(v => allItems.push({ col: COLS.ventas, doc: { ...v, updatedAt: v.updatedAt || v.fechaRegistro || Date.now() } }));
       (window.combos || []).forEach(c => allItems.push({ col: COLS.combos, doc: { ...c, updatedAt: c.updatedAt || Date.now() } }));
+      (window.clientes || []).forEach(c => allItems.push({ col: COLS.clientes, doc: { ...c, updatedAt: c.updatedAt || c.creado || Date.now() } }));
+      (window.fiados || []).forEach(f => allItems.push({ col: COLS.fiados, doc: { ...f, updatedAt: f.updatedAt || f.fecha || Date.now() } }));
+      (window.pagos || []).forEach(p => allItems.push({ col: COLS.pagos, doc: { ...p, updatedAt: p.updatedAt || p.fecha || Date.now() } }));
+      // Salidas y entradas solo en localStorage, pero las subimos si existen
+      const salidas = JSON.parse(localStorage.getItem('tiaeli_salidas') || '[]');
+      salidas.forEach(s => allItems.push({ col: COLS.salidas, doc: { ...s, updatedAt: s.updatedAt || s.fecha || Date.now() } }));
+      const entradas = JSON.parse(localStorage.getItem('tiaeli_entradas') || '[]');
+      entradas.forEach(e => allItems.push({ col: COLS.entradas, doc: { ...e, updatedAt: e.updatedAt || e.fecha || Date.now() } }));
 
       // Firestore soporta máximo 500 operaciones por batch
       const chunk = 450;

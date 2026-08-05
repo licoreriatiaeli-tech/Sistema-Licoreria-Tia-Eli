@@ -1,4 +1,4 @@
-const CACHE = 'tiaeli-v3';
+const CACHE = 'tiaeli-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -8,6 +8,8 @@ const ASSETS = [
   './sync.js',
   './charts.js',
   './extras.js',
+  './gestion.js',
+  './lucide.min.js',
   './firebase-config.js',
   './manifest.json'
 ];

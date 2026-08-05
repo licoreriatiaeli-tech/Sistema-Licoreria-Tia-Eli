@@ -237,15 +237,16 @@ function renderTopProductosDash() {
   const sorted = Object.entries(map).sort((a, b) => b[1].total - a[1].total).slice(0, 5);
   if (!sorted.length) { cont.innerHTML = '<div class="empty-state" style="padding:20px"><p>Sin ventas aún.</p></div>'; return; }
   const maxTotal = sorted[0][1].total;
-  cont.innerHTML = sorted.map(([name, d], i) => {
+   cont.innerHTML = sorted.map(([name, d], i) => {
     const prod = (window.productos || []).find(p => p.id === d.id);
     const foto = prod && prod.foto ? `<img src="${prod.foto}" alt="${name}" />` : (name.charAt(0));
+    const sub = [prod?.marca, prod?.presentacion, prod?.categoria].filter(Boolean).join(' / ');
     return `<div class="top-prod-item">
       <div class="top-prod-rank${i===0?' gold':i===1?' silver':i===2?' bronze':''}">${i+1}</div>
       <div class="top-prod-img">${prod && prod.foto ? '<img src="'+prod.foto+'" />' : name.charAt(0)}</div>
       <div class="top-prod-info">
         <div class="top-prod-name">${name}</div>
-        <div class="top-prod-cat">${d.cat}</div>
+        <div class="top-prod-cat">${sub || d.cat}</div>
         <div class="top-bar"><div class="top-bar-fill" style="width:${(d.total/maxTotal*100).toFixed(1)}%"></div></div>
       </div>
       <div class="top-prod-val">Bs. ${d.total.toFixed(2)}</div>

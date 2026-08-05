@@ -302,9 +302,9 @@ function renderCombosManager() {
     return `<div class="combo-manager-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
         <div><div class="combo-nombre">${c.nombre}</div><div class="combo-desc">${c.descripcion||''}</div></div>
-        <div style="display:flex;gap:4px">
-          <button class="btn-icon" onclick="abrirModalCombo('${c.id}')">Editar</button>
-          <button class="btn-icon danger" onclick="eliminarCombo('${c.id}')">X</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalCombo('${c.id}')"><i data-lucide="pencil" style="width:13px;height:13px"></i> Editar</button>
+          <button class="btn-icon danger" onclick="eliminarCombo('${c.id}')" title="Eliminar combo"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>
         </div>
       </div>
       <div class="combo-componentes" style="margin-bottom:10px">${comps}</div>
@@ -314,6 +314,7 @@ function renderCombosManager() {
       </div>
     </div>`;
   }).join('');
+  if (window.lucide) lucide.createIcons();
 }
 
 function abrirModalCombo(id) {
