@@ -538,16 +538,23 @@ window.animateValueElement = function(el) {
   el.classList.add('updated');
 };
 
-// ── EXPORTAR / IMPORTAR DATOS (BACKUP) ──
+// ── EXPORTAR / IMPORTAR DATOS (BACKUP v4.1) ──
 window.exportarDatos = function() {
   const datos = {
-    version: '3.0',
+    version: '4.1',
     fecha: new Date().toISOString(),
     dispositivo: navigator.userAgent.substring(0, 50),
     productos: window.productos || [],
     ventas: window.ventas || [],
-    combos: window.combos || []
+    combos: window.combos || [],
+    clientes: window.clientes || [],
+    fiados: window.fiados || [],
+    pagos: window.pagos || [],
+    actividad: window.actividad || [],
+    historialPrecios: window.historialPrecios || JSON.parse(localStorage.getItem('tiaeli_historial_precios') || '[]')
   };
+  try { datos.salidas = JSON.parse(localStorage.getItem('tiaeli_salidas') || '[]'); } catch { datos.salidas = []; }
+  try { datos.entradas = JSON.parse(localStorage.getItem('tiaeli_entradas') || '[]'); } catch { datos.entradas = []; }
 
   const totalProductos = datos.productos.length;
   const totalVentas = datos.ventas.length;
@@ -561,7 +568,7 @@ window.exportarDatos = function() {
   a.click();
   URL.revokeObjectURL(url);
 
-  toast(`✅ Backup descargado: ${totalProductos} productos, ${totalVentas} ventas`, 'success');
+  toast(`✅ Backup v4.1 descargado: ${totalProductos} productos, ${totalVentas} ventas`, 'success');
 };
 
 window.importarDatos = function(event) {
@@ -662,6 +669,45 @@ window.importarDatos = function(event) {
         if (window.setCombosGlobal) window.setCombosGlobal(mergedCombos);
       }
 
+      // Merge clientes / fiados / pagos
+      if (datos.clientes) {
+        const merged = mergeArrays(window.clientes || [], datos.clientes);
+        localStorage.setItem('tiaeli_clientes', JSON.stringify(merged));
+        window.clientes = merged;
+        if (window.setClientesGlobal) window.setClientesGlobal(merged);
+      }
+      if (datos.fiados) {
+        const merged = mergeArrays(window.fiados || [], datos.fiados);
+        localStorage.setItem('tiaeli_fiados', JSON.stringify(merged));
+        window.fiados = merged;
+        if (window.setFiadosGlobal) window.setFiadosGlobal(merged);
+      }
+      if (datos.pagos) {
+        const merged = mergeArrays(window.pagos || [], datos.pagos);
+        localStorage.setItem('tiaeli_pagos', JSON.stringify(merged));
+        window.pagos = merged;
+        if (window.setPagosGlobal) window.setPagosGlobal(merged);
+      }
+      if (datos.historialPrecios) {
+        const merged = mergeArrays(window.historialPrecios || [], datos.historialPrecios);
+        localStorage.setItem('tiaeli_historial_precios', JSON.stringify(merged));
+        window.historialPrecios = merged;
+      }
+      if (datos.salidas) {
+        const localSalidas = JSON.parse(localStorage.getItem('tiaeli_salidas') || '[]');
+        localStorage.setItem('tiaeli_salidas', JSON.stringify(mergeArrays(localSalidas, datos.salidas)));
+      }
+      if (datos.entradas) {
+        const localEntradas = JSON.parse(localStorage.getItem('tiaeli_entradas') || '[]');
+        localStorage.setItem('tiaeli_entradas', JSON.stringify(mergeArrays(localEntradas, datos.entradas)));
+      }
+      if (datos.actividad) {
+        const localAct = window.actividad || [];
+        const merged = mergeArrays(localAct, datos.actividad).sort((a, b) => (b.fecha || 0) - (a.fecha || 0));
+        localStorage.setItem('tiaeli_actividad', JSON.stringify(merged));
+        window.actividad = merged;
+      }
+
       // Sync to Firestore if connected (with proper await)
       const syncPromises = [];
       if (window.syncSaveProducto && datos.productos) {
@@ -672,6 +718,18 @@ window.importarDatos = function(event) {
       }
       if (window.syncSaveCombo && datos.combos) {
         datos.combos.forEach(c => syncPromises.push(window.syncSaveCombo(c)));
+      }
+      if (window.syncSaveCliente && datos.clientes) {
+        datos.clientes.forEach(c => syncPromises.push(window.syncSaveCliente(c)));
+      }
+      if (window.syncSaveFiado && datos.fiados) {
+        datos.fiados.forEach(f => syncPromises.push(window.syncSaveFiado(f)));
+      }
+      if (window.syncSavePago && datos.pagos) {
+        datos.pagos.forEach(p => syncPromises.push(window.syncSavePago(p)));
+      }
+      if (window.syncSaveHistorialPrecio && datos.historialPrecios) {
+        datos.historialPrecios.forEach(h => syncPromises.push(window.syncSaveHistorialPrecio(h)));
       }
       
       Promise.all(syncPromises).catch(err => console.warn('Sync partial:', err));
@@ -685,6 +743,8 @@ window.importarDatos = function(event) {
       if (window.renderAllCharts) renderAllCharts();
       if (window.renderCategoryGrid) renderCategoryGrid();
       if (window.renderCombosManager) renderCombosManager();
+      if (typeof renderFiados === 'function') renderFiados();
+      if (typeof renderActividad === 'function') renderActividad();
 
       toast(`✅ Importación completada: ${totalP} productos, ${totalV} ventas fusionados`, 'success');
       event.target.value = ''; // Reset input

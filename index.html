@@ -9,12 +9,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>TIA ELI LICORERIA &ndash; Sistema de Inventario</title>
   <meta name="description" content="Sistema de control de inventario y ventas para TIA ELI LICORERIA." />
-  <link rel="manifest" href="manifest.json?v=6" />
+  <link rel="manifest" href="manifest.json?v=8" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=6" />
-  <script src="lucide.min.js?v=7" defer></script>
+  <link rel="stylesheet" href="style.css?v=8" />
 </head>
 <body>
 
@@ -355,67 +354,118 @@
       <div class="vencimiento-list" id="vencimientoList"></div>
     </section>
 
-    <!-- ══ AGREGAR PRODUCTO ══ -->
+    <!-- ══ AGREGAR PRODUCTO - WIZARD 3 PASOS ══ -->
     <section class="section" id="section-agregar">
       <div class="section-header">
-        <div><h1 id="formTitle">+ Agregar Producto</h1><p class="section-sub">Completa los datos del nuevo producto</p></div>
+        <div><h1 id="formTitle">+ Agregar Producto</h1><p class="section-sub" id="formSubtitle">Paso 1 de 3: Identidad del producto</p></div>
       </div>
+      
+      <!-- Progress indicator -->
+      <div class="wizard-progress" id="wizardProgress">
+        <div class="wizard-step active" data-step="1"><span class="wizard-step-num">1</span><span class="wizard-step-label">Identidad</span></div>
+        <div class="wizard-step" data-step="2"><span class="wizard-step-num">2</span><span class="wizard-step-label">Paquetes</span></div>
+        <div class="wizard-step" data-step="3"><span class="wizard-step-num">3</span><span class="wizard-step-label">Precios</span></div>
+      </div>
+
       <div class="form-card">
         <form id="productForm" novalidate>
           <input type="hidden" id="editId" />
-          <div class="form-grid">
-            <div class="form-group"><label>Nombre del Producto *</label><input type="text" id="fNombre" class="form-input" placeholder="Ej: Ron Bacard&iacute; 750ml" required /></div>
-            <div class="form-group"><label>Categor&iacute;a *</label>
-              <select id="fCategoria" class="form-input" required>
-                <option value="">Seleccionar...</option>
-                <option value="Licores">Licores</option>
-                <option value="Cervezas">Cervezas</option>
-                <option value="Sodas">Sodas</option>
-                <option value="Jugos">Jugos</option>
-                <option value="Galletas">Galletas</option>
-                <option value="Chicles">Chicles</option>
-                <option value="Otros">Otros</option>
-              </select>
-            </div>
-            <div class="form-group"><label>Marca / Presentaci&oacute;n</label><input type="text" id="fMarca" class="form-input" placeholder="Ej: 1 litro, 750ml..." /></div>
-            <div class="form-group"><label>Unidad</label>
-              <select id="fUnidad" class="form-input">
-                <option value="unidad">Unidad</option><option value="botella">Botella</option>
-                <option value="lata">Lata</option><option value="paquete">Paquete</option>
-                <option value="caja">Caja</option><option value="litro">Litro</option>
-              </select>
-            </div>
-            <div class="form-group"><label>Stock M&iacute;nimo</label><input type="number" id="fStockMin" class="form-input" value="3" min="0" /></div>
-            <div class="form-group"><label>Precio Venta (Bs.) *</label><input type="number" id="fVenta" class="form-input" placeholder="0.00" min="0" step="0.01" required /></div>
-            <div class="form-group form-group-full">
-              <label>Lotes de Inventario</label>
-              <div class="form-lotes-container">
-                <div id="lotesFormList"></div>
-                <button type="button" class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="agregarLoteUI()">+ Agregar Lote</button>
+          <input type="hidden" id="wizardStep" value="1" />
+          
+          <!-- PASO 1: IDENTIDAD -->
+          <div class="wizard-pane active" data-pane="1">
+            <h3 class="wizard-pane-title">Paso 1: Identidad del producto</h3>
+            <div class="form-grid">
+              <div class="form-group"><label>Nombre del producto *</label><input type="text" id="fNombre" class="form-input" placeholder="Ej: Paceña normal 330ml" required /></div>
+              <div class="form-group"><label>Categoría *</label>
+                <select id="fCategoria" class="form-input" required>
+                  <option value="">Seleccionar...</option>
+                  <option value="Licores">Licores</option>
+                  <option value="Cervezas">Cervezas</option>
+                  <option value="Sodas">Sodas</option>
+                  <option value="Jugos">Jugos</option>
+                  <option value="Galletas">Galletas</option>
+                  <option value="Chicles">Chicles</option>
+                  <option value="Otros">Otros</option>
+                </select>
               </div>
-            </div>
-            <div class="form-group"><label>Proveedor</label><input type="text" id="fProveedor" class="form-input" placeholder="Nombre del proveedor" /></div>
-            <div class="form-group form-group-full">
-              <label>Foto del Producto</label>
-              <div class="photo-upload-wrap">
-                <div class="photo-preview" id="photoPreview">
-                  <span>Toca para subir foto</span>
-                  <input type="file" id="fFoto" accept="image/*" onchange="handlePhotoUpload(this)" />
+              <div class="form-group"><label>Unidad base *</label>
+                <select id="fUnidadBase" class="form-input" required>
+                  <option value="">Seleccionar...</option>
+                  <option value="lata">Lata</option>
+                  <option value="botella">Botella</option>
+                  <option value="unidad">Unidad</option>
+                  <option value="ml">Mililitros (ml)</option>
+                  <option value="litro">Litro</option>
+                </select>
+              </div>
+              <div class="form-group"><label>ml por unidad base</label><input type="number" id="fMlPorUnidad" class="form-input" placeholder="Ej: 330" min="1" step="1" /></div>
+              <div class="form-group"><label>Stock mínimo (unidades base) *</label><input type="number" id="fStockMin" class="form-input" value="24" min="0" required /></div>
+              <div class="form-group"><label>Marca / Presentación</label><input type="text" id="fMarca" class="form-input" placeholder="Ej: normal, light, zero..." /></div>
+              <div class="form-group form-group-full">
+                <label>Foto del producto</label>
+                <div class="photo-upload-wrap">
+                  <div class="photo-preview" id="photoPreview">
+                    <span>Toca para subir foto</span>
+                    <input type="file" id="fFoto" accept="image/*" onchange="handlePhotoUpload(this)" />
+                  </div>
                 </div>
               </div>
+              <div class="form-group form-group-full"><label>Notas</label><textarea id="fNota" class="form-input form-textarea" placeholder="Observaciones..."></textarea></div>
             </div>
-            <div class="form-group form-group-full"><label>Notas</label><textarea id="fNota" class="form-input form-textarea" placeholder="Observaciones..."></textarea></div>
           </div>
-          <div class="margen-preview" id="margenPreview" style="display:none">
-            <div class="margen-item"><span>Ganancia por unidad:</span><span id="prevGanancia" class="margen-value">Bs. 0.00</span></div>
-            <div class="margen-item"><span>Margen:</span><span id="prevMargen" class="margen-value">0%</span></div>
+
+          <!-- PASO 2: PAQUETES -->
+          <div class="wizard-pane" data-pane="2" style="display:none">
+            <h3 class="wizard-pane-title">Paso 2: Paquetes (conversiones)</h3>
+            <p class="wizard-pane-subtitle">Define los paquetes disponibles. El primero será el predeterminado en POS.</p>
+            
+            <div id="paquetesList"></div>
+            
+            <div class="paquete-form" id="paqueteForm" style="margin-top:16px;padding:16px;background:var(--bg3);border-radius:var(--radius);border:1px dashed var(--border)">
+              <h4 style="margin-bottom:12px">➕ Agregar / Editar paquete</h4>
+              <input type="hidden" id="editPaqueteIdx" />
+              <div class="form-grid" style="grid-template-columns:1fr 1fr auto;gap:10px;align-items:end">
+                <div class="form-group"><label>Nombre del paquete *</label><input type="text" id="paqueteNombre" class="form-input" placeholder="Ej: Paquete 12" required /></div>
+                <div class="form-group"><label>Unidades por paquete *</label><input type="number" id="paqueteUnidades" class="form-input" min="2" step="1" required placeholder="Ej: 12" /></div>
+                <div class="form-group" style="height:38px">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="paquetePredeterminado" /> Predeterminado en POS
+                  </label>
+                </div>
+              </div>
+              <div class="form-actions" style="margin-top:10px">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="cancelarPaquete()">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="guardarPaquete()">✅ Guardar paquete</button>
+              </div>
+            </div>
+            
+            <div id="paquetesPreview" style="margin-top:16px"></div>
           </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" id="btnCancelForm">Cancelar</button>
-            <button type="submit" class="btn btn-primary" id="btnSubmitForm">
-              <span class="btn-spinner" id="btnSpinner" style="display:none"></span>
-              <span id="btnSubmitText">Guardar Producto</span>
-            </button>
+
+          <!-- PASO 3: PRECIOS -->
+          <div class="wizard-pane" data-pane="3" style="display:none">
+            <h3 class="wizard-pane-title">Paso 3: Precios sugeridos</h3>
+            <p class="wizard-pane-subtitle">Estos precios se heredan del último lote ingresado. Son editables.</p>
+            
+            <div class="form-grid">
+              <div class="form-group"><label>Precio por unidad (Bs.) *</label><input type="number" id="fPrecioUnidad" class="form-input" placeholder="0.00" min="0" step="0.01" required /></div>
+              <div class="form-group"><label>Precio por paquete predeterminado (Bs.)</label><input type="number" id="fPrecioPaquete" class="form-input" placeholder="0.00" min="0" step="0.01" /></div>
+              <div class="form-group"><label>Stock mínimo (unidades base) *</label><input type="number" id="fStockMin" class="form-input" value="24" min="0" required /></div>
+            </div>
+            
+            <div class="margen-preview" id="margenPreview" style="display:none;margin-top:16px;padding:12px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--border)">
+              <div class="margen-item"><span>Ganancia por unidad:</span><span id="prevGanancia" class="margen-value">Bs. 0.00</span></div>
+              <div class="margen-item"><span>Margen:</span><span id="prevMargen" class="margen-value">0%</span></div>
+            </div>
+            <div id="historialPreciosBtnWrap" style="margin-top:14px"></div>
+          </div>
+
+          <!-- NAVEGACIÓN WIZARD -->
+          <div class="wizard-nav">
+            <button type="button" class="btn btn-secondary" id="wizardPrev" onclick="wizardPrevStep()" style="display:none">← Atrás</button>
+            <button type="button" class="btn btn-primary" id="wizardNext" onclick="wizardNextStep()">Siguiente →</button>
+            <button type="submit" class="btn btn-success" id="wizardSubmit" style="display:none">✅ Crear producto</button>
           </div>
         </form>
       </div>
@@ -614,19 +664,48 @@
     </div>
   </div>
 
-  <!-- ══ MODAL OFERTA ══ -->
+  <!-- ══ MODAL OFERTA (Manual + Config Lote) ══ -->
   <div class="modal-overlay" id="ofertaOverlay" style="display:none">
-    <div class="modal">
-      <div class="modal-header">
-        <h3>Poner en Oferta</h3>
-        <button class="modal-close" id="ofertaClose">&times;</button>
-      </div>
+    <div class="modal" style="max-width:480px">
+      <div class="modal-header"><h3 id="ofertaModalTitle">Oferta</h3><button class="modal-close" onclick="document.getElementById('ofertaOverlay').style.display='none'">&times;</button></div>
       <div class="modal-body">
+        <input type="hidden" id="ofertaProductoId" />
         <div id="ofertaInfo" class="oferta-info"></div>
-        <div class="form-group" style="margin-top:1rem"><label>Nuevo Precio de Oferta (Bs.)</label><input type="number" id="ofertaPrecio" class="form-input" step="0.01" /></div>
-        <div class="form-actions" style="margin-top:1rem">
-          <button class="btn btn-secondary" id="ofertaCancelBtn">Cancelar</button>
-          <button class="btn btn-warning" id="ofertaConfirmBtn">Aplicar Oferta</button>
+        
+        <!-- Pestañas de oferta -->
+        <div class="oferta-tabs" style="display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:8px">
+          <button class="oferta-tab active" data-tab="manual" onclick="cambiarOfertaTab('manual')">🏷️ Oferta Manual</button>
+          <button class="oferta-tab" data-tab="lote" onclick="cambiarOfertaTab('lote')">⏰ Por Lote (Vencimiento)</button>
+        </div>
+        
+        <!-- OFERTA MANUAL -->
+        <div class="oferta-tab-pane active" id="ofertaTabManual">
+          <div class="form-group"><label>Precio oferta por unidad (Bs.)</label><input type="number" id="ofertaPrecioUnidad" class="form-input" step="0.01" min="0" placeholder="0.00" /></div>
+          <div class="form-group"><label>Precio oferta por paquete (Bs.)</label><input type="number" id="ofertaPrecioPaquete" class="form-input" step="0.01" min="0" placeholder="0.00" /></div>
+          <div class="form-group"><label>Fecha fin (opcional)</label><input type="date" id="ofertaFechaFin" class="form-input" /></div>
+          <div class="form-actions" style="margin-top:1rem">
+            <button class="btn btn-secondary" id="ofertaCancelBtn">Cancelar</button>
+            <button class="btn btn-warning" id="ofertaConfirmBtn">Aplicar Oferta Manual</button>
+          </div>
+        </div>
+        
+        <!-- CONFIG POR LOTE -->
+        <div class="oferta-tab-pane" id="ofertaTabLote" style="display:none">
+          <div class="oferta-config-card" style="padding:12px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--border);margin-bottom:12px">
+            <div class="form-group" style="margin-bottom:8px">
+              <label class="checkbox-label">
+                <input type="checkbox" id="ofertaLoteActiva" checked /> Activar descuento automático por vencimiento
+              </label>
+            </div>
+            <div class="entrada-fields-grid" style="margin-top:8px">
+              <div class="form-group"><label>Días antes de vencer</label><input type="number" id="ofertaDiasVencimiento" class="form-input" value="14" min="1" max="60" /></div>
+              <div class="form-group"><label>% Descuento</label><input type="number" id="ofertaDescuentoLote" class="form-input" value="10" min="1" max="50" step="1" /></div>
+            </div>
+          </div>
+          <div class="form-actions" style="margin-top:1rem">
+            <button class="btn btn-secondary" id="ofertaLoteCancelBtn">Cancelar</button>
+            <button class="btn btn-primary" id="ofertaLoteConfirmBtn">Guardar Configuración</button>
+          </div>
         </div>
       </div>
     </div>
@@ -669,6 +748,20 @@
     </div>
   </div>
 
+  <!-- ══ MODAL SELECTOR FORMATO POS (Paquete / Unidad) ══ -->
+  <div class="modal-overlay" id="posEmpaqueOverlay" style="display:none">
+    <div class="modal" style="max-width:380px">
+      <div class="modal-header"><h3>Elegir formato</h3><button class="modal-close" onclick="document.getElementById('posEmpaqueOverlay').style.display='none'">&times;</button></div>
+      <div class="modal-body">
+        <div style="margin-bottom:14px">
+          <strong id="posEmpaqueProductoNombre" style="font-size:1rem"></strong>
+          <div style="font-size:.78rem;color:var(--text3);margin-top:2px" id="posEmpaqueStock"></div>
+        </div>
+        <div id="posEmpaqueOptions" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ MODAL ENTRADA (agregar stock) ══ -->
   <div class="modal-overlay" id="entradaOverlay" style="display:none">
     <div class="modal" style="max-width:460px">
@@ -693,24 +786,32 @@
           <div class="entrada-section-title">📦 Datos de la entrada</div>
           <div class="entrada-fields-grid">
             <div class="form-group">
-              <label>Cantidad a agregar <span class="required">*</span></label>
-              <input type="number" id="entradaCantidad" class="form-input" min="1" step="1" placeholder="Ej: 24" />
+              <label>Formato del lote <span class="required">*</span></label>
+              <select id="entradaTipoEmpaque" class="form-input" onchange="actualizarEntradaResumen()"></select>
             </div>
             <div class="form-group">
-              <label>Costo unitario (Bs.) <span class="required">*</span></label>
-              <input type="number" id="entradaCosto" class="form-input" min="0" step="0.01" placeholder="Ej: 5.50" />
+              <label>Cantidad a agregar (en ese formato) <span class="required">*</span></label>
+              <input type="number" id="entradaCantidad" class="form-input" min="1" step="1" placeholder="Ej: 24" oninput="actualizarEntradaResumen()" />
+            </div>
+            <div class="form-group">
+              <label>Costo por empaque (Bs.) <span class="required">*</span></label>
+              <input type="number" id="entradaCosto" class="form-input" min="0" step="0.01" placeholder="Ej: 5.50" oninput="actualizarEntradaResumen()" />
             </div>
           </div>
         </div>
         <!-- Resumen de costos -->
         <div class="entrada-resumen" id="entradaResumen" style="display:none">
           <div class="entrada-resumen-row">
-            <span>Costo unitario</span>
+            <span>Costo por unidad (auto)</span>
             <span id="entradaResumenUnit">Bs. 0.00</span>
           </div>
           <div class="entrada-resumen-row">
-            <span>Cantidad</span>
+            <span>Cantidad (empaques)</span>
             <span id="entradaResumenQty">0</span>
+          </div>
+          <div class="entrada-resumen-row">
+            <span>Unidades totales</span>
+            <span id="entradaResumenUnids">0</span>
           </div>
           <div class="entrada-resumen-divider"></div>
           <div class="entrada-resumen-row entrada-resumen-total">
@@ -882,6 +983,20 @@
           <div class="entrada-section-title">💰 Abonos</div>
           <div id="expPagosList"></div>
         </div>
+</div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL HISTORIAL DE PRECIOS ══ -->
+  <div class="modal-overlay" id="historialPreciosOverlay" style="display:none">
+    <div class="modal" style="max-width:640px;max-height:85vh">
+      <div class="modal-header"><h3 id="historialPreciosModalTitle">Historial de Precios</h3><button class="modal-close" onclick="document.getElementById('historialPreciosOverlay').style.display='none'">&times;</button></div>
+      <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+        <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+          <strong id="hpProductoNombre"></strong>
+          <div style="font-size:.75rem;color:var(--text3);margin-top:4px" id="hpProductoInfo"></div>
+        </div>
+        <div id="historialPreciosList"></div>
       </div>
     </div>
   </div>
@@ -899,24 +1014,19 @@
     </div>
   </div>
 
-  <!-- ══ SCRIPTS ══ -->
+<!-- ══ SCRIPTS ══ -->
+  <script src="lucide.min.js?v=8" defer></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="firebase-config.js?v=6" defer></script>
-  <script src="lucide.min.js?v=7" defer></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="firebase-config.js?v=7" defer></script>
-  <script src="sync.js?v=7" defer></script>
-  <script src="app.js?v=7" defer></script>
-  <script src="charts.js?v=7" defer></script>
-  <script src="ventas.js?v=7" defer></script>
-  <script src="extras.js?v=7" defer></script>
-  <script src="gestion.js?v=7" defer></script>
+  <script src="firebase-config.js?v=8" defer></script>
+  <script src="sync.js?v=8" defer></script>
+  <script src="app.js?v=8" defer></script>
+  <script src="charts.js?v=8" defer></script>
+  <script src="ventas.js?v=8" defer></script>
+  <script src="extras.js?v=8" defer></script>
+  <script src="gestion.js?v=8" defer></script>
   <script>
-    // Iniciar Firebase + listeners en tiempo real al cargar la página
     document.addEventListener('DOMContentLoaded', function() {
       if (window.lucide && window.lucide.createIcons) {
         window.lucide.createIcons();

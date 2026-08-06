@@ -22,7 +22,8 @@
     fiados:    'fiados_tiaeli',
     pagos:     'pagos_fiados_tiaeli',
     salidas:   'salidas_tiaeli',
-    entradas:  'entradas_tiaeli'
+    entradas:  'entradas_tiaeli',
+    historialPrecios: 'historial_precios_tiaeli'
   };
 
   // ── HELPERS DE UI ──
@@ -145,7 +146,8 @@
          [COLS.fiados]:    'tiaeli_fiados',
          [COLS.pagos]:     'tiaeli_pagos',
          [COLS.salidas]:   'tiaeli_salidas',
-         [COLS.entradas]:  'tiaeli_entradas'
+         [COLS.entradas]:  'tiaeli_entradas',
+         [COLS.historialPrecios]: 'tiaeli_historial_precios'
        };
        const lsKey = LS_KEYS[collection];
        if (lsKey) localStorage.setItem(lsKey, JSON.stringify(filtered));
@@ -266,6 +268,17 @@
         });
         console.log('[Sync] Entradas actualizadas desde nube:', remoto.length);
       }, err => console.error('[Sync] Error listener entradas:', err));
+
+    // ── Historial de precios ──
+    const unsubHistorial = _db.collection(COLS.historialPrecios)
+      .onSnapshot({ includeMetadataChanges: false }, snap => {
+        const remoto = snap.docs.map(d => d.data());
+        smartMerge(COLS.historialPrecios, remoto, (merged) => {
+          localStorage.setItem('tiaeli_historial_precios', JSON.stringify(merged));
+          if (window.historialPrecios !== undefined) window.historialPrecios = merged;
+        });
+        console.log('[Sync] Historial de precios actualizado desde nube:', remoto.length);
+      }, err => console.error('[Sync] Error listener historial precios:', err));
 
     // ── QRs (Configuración global) ──
     const unsubConfig = _db.collection(COLS.config).doc('qrs')
@@ -425,6 +438,13 @@
     _eliminarDoc(COLS.entradas, id);
   };
 
+  // ── Historial de precios ──
+  window.syncSaveHistorialPrecio = function(registro) {
+    if (!registro || !registro.id) return;
+    _trackLocalChange(COLS.historialPrecios, registro, 'update');
+    _subirDoc(COLS.historialPrecios, registro);
+  };
+
   // Guardar QR Global
   window.syncSaveQRsGlobal = function(qrData) {
     if (!_db) return;
@@ -460,6 +480,8 @@
       salidas.forEach(s => allItems.push({ col: COLS.salidas, doc: { ...s, updatedAt: s.updatedAt || s.fecha || Date.now() } }));
       const entradas = JSON.parse(localStorage.getItem('tiaeli_entradas') || '[]');
       entradas.forEach(e => allItems.push({ col: COLS.entradas, doc: { ...e, updatedAt: e.updatedAt || e.fecha || Date.now() } }));
+      const historial = JSON.parse(localStorage.getItem('tiaeli_historial_precios') || '[]');
+      historial.forEach(h => allItems.push({ col: COLS.historialPrecios, doc: { ...h, updatedAt: h.updatedAt || h.fecha || Date.now() } }));
 
       // Firestore soporta máximo 500 operaciones por batch
       const chunk = 450;

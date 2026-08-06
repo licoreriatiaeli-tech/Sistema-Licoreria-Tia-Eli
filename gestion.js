@@ -142,8 +142,10 @@ function savePagos() { localStorage.setItem('tiaeli_pagos', JSON.stringify(pagos
 window.setPagosGlobal = function(nuevos) { pagos = nuevos; window.pagos = nuevos; };
 
 // ==== HELPERS DE STOCK ====
+// Stock total expresado en UNIDADES BASE (considera empaques/paquetes)
 function getStockTotal(p) {
   if (!p) return 0;
+  if (typeof getTotalUnidadesBase === 'function') return getTotalUnidadesBase(p);
   if (!p.lotes || !Array.isArray(p.lotes)) return safeNum(p.stock);
   return p.lotes.reduce((sum, l) => sum + safeNum(l && l.cantidad), 0);
 }
@@ -160,8 +162,13 @@ function getCostoPromedio(p) {
   if (!p.lotes || !Array.isArray(p.lotes) || p.lotes.length === 0) return safeNum(p.costo);
   const activos = p.lotes.filter(l => l && safeNum(l.cantidad) > 0);
   if (!activos.length) return safeNum(p.costo);
-  const totalValor = activos.reduce((s, l) => s + (safeNum(l.cantidad) * safeNum(l.costo)), 0);
-  const totalStock = activos.reduce((s, l) => s + safeNum(l.cantidad), 0);
+  let totalValor = 0, totalStock = 0;
+  activos.forEach(l => {
+    const unidEmp = getUnidadesPorEmpaque(p, l.empaqueId || 'unidad_base');
+    const unidades = safeNum(l.cantidad) * (unidEmp || 1);
+    totalStock += unidades;
+    totalValor += unidades * (safeNum(l.costo) / (unidEmp || 1));
+  });
   return totalStock > 0 ? totalValor / totalStock : 0;
 }
 
@@ -290,75 +297,85 @@ function abrirEntrada(productoId) {
   const p = window.productos ? window.productos.find(x => x.id === productoId) : null;
   if (!p) { toast('Producto no encontrado', 'error'); return; }
   entradaProductoId = productoId;
-  const stock = getStockTotal(p);
+  const stockUnid = getStockTotal(p);
   document.getElementById('entradaProductoId').value = productoId;
   document.getElementById('entradaProductoNombre').value = p.nombre;
-  document.getElementById('entradaStockActual').value = stock + ' ' + (p.unidad || 'ud');
-  // Populate display fields
+  document.getElementById('entradaStockActual').value = stockUnid + ' u.';
   const nombre2El = document.getElementById('entradaProductoNombre2');
   if (nombre2El) nombre2El.textContent = p.nombre;
   const stock2El = document.getElementById('entradaStockActual2');
-  if (stock2El) stock2El.textContent = stock + ' ' + (p.unidad || 'ud');
+  if (stock2El) stock2El.textContent = window.formatStockDisplay ? formatStockDisplay(p) : stockUnid + ' u.';
   document.getElementById('entradaCantidad').value = '';
-  // Round cost to 2 decimals for display
   const costoVal = p.costo ? parseFloat(Number(p.costo).toFixed(2)) : '';
   document.getElementById('entradaCosto').value = costoVal;
   document.getElementById('entradaVencimiento').value = '';
   document.getElementById('entradaProveedor').value = '';
   document.getElementById('entradaNota').value = '';
   document.getElementById('entradaModalTitle').textContent = 'Registrar Entrada';
-  // Hide cost summary until fields are filled
+  // Poblar selector de empaque: unidad base + paquetes del producto
+  const selectEmp = document.getElementById('entradaTipoEmpaque');
+  if (selectEmp) {
+    const baseName = p.unidadBase || 'unidad';
+    const empaques = safeArr(p.empaques);
+    selectEmp.innerHTML = '<option value="unidad_base">' + escHTML(baseName) + ' (unidad)</option>' +
+      empaques.map((e, i) => '<option value="' + escHTML(e.id) + '">' + escHTML(e.nombre) + ' (' + e.unidades + ' u)</option>').join('');
+    selectEmp.value = getEmpaquePredeterminado(p) ? getEmpaquePredeterminado(p).id : 'unidad_base';
+  }
   const resumenEl = document.getElementById('entradaResumen');
   if (resumenEl) resumenEl.style.display = 'none';
   document.getElementById('entradaOverlay').style.display = 'flex';
-  // Setup cost calculation listeners
-  setupEntradaCostCalc();
+  actualizarEntradaResumen();
 }
 window.abrirEntrada = abrirEntrada;
 
-function setupEntradaCostCalc() {
-  const cantEl = document.getElementById('entradaCantidad');
-  const costoEl = document.getElementById('entradaCosto');
+// Auto-cálculo: costo por unidad = costo del empaque ÷ unidades del empaque
+function actualizarEntradaResumen() {
   const resumenEl = document.getElementById('entradaResumen');
-  if (!cantEl || !costoEl || !resumenEl) return;
-  const calc = () => {
-    const cant = parseFloat(cantEl.value) || 0;
-    const costo = parseFloat(costoEl.value) || 0;
-    if (cant > 0 && costo > 0) {
-      resumenEl.style.display = 'block';
-      document.getElementById('entradaResumenUnit').textContent = 'Bs. ' + costo.toFixed(2);
-      document.getElementById('entradaResumenQty').textContent = cant;
-      document.getElementById('entradaResumenTotal').textContent = 'Bs. ' + (cant * costo).toFixed(2);
-    } else {
-      resumenEl.style.display = 'none';
-    }
-  };
-  // Remove old listeners by cloning
-  const newCant = cantEl.cloneNode(true);
-  cantEl.parentNode.replaceChild(newCant, cantEl);
-  const newCosto = costoEl.cloneNode(true);
-  costoEl.parentNode.replaceChild(newCosto, costoEl);
-  newCant.addEventListener('input', calc);
-  newCosto.addEventListener('input', calc);
-  calc();
+  if (!resumenEl) return;
+  const p = window.productos ? window.productos.find(x => x.id === entradaProductoId) : null;
+  if (!p) return;
+  const empaqueId = (document.getElementById('entradaTipoEmpaque') || {}).value || 'unidad_base';
+  const unidadesEmp = getUnidadesPorEmpaque(p, empaqueId) || 1;
+  const cant = parseFloat(document.getElementById('entradaCantidad').value) || 0;
+  const costoEmp = parseFloat(document.getElementById('entradaCosto').value) || 0;
+  const costoUnidad = costoEmp > 0 ? costoEmp / unidadesEmp : 0;
+  const total = cant * costoEmp;
+  const elUnit = document.getElementById('entradaResumenUnit');
+  const elQty = document.getElementById('entradaResumenQty');
+  const elUnids = document.getElementById('entradaResumenUnids');
+  const elTotal = document.getElementById('entradaResumenTotal');
+  if (cant > 0 && costoEmp > 0) {
+    resumenEl.style.display = 'block';
+    if (elUnit) elUnit.textContent = 'Bs. ' + costoUnidad.toFixed(2) + ' / u.';
+    if (elQty) elQty.textContent = cant + ' ' + (empaqueId === 'unidad_base' ? 'u.' : getNombreEmpaque(p, empaqueId));
+    if (elUnids) elUnids.textContent = cant * unidadesEmp + ' u.';
+    if (elTotal) elTotal.textContent = 'Bs. ' + total.toFixed(2);
+  } else {
+    resumenEl.style.display = 'none';
+  }
 }
+window.actualizarEntradaResumen = actualizarEntradaResumen;
 
 function confirmarEntrada() {
   const pid = document.getElementById('entradaProductoId').value;
+  const empaqueId = document.getElementById('entradaTipoEmpaque').value;
   const cantidad = safeNum(document.getElementById('entradaCantidad').value);
-  const costo = safeNum(document.getElementById('entradaCosto').value);
+  const costoEmp = safeNum(document.getElementById('entradaCosto').value);
   const vencimiento = document.getElementById('entradaVencimiento').value;
   const proveedor = document.getElementById('entradaProveedor').value.trim();
   const nota = document.getElementById('entradaNota').value.trim();
-  if (!pid || !cantidad || cantidad <= 0 || costo < 0) { toast('Datos inválidos', 'error'); return; }
+  if (!pid || !cantidad || cantidad <= 0 || costoEmp < 0) { toast('Datos inválidos', 'error'); return; }
   const p = window.productos.find(x => x.id === pid);
   if (!p) { toast('Producto no encontrado', 'error'); return; }
+  const unidadesEmp = getUnidadesPorEmpaque(p, empaqueId) || 1;
 
   if (!p.lotes) p.lotes = [];
   p.lotes.push({
     id: genId(),
+    empaqueId: empaqueId,
     cantidad: cantidad,
-    costo: costo,
+    costo: costoEmp,
+    costoPorUnidad: unidadesEmp > 0 ? costoEmp / unidadesEmp : costoEmp,
     vencimiento: vencimiento || '',
     fechaIngreso: new Date().toISOString().slice(0, 10),
     nota: nota || (proveedor ? 'Proveedor: ' + proveedor : '')
@@ -375,8 +392,12 @@ function confirmarEntrada() {
     id: genId(),
     productoId: pid,
     productoNombre: p.nombre,
+    empaqueId: empaqueId,
+    empaqueNombre: empaqueId === 'unidad_base' ? (p.unidadBase || 'unidad') : getNombreEmpaque(p, empaqueId),
     cantidad: cantidad,
-    costo: costo,
+    unidadesTotales: cantidad * unidadesEmp,
+    costo: costoEmp,
+    costoPorUnidad: unidadesEmp > 0 ? costoEmp / unidadesEmp : costoEmp,
     vencimiento: vencimiento,
     proveedor: proveedor,
     nota: nota,
@@ -385,7 +406,7 @@ function confirmarEntrada() {
   });
   localStorage.setItem('tiaeli_entradas', JSON.stringify(entradas));
 
-  registrarActividad('entrada', 'Entrada: ' + p.nombre + ' (+' + cantidad + ' ' + (p.unidad || 'ud') + ') — Costo: Bs.' + costo.toFixed(2) + (vencimiento ? ' Vence: ' + vencimiento : ''));
+  registrarActividad('entrada', 'Entrada: ' + p.nombre + ' (+' + cantidad + ' ' + (empaqueId === 'unidad_base' ? 'u' : getNombreEmpaque(p, empaqueId)) + ' = ' + cantidad * unidadesEmp + ' u.) — Costo: Bs.' + costoEmp.toFixed(2) + (vencimiento ? ' Vence: ' + vencimiento : ''));
 
   if (typeof save === 'function') save();
   if (typeof window.syncSaveProducto === 'function') window.syncSaveProducto(p);
@@ -395,6 +416,7 @@ function confirmarEntrada() {
   if (typeof filterAndRender === 'function') filterAndRender();
   if (typeof renderDashboard === 'function') renderDashboard();
   if (typeof renderPOSProducts === 'function') renderPOSProducts();
+  if (typeof ejecutarJobOfertasLote === 'function') ejecutarJobOfertasLote();
   toast('Entrada registrada', 'success');
 }
 
@@ -924,6 +946,58 @@ function exportarActividadCSV() {
 }
 window.exportarActividadCSV = exportarActividadCSV;
 
+// ==== JOB OFERTAS POR LOTE (VENCIMIENTO) ====
+// Corre al iniciar y cada hora: marca lotes próximos a vencer como en oferta.
+// Cuando el lote se agota, el precio vuelve a la normalidad automáticamente.
+function ejecutarJobOfertasLote(notificar) {
+  const prods = window.productos || [];
+  let cambios = 0;
+  const notifs = [];
+  const now = new Date();
+  prods.forEach(p => {
+    const cfg = p.ofertaLote && p.ofertaLote.activa ? p.ofertaLote : null;
+    safeArr(p.lotes).forEach(l => {
+      if (safeNum(l.cantidad) <= 0) {
+        if (l.enOfertaPorVencimiento) { l.enOfertaPorVencimiento = false; cambios++; }
+        return;
+      }
+      if (!l.vencimiento) return;
+      const vd = new Date(l.vencimiento);
+      const dias = Math.ceil((vd - now) / 86400000);
+      const umbral = cfg ? cfg.dias : 0;
+      const deberiaOferta = cfg && dias <= umbral;
+      if (deberiaOferta && !l.enOfertaPorVencimiento) {
+        l.enOfertaPorVencimiento = true;
+        cambios++;
+        notifs.push(p.nombre + ' (lote vence en ' + dias + 'd) — oferta ' + cfg.descuento + '%');
+        if (typeof registrarHistorialPrecio === 'function') {
+          registrarHistorialPrecio(p, 'oferta', 'Oferta automática por lote: vence en ' + dias + ' días (' + cfg.descuento + '% dcto)');
+        }
+      } else if (!deberiaOferta && l.enOfertaPorVencimiento) {
+        l.enOfertaPorVencimiento = false;
+        cambios++;
+      }
+    });
+  });
+  if (cambios > 0) {
+    if (typeof save === 'function') save();
+    prods.forEach(p => { if (window.syncSaveProducto) window.syncSaveProducto(p); });
+    if (typeof filterAndRender === 'function') filterAndRender();
+    if (typeof renderDashboard === 'function') renderDashboard();
+    if (typeof renderPOSProducts === 'function') renderPOSProducts();
+    if (typeof renderVencimientos === 'function') renderVencimientos(activeVencDias || 7);
+  }
+  if (notificar !== false && notifs.length) {
+    toast('Lotes en oferta por vencimiento: ' + notifs.length, 'success');
+    notifs.slice(0, 3).forEach(n => toast(n, 'info'));
+    if (typeof registrarActividad === 'function') {
+      notifs.forEach(n => registrarActividad('oferta', 'Oferta automática: ' + n));
+    }
+  }
+  return cambios;
+}
+window.ejecutarJobOfertasLote = ejecutarJobOfertasLote;
+
 // ==== INICIALIZACIÓN ====
 function initGestion() {
   actualizarChipUsuario();
@@ -931,5 +1005,11 @@ function initGestion() {
   if (!sesion) {
     setTimeout(function() { mostrarLogin(true); }, 100);
   }
+  setTimeout(function() {
+    try { ejecutarJobOfertasLote(true); } catch (e) { console.warn('Job ofertas:', e); }
+  }, 1500);
+  setInterval(function() {
+    try { ejecutarJobOfertasLote(false); } catch (e) { console.warn('Job ofertas (hora):', e); }
+  }, 3600000);
 }
 window.initGestion = initGestion;

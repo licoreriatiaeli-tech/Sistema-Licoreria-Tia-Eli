@@ -1579,3 +1579,40 @@ select.form-input{cursor:pointer}
   font-weight: 800 !important;
   color: var(--green) !important;
 }
+
+/* ---------------- WIZARD PRODUCTO (3 pasos) ---------------- */
+.wizard-progress{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.wizard-step{flex:1;min-width:120px;display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--radius);background:var(--bg3);border:1px solid var(--border);opacity:.55;transition:all .2s}
+.wizard-step.active{opacity:1;border-color:var(--primary);background:var(--primary-soft,#e3edff)}
+.wizard-step-num{width:24px;height:24px;border-radius:50%;background:var(--border);color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700}
+.wizard-step.active .wizard-step-num{background:var(--primary);color:#fff}
+.wizard-step-label{font-size:.8rem;font-weight:600;color:var(--text)}
+.wizard-pane{animation:fadeInUp .25s ease}
+.wizard-pane-title{font-size:1rem;margin-bottom:4px;color:var(--text)}
+.wizard-pane-subtitle{font-size:.8rem;color:var(--text3);margin-bottom:16px}
+.wizard-nav{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap}
+
+.paquete-chip{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;flex-wrap:wrap}
+.paquete-chip-info{display:flex;flex-direction:column;gap:2px}
+.paquete-chip-info strong{font-size:.9rem}
+.paquete-chip-info span{font-size:.75rem;color:var(--text3)}
+.paquete-chip-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ---------------- MODAL OFERTA (tabs) ---------------- */
+.oferta-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:8px;overflow-x:auto}
+.oferta-tab{flex:1;padding:8px 10px;font-size:.8rem;font-weight:600;color:var(--text3);background:transparent;border:1px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0;cursor:pointer;white-space:nowrap;transition:all .15s}
+.oferta-tab.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.oferta-tab-pane{animation:fadeInUp .2s ease}
+.oferta-info{padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);font-size:.85rem;margin-bottom:14px;color:var(--text2)}
+
+/* ---------------- SELECTOR FORMATO POS ---------------- */
+.pos-empaque-opt{display:flex;flex-direction:column;gap:2px;align-items:flex-start;padding:14px 16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);cursor:pointer;transition:all .15s;text-align:left}
+.pos-empaque-opt:hover{border-color:var(--primary);background:var(--primary-soft,#e3edff);transform:translateY(-1px)}
+.pos-empaque-opt .po-name{font-weight:700;font-size:.95rem;color:var(--text)}
+.pos-empaque-opt .po-sub{font-size:.75rem;color:var(--text3)}
+.pos-empaque-opt .po-price{font-size:1rem;font-weight:800;color:var(--primary);margin-top:4px}
+
+/* ---------------- BADGES NUEVOS ---------------- */
+.lote-badge.lote-oferta{background:var(--orange);color:#fff}
+.pos-card-sub2{font-size:.75rem;color:var(--orange);font-weight:600;margin-top:2px}
+.badge-oferta{background:var(--orange);color:#fff}
