@@ -381,6 +381,94 @@ function abrirEntrada(productoId) {
 }
 window.abrirEntrada = abrirEntrada;
 
+// ── ELIMINAR LOTE ──
+window.eliminarLote = function(pid, lid) {
+  if (!sesion) { toast('Debes iniciar sesión primero', 'warning'); return; }
+  const p = window.productos ? window.productos.find(x => x.id === pid) : null;
+  if (!p || !p.lotes) return;
+  const idx = p.lotes.findIndex(l => l && l.id === lid);
+  if (idx < 0) return;
+  const l = p.lotes[idx];
+  const cant = safeNum(l.cantidadBaseUnidades !== undefined ? l.cantidadBaseUnidades : l.cantidad);
+
+  const conf = confirm(`¿Quitar Lote #${idx+1}?\n(${cant} unidades de ${p.nombre})\nEsto reducirá el stock y no se podrá deshacer.`);
+  if (!conf) return;
+
+  // Si tiene cantidad, generar movimiento de salida antes de borrar
+  if (cant > 0) {
+    const salida = {
+      id: genId(),
+      productoId: pid,
+      productoNombre: p.nombre,
+      cantidad: cant,
+      unidadesTotales: cant,
+      motivo: 'Anulación de lote',
+      empaqueId: 'unidad_base',
+      empaqueNombre: p.unidadBase || 'unidad',
+      fecha: Date.now(),
+      usuario: (typeof usuarioActual === 'function' && usuarioActual()) || '—',
+      tipo: 'ajuste'
+    };
+    // Registrar en historial de salidas si existe
+    if (typeof window.registrarSalidaMovimiento === 'function') {
+      window.registrarSalidaMovimiento(salida);
+    } else {
+      let salidas = [];
+      try { salidas = JSON.parse(localStorage.getItem('tiaeli_salidas') || '[]'); } catch { salidas = []; }
+      salidas.unshift(salida);
+      localStorage.setItem('tiaeli_salidas', JSON.stringify(salidas));
+      if (typeof window.syncSaveSalida === 'function') window.syncSaveSalida(salida);
+    }
+  }
+
+  // Eliminar lote
+  p.lotes.splice(idx, 1);
+  if (p.lotes.length === 0) p.lotes = [];
+
+  // Recalcular
+  p.stock = getTotalUnidadesBase(p);
+  p.vencimiento = getVencimientoMasCercano(p);
+  p.costoPromedioUnidad = getCostoPromedio(p);
+  p.costo = p.costoPromedioUnidad;
+  p.updatedAt = Date.now();
+
+  // Auditoría
+  registrarActividad('entrada', `Lote #${idx+1} quitado (${cant} u.) — ${p.nombre}`);
+
+  // Persistir
+  if (typeof save === 'function') save();
+  if (typeof window.syncSaveProducto === 'function') window.syncSaveProducto(p);
+
+  // Re-render
+  if (typeof filterAndRender === 'function') filterAndRender();
+  toast('Lote quitado', 'success');
+};
+
+// ── AJUSTAR CANTIDAD DE LOTE ──
+window.ajustarCantidadLote = function(pid, lid, nuevaCant) {
+  if (!sesion) { toast('Debes iniciar sesión primero', 'warning'); return; }
+  const p = window.productos ? window.productos.find(x => x.id === pid) : null;
+  if (!p || !p.lotes) return;
+  const idx = p.lotes.findIndex(l => l && l.id === lid);
+  if (idx < 0) return;
+  let cant = safeNum(nuevaCant);
+  if (cant < 0) cant = 0;
+  const l = p.lotes[idx];
+  const cantActual = safeNum(l.cantidadBaseUnidades !== undefined ? l.cantidadBaseUnidades : l.cantidad);
+  if (cant > cantActual + getTotalUnidadesBase(p) - cantActual) cant = cantActual;
+  l.cantidadBaseUnidades = cant;
+  l.cantidad = cant;
+  p.stock = getTotalUnidadesBase(p);
+  p.vencimiento = getVencimientoMasCercano(p);
+  p.costoPromedioUnidad = getCostoPromedio(p);
+  p.costo = p.costoPromedioUnidad;
+  p.updatedAt = Date.now();
+  if (typeof save === 'function') save();
+  if (typeof window.syncSaveProducto === 'function') window.syncSaveProducto(p);
+  registrarActividad('entrada', `Lote #${idx+1} ajustado a ${cant} u. — ${p.nombre}`);
+  if (typeof filterAndRender === 'function') filterAndRender();
+};
+
 // Muestra/oculta detalle extra cuando se elige crear un lote nuevo vs. agregar a uno existente
 window.toggleLoteExistente = function() {
   const sel = document.getElementById('loteExistenteSelect');
