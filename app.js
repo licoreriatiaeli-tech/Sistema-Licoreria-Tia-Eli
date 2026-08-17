@@ -627,7 +627,7 @@ function renderTabla(list) {
         <div class="lote-row-wrapper">
           <div class="lote-row-inner">
             <table class="lote-table">
-              <thead><tr><th>Lote</th><th>Stock</th><th>Costo</th><th>Vencimiento</th><th>F. Ingreso</th><th>Estado</th></tr></thead>
+              <thead><tr><th>Lote</th><th>Stock</th><th>Costo</th><th>Vencimiento</th><th>F. Ingreso</th><th>Estado</th><th>Acciones</th></tr></thead>
               <tbody>${lotesHtml}</tbody>
             </table>
           </div>

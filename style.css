@@ -758,6 +758,45 @@ select.form-input{cursor:pointer}
 }
 /* Each lote row starts invisible — JS animates them in with stagger */
 .lote-table tbody tr {
+  transition: background 0.2s;
+}
+.lote-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.lote-actions input[type="number"] {
+  width: 60px;
+  padding: 2px 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg3);
+  color: var(--text);
+  text-align: center;
+}
+.btn-quitar-lote {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid var(--red);
+  background: color-mix(in srgb, var(--red) 12%, transparent);
+  color: var(--red);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+.btn-quitar-lote:hover,
+.btn-quitar-lote:focus {
+  background: var(--red);
+  color: #fff;
+  transform: scale(1.1);
+}
   opacity: 0;
   transform: translateX(-12px);
   /* transition applied by JS */
