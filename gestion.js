@@ -357,10 +357,39 @@ function abrirEntrada(productoId) {
   if (actualizarRow) actualizarRow.style.display = 'none';
   const resumenEl = document.getElementById('entradaResumen');
   if (resumenEl) resumenEl.style.display = 'none';
+  // Poblar selector de lotes existentes (solo activos) para "agregar a lote existente"
+  const loteGroup = document.getElementById('loteExistenteGroup');
+  const loteSelect = document.getElementById('loteExistenteSelect');
+  const lotesActivos = (p.lotes || []).filter(l => l && safeNum(l.cantidadBaseUnidades !== undefined ? l.cantidadBaseUnidades : l.cantidad) > 0);
+  if (loteGroup && loteSelect) {
+    if (lotesActivos.length > 0) {
+      const opts = lotesActivos.map((l, idx) => {
+        const c = safeNum(l.cantidadBaseUnidades !== undefined ? l.cantidadBaseUnidades : l.cantidad);
+        const origIdx = (p.lotes || []).indexOf(l);
+        return '<option value="' + escHTML(l.id) + '">Lote #' + (origIdx >= 0 ? origIdx + 1 : idx + 1) + ' · ' + c + ' u. · vence ' + (l.vencimiento || 'S/Venc') + '</option>';
+      }).join('');
+      loteSelect.innerHTML = '<option value="">(Crear lote nuevo)</option>' + opts;
+      loteSelect.value = '';
+      loteGroup.style.display = 'block';
+    } else {
+      loteGroup.style.display = 'none';
+      loteSelect.innerHTML = '';
+    }
+  }
   document.getElementById('entradaOverlay').style.display = 'flex';
   actualizarEntradaResumen();
 }
 window.abrirEntrada = abrirEntrada;
+
+// Muestra/oculta detalle extra cuando se elige crear un lote nuevo vs. agregar a uno existente
+window.toggleLoteExistente = function() {
+  const sel = document.getElementById('loteExistenteSelect');
+  const group = document.getElementById('loteExistenteGroup');
+  if (!sel || !group) return;
+  // Si un lote está seleccionado, se podría ocultar el vencimiento (el lote ya lo tiene);
+  // dejamos el selector activo siempre que haya lotes activos.
+  return sel.value;
+};
 
 
 // Auto-cálculo: costo por unidad = costo del empaque ÷ unidades del empaque
@@ -392,8 +421,24 @@ function actualizarEntradaResumen() {
   const elTotal = document.getElementById('entradaResumenTotal');
   const labelCantidad = document.getElementById('entradaCantidadLabel');
   const labelCosto = document.getElementById('entradaCostoLabel');
-  if (labelCantidad) labelCantidad.innerHTML = '¿Cuántos ingresaron? (' + escHTML(nombreEmp) + ') <span class="required">*</span>';
+   if (labelCantidad) labelCantidad.innerHTML = '¿Cuántos ingresaron? (' + escHTML(nombreEmp) + ') <span class="required">*</span>';
   if (labelCosto) labelCosto.innerHTML = '¿Cuánto costó cada ' + escHTML(nombreEmp) + '? (Bs.) <span class="required">*</span>';
+  // Aviso visual: la entrada se sumará al lote existente seleccionado
+  let loteAviso = document.getElementById('entradaLoteAviso');
+  if (!loteAviso) {
+    loteAviso = document.createElement('div');
+    loteAviso.id = 'entradaLoteAviso';
+    loteAviso.style.cssText = 'font-size:0.82rem;color:var(--primary);margin-top:6px;';
+    resumenEl.parentNode.insertBefore(loteAviso, resumenEl);
+  }
+  const selLote = document.getElementById('loteExistenteSelect');
+  const lotId = selLote ? selLote.value : '';
+  if (lotId && p.lotes) {
+    const lot = p.lotes.find(l => l && l.id === lotId);
+    loteAviso.textContent = lot ? 'Se sumará al Lote #' + ((p.lotes.indexOf(lot) + 1)) + ' (' + safeNum(lot.cantidadBaseUnidades !== undefined ? lot.cantidadBaseUnidades : lot.cantidad) + ' u. actuales).' : '';
+  } else {
+    loteAviso.textContent = '';
+  }
   if (cant > 0 && costoEmp > 0) {
     resumenEl.style.display = 'block';
     if (elUnit) elUnit.textContent = 'Bs. ' + costoUnidad.toFixed(2) + ' / u.';
@@ -500,18 +545,37 @@ function confirmarEntrada() {
 
   const cantidadBase = cantidad * unidadesEmp;
   const costoUnidad = unidadesEmp > 0 ? costoEmp / unidadesEmp : costoEmp;
+  const valorIngreso = costoEmp * cantidad;
 
   if (!p.lotes) p.lotes = [];
-  p.lotes.push({
-    id: genId(),
-    cantidadBaseUnidades: cantidadBase,
-    cantidad: cantidadBase,
-    costoTotalLote: costoEmp * cantidad,
-    costoPorUnidad: costoUnidad,
-    vencimiento: vencimiento || '',
-    fechaIngreso: new Date().toISOString().slice(0, 10),
-    nota: nota || (proveedor ? 'Proveedor: ' + proveedor : '')
-  });
+  const loteExistenteId = (document.getElementById('loteExistenteSelect') ? document.getElementById('loteExistenteSelect').value : '') || '';
+  let lotesNuevos = true;
+  if (loteExistenteId) {
+    const lote = p.lotes.find(l => l && l.id === loteExistenteId);
+    if (lote) {
+      const cantVieja = safeNum(lote.cantidadBaseUnidades !== undefined ? lote.cantidadBaseUnidades : lote.cantidad);
+      const valorViejo = safeNum(lote.costoPorUnidad) * cantVieja;
+      const nuevaCant = cantVieja + cantidadBase;
+      lote.cantidadBaseUnidades = nuevaCant;
+      lote.cantidad = nuevaCant;
+      lote.costoTotalLote = (safeNum(lote.costoTotalLote) || 0) + valorIngreso;
+      lote.costoPorUnidad = nuevaCant > 0 ? (valorViejo + valorIngreso) / nuevaCant : costoUnidad;
+      if (!lote.vencimiento && vencimiento) lote.vencimiento = vencimiento;
+      lotesNuevos = false;
+    }
+  }
+  if (lotesNuevos) {
+    p.lotes.push({
+      id: genId(),
+      cantidadBaseUnidades: cantidadBase,
+      cantidad: cantidadBase,
+      costoTotalLote: valorIngreso,
+      costoPorUnidad: costoUnidad,
+      vencimiento: vencimiento || '',
+      fechaIngreso: new Date().toISOString().slice(0, 10),
+      nota: nota || (proveedor ? 'Proveedor: ' + proveedor : '')
+    });
+  }
 
   p.stock = getTotalUnidadesBase(p);
   p.vencimiento = getVencimientoMasCercano(p);
@@ -535,7 +599,8 @@ function confirmarEntrada() {
     proveedor: proveedor,
     nota: nota,
     fecha: Date.now(),
-    usuario: (typeof usuarioActual === 'function' && usuarioActual()) || '—'
+    usuario: (typeof usuarioActual === 'function' && usuarioActual()) || '—',
+    aLoteExistente: !lotesNuevos
   });
   localStorage.setItem('tiaeli_entradas', JSON.stringify(entradas));
 

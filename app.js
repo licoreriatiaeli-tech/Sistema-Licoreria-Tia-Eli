@@ -535,7 +535,7 @@ function renderTabla(list) {
                   d<=30?'<span class="lote-badge lote-amarillo">30d</span>':
                   '<span class="lote-badge lote-vigente">Vigente</span>');
       const ofertaTag = l.enOfertaPorVencimiento && safeNum(l.cantidad) > 0 ? ' <span class="lote-badge lote-oferta">OFERTA VENC.</span>' : '';
-      return `<tr><td>Lote ${i+1}</td><td><b>${l.cantidad} u.</b></td><td>Bs.${safeNum(l.costo).toFixed(2)}</td><td>${l.vencimiento||'—'}</td><td>${l.fechaIngreso||'—'}</td><td>${bdg}${ofertaTag}</td></tr>`;
+      return `<tr><td>Lote ${i+1}</td><td><b>${l.cantidad} u.</b></td><td>Bs.${safeNum(l.costoPorUnidad).toFixed(2)} / u.<br><span style="color:var(--text3);font-size:.72rem">Total Bs.${safeNum(l.costoTotalLote).toFixed(2)}</span></td><td>${l.vencimiento||'—'}</td><td>${l.fechaIngreso||'—'}</td><td>${bdg}${ofertaTag}</td></tr>`;
     }).join('') : '';
 
     const lotesActivos = p.lotes ? p.lotes.filter(l => l.cantidad > 0).length : 0;
