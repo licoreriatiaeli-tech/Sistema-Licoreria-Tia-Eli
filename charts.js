@@ -189,7 +189,7 @@ function renderChartGanCat() {
   if (!labels.length) return;
   chartInstances['cgancat'] = new Chart(ctx, {
     type: 'bar', indexAxis: 'y',
-    data: { labels, datasets: [{ label: 'Ganancia (Bs.)', data, backgroundColor: data.map(v => v >= 0 ? c.green.replace(')', ',.2)').replace('rgb', 'rgba') : c.red.replace(')', ',.2)').replace('rgb', 'rgba')), borderColor: data.map(v => v >= 0 ? c.green : c.red), borderWidth: 1.5, borderRadius: 5 }] },
+    data: { labels, datasets: [{ label: 'Ganancia (Bs.)', data, backgroundColor: data.map(v => v >= 0 ? (c.green + '40') : (c.red + '40')), borderColor: data.map(v => v >= 0 ? c.green : c.red), borderWidth: 1.5, borderRadius: 5 }] },
     options: {
       responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
       scales: { x: { grid: { color: c.grid }, border: { display: false }, ticks: { color: c.text, callback: v => 'Bs.' + v } }, y: { grid: { display: false }, border: { display: false }, ticks: { color: c.text } } },

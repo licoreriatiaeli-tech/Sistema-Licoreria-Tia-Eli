@@ -25,6 +25,10 @@ window.safeArr = safeArr;
 window.csvSafe = csvSafe;
 window._safeImg = _safeImg;
 
+// Declaración global temprana para evitar TDZ en sincronización
+var activeVencDias = 7;
+window.activeVencDias = activeVencDias;
+
 let productos = [];
 try {
   productos = JSON.parse(localStorage.getItem('tiaeli_v2') || '[]');
@@ -39,7 +43,7 @@ window.setProductosGlobal = function(nuevos) {
   window.productos = nuevos;
 };
 
-const CATS = {Licores:'[L]',Cervezas:'[C]',Sodas:'[S]',Jugos:'[J]',Galletas:'[G]',Chicles:'[CH]',Otros:'[+]'};
+const CATS = {Licores:'[L]',Cervezas:'[C]',Sodas:'[S]',Jugos:'[J]',Galletas:'[G]',Chicles:'[CH]',Snacks:'[SN]',Cigarrillos:'[CI]',Farmacia:'[F]',Otros:'[+]'};
 const COLLECTION = 'inventario_tiaeli';
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
@@ -74,21 +78,18 @@ function getEmpaquePorNombre(p, nombre) {
   return empaques.find(e => e.nombre === nombre);
 }
 
-// ── UTILS LOTES ──
-// Stock total expresado en UNIDADES BASE (convierte empaques)
+// ── UTILS LOTES Y FORMATOS ──
+// Stock total expresado SIEMPRE en UNIDADES BASE
 function getTotalUnidadesBase(p) {
   if (!p) return 0;
   if (!p.lotes || !Array.isArray(p.lotes)) return safeNum(p.stock);
-  return p.lotes.reduce((sum, l) => {
-    const unidades = getUnidadesPorEmpaque(p, l.empaqueId || 'unidad_base');
-    return sum + safeNum(l.cantidad) * unidades;
-  }, 0);
+  return p.lotes.reduce((sum, l) => sum + safeNum(l.cantidadBaseUnidades !== undefined ? l.cantidadBaseUnidades : l.cantidad), 0);
 }
 
 function getVencimientoMasCercano(p) {
   if (!p) return null;
   if (!p.lotes || !Array.isArray(p.lotes) || p.lotes.length === 0) return p.vencimiento || null;
-  const activos = p.lotes.filter(l => l && safeNum(l.cantidad) > 0 && l.vencimiento);
+  const activos = p.lotes.filter(l => l && safeNum(l.cantidadBaseUnidades !== undefined ? l.cantidadBaseUnidades : l.cantidad) > 0 && l.vencimiento);
   if (!activos.length) return null;
   activos.sort((a, b) => new Date(a.vencimiento) - new Date(b.vencimiento));
   return activos[0].vencimiento;
@@ -96,92 +97,109 @@ function getVencimientoMasCercano(p) {
 
 function getCostoPromedio(p) {
   if (!p) return 0;
-  if (!p.lotes || !Array.isArray(p.lotes) || p.lotes.length === 0) return safeNum(p.costo);
-  const activos = p.lotes.filter(l => l && safeNum(l.cantidad) > 0);
-  if (!activos.length) return safeNum(p.costo);
+  if (!p.lotes || !Array.isArray(p.lotes) || p.lotes.length === 0) return safeNum(p.costoPromedioUnidad || p.costo);
+  const activos = p.lotes.filter(l => l && safeNum(l.cantidadBaseUnidades !== undefined ? l.cantidadBaseUnidades : l.cantidad) > 0);
+  if (!activos.length) return safeNum(p.costoPromedioUnidad || p.costo);
   let totalValor = 0, totalStock = 0;
   activos.forEach(l => {
-    const unidEmp = getUnidadesPorEmpaque(p, l.empaqueId || 'unidad_base') || 1;
-    const unidades = safeNum(l.cantidad) * unidEmp;
+    const unidades = safeNum(l.cantidadBaseUnidades !== undefined ? l.cantidadBaseUnidades : l.cantidad);
+    const costoUnit = safeNum(l.costoPorUnidad) || (safeNum(l.costo) / (getUnidadesPorEmpaque(p, l.empaqueId) || 1));
     totalStock += unidades;
-    totalValor += unidades * (safeNum(l.costo) / unidEmp);
+    totalValor += unidades * costoUnit;
   });
-  return totalStock > 0 ? totalValor / totalStock : 0;
+  return totalStock > 0 ? totalValor / totalStock : safeNum(p.costoPromedioUnidad || p.costo);
 }
 
-// Helper para obtener stock total en unidades base
-function getTotalUnidadesBase(p) {
-  if (!p) return 0;
-  if (!p.lotes || !Array.isArray(p.lotes)) return safeNum(p.stock);
-  return p.lotes.reduce((sum, l) => {
-    const unidades = getUnidadesPorEmpaque({empaques: safeArr(p.empaques)}, l.empaqueId);
-    return sum + safeNum(l.cantidad) * unidades;
-  }, 0);
-}
+window.getTotalUnidadesBase = getTotalUnidadesBase;
+window.getVencimientoMasCercano = getVencimientoMasCercano;
+window.getCostoPromedio = getCostoPromedio;
 
-function migrarProductosALotes() {
-  let migrados = false;
-  productos.forEach(p => {
-    // Campos nuevos de identidad
-    if (!p.unidadBase) p.unidadBase = p.unidad || 'unidad';
-    if (!p.mlPorUnidad) p.mlPorUnidad = 330;
-    // Sin empaques definidos = solo unidades sueltas (sin paquete inventado)
-    if (!Array.isArray(p.empaques)) p.empaques = [];
-    if (!p.stockMinUnidades) p.stockMinUnidades = p.stockMin || 24;
+function migrarProductoV3(p) {
+  if (!p) return p;
 
-    // Lotes: normalizar al nuevo modelo (empaqueId + costo por empaque)
-    if (!p.lotes) {
-      p.lotes = [{
-        id: genId(),
-        cantidad: p.stock || 0,
-        empaqueId: 'unidad_base',
-        vencimiento: p.vencimiento || '',
-        fechaIngreso: p.fechaRegistro || new Date().toISOString().slice(0, 10),
-        costo: p.costo || 0,
-        nota: 'Lote original migrado'
-      }];
-      migrados = true;
-    } else {
-      p.lotes.forEach(l => {
-        if (!l.empaqueId) l.empaqueId = 'unidad_base';
-        if (!l.id) l.id = genId();
-        if (!l.fechaIngreso) l.fechaIngreso = p.fechaRegistro || new Date().toISOString().slice(0, 10);
+  // 1. Formatos de venta
+  if (!Array.isArray(p.formatosVenta) || p.formatosVenta.length === 0) {
+    p.formatosVenta = [
+      { id: 'unidad', nombre: 'Unidad', unidades: 1, precio: safeNum(p.precioVentaUnidad || p.venta), esBase: true }
+    ];
+    if (Array.isArray(p.empaques) && p.empaques.length > 0) {
+      p.empaques.forEach(emp => {
+        p.formatosVenta.push({
+          id: emp.id || ('fmt_' + genId()),
+          nombre: emp.nombre || 'Paquete',
+          unidades: safeNum(emp.unidades) || 12,
+          precio: safeNum(p.precioVentaPaquete) || 0
+        });
       });
     }
-
-    // Precios nuevos
-    if (typeof p.precioVentaUnidad !== 'number') p.precioVentaUnidad = p.venta || 0;
-    if (typeof p.precioVentaPaquete !== 'number') p.precioVentaPaquete = 0;
-    if (!p.venta) p.venta = p.precioVentaUnidad;
-
-    // Ofertas
-    if (typeof p.enOfertaManual !== 'boolean') p.enOfertaManual = p.enOferta || false;
-    if (typeof p.precioOfertaUnidad !== 'number') p.precioOfertaUnidad = p.precioOferta || 0;
-    if (typeof p.precioOfertaPaquete !== 'number') p.precioOfertaPaquete = 0;
-    if (!p.fechaFinOferta) p.fechaFinOferta = '';
-    if (!p.ofertaLote || typeof p.ofertaLote !== 'object') {
-      p.ofertaLote = { activa: true, dias: 14, descuento: 10 };
-    }
-
-    // Sincronizar stock total
-    p.stock = getTotalUnidadesBase(p);
-    p.vencimiento = getVencimientoMasCercano(p);
-    p.costo = getCostoPromedio(p);
-  });
-  if (migrados) {
-    save();
-    console.log('Migración a lotes con paquetes completada.');
   }
+
+  // 2. Formatos de compra
+  if (!Array.isArray(p.formatosCompra)) {
+    p.formatosCompra = Array.isArray(p.empaques) && p.empaques.length > 0
+      ? p.empaques.map(e => ({ id: e.id, nombre: e.nombre, unidades: e.unidades }))
+      : [];
+  }
+
+  // 3. Normalizar Lotes a cantidadBaseUnidades
+  if (!Array.isArray(p.lotes) || p.lotes.length === 0) {
+    const st = safeNum(p.stock);
+    p.lotes = [{
+      id: genId(),
+      cantidadBaseUnidades: st,
+      cantidad: st,
+      costoTotalLote: safeNum(p.costo) * st,
+      costoPorUnidad: safeNum(p.costo),
+      vencimiento: p.vencimiento || '',
+      fechaIngreso: p.fechaRegistro || new Date().toISOString().slice(0, 10),
+      nota: 'Stock inicial migrado'
+    }];
+  } else {
+    p.lotes.forEach(l => {
+      if (l.cantidadBaseUnidades === undefined) {
+        const unidEmp = getUnidadesPorEmpaque(p, l.empaqueId || 'unidad_base') || 1;
+        l.cantidadBaseUnidades = safeNum(l.cantidad) * unidEmp;
+        l.cantidad = l.cantidadBaseUnidades;
+      } else {
+        l.cantidad = l.cantidadBaseUnidades;
+      }
+      if (l.costoPorUnidad === undefined) {
+        const unidEmp = getUnidadesPorEmpaque(p, l.empaqueId || 'unidad_base') || 1;
+        l.costoPorUnidad = safeNum(l.costo) / unidEmp;
+      }
+      if (l.costoTotalLote === undefined) {
+        l.costoTotalLote = l.cantidadBaseUnidades * l.costoPorUnidad;
+      }
+      if (!l.id) l.id = genId();
+    });
+  }
+
+  // 4. Sincronizar metadatos
+  p.stock = p.lotes.reduce((s, l) => s + safeNum(l.cantidadBaseUnidades), 0);
+  p.costoPromedioUnidad = getCostoPromedio(p);
+  p.costo = p.costoPromedioUnidad;
+  p.vencimiento = getVencimientoMasCercano(p);
+  const fmtUni = p.formatosVenta.find(f => f.id === 'unidad');
+  if (fmtUni) {
+    p.precioVentaUnidad = fmtUni.precio;
+    p.venta = fmtUni.precio;
+  }
+  return p;
+}
+window.migrarProductoV3 = migrarProductoV3;
+
+function migrarTodosLosProductos() {
+  productos = productos.map(migrarProductoV3);
+  save();
 }
 
 function save() {
   localStorage.setItem('tiaeli_v2', JSON.stringify(productos));
   window.productos = productos;
-  
 }
 
 window.productos = productos;
-migrarProductosALotes();
+migrarTodosLosProductos();
 
 // ── SEED PRODUCTOS INICIALES ──
 function seedProductos() {
@@ -225,14 +243,14 @@ function navegarA(sectionId) {
   if (posFloating) {
     if (sectionId === 'pos') {
       posFloating.style.display = 'block';
+      if (typeof updatePOSCart === 'function') updatePOSCart();
     } else {
       posFloating.style.display = 'none';
-      // Also close the cart if navigating away
       const cartContainer = document.getElementById('posCartContainer');
+      const backdrop = document.getElementById('posCartBackdrop');
       if (cartContainer) cartContainer.classList.remove('open');
+      if (backdrop) backdrop.classList.remove('active');
     }
- 
- 
   }
 
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -433,27 +451,32 @@ function toggleLotesRow(id) {
 }
 window.toggleLotesRow = toggleLotesRow;
 
-// Devuelve texto tipo "8 Paq. + 5 u." para un producto
+// Devuelve texto tipo "120 u. (10 Cajas de 12)" o "5 u."
 function formatStockDisplay(p) {
   if (!p) return '0 u.';
-  if (!p.lotes || !p.lotes.length) return safeNum(p.stock) + ' u.';
-  const empaques = safeArr(p.empaques);
-  // Agrupar por empaque
-  const porEmpaque = {};
-  p.lotes.forEach(l => {
-    if (!l || safeNum(l.cantidad) <= 0) return;
-    const id = l.empaqueId || 'unidad_base';
-    porEmpaque[id] = (porEmpaque[id] || 0) + safeNum(l.cantidad);
-  });
-  const partes = [];
-  empaques.forEach(e => {
-    if (porEmpaque[e.id] > 0) partes.push(porEmpaque[e.id] + ' Paq.');
-  });
-  if (porEmpaque['unidad_base'] > 0) partes.push(porEmpaque['unidad_base'] + ' u.');
-  // Si no hay empaques definidos pero hay stock en lotes viejos sin empaqueId
-  const totalUnidades = getTotalUnidadesBase(p);
-  if (!partes.length && totalUnidades > 0) partes.push(totalUnidades + ' u.');
-  return partes.length ? partes.join(' + ') : (totalUnidades > 0 ? totalUnidades + ' u.' : '0 u.');
+  const total = getTotalUnidadesBase(p);
+  if (total <= 0) return '0 u.';
+
+  // Buscar si tiene formatos de venta con paquetes (> 1 unidad)
+  const formatos = safeArr(p.formatosVenta).filter(f => f && safeNum(f.unidades) > 1);
+  if (formatos.length > 0) {
+    formatos.sort((a, b) => b.unidades - a.unidades);
+    const ref = formatos[0];
+    const paquetes = Math.floor(total / ref.unidades);
+    const sueltas = total % ref.unidades;
+    if (paquetes > 0 && sueltas > 0) {
+      return `${total} u. (${paquetes} ${ref.nombre} + ${sueltas} u.)`;
+    } else if (paquetes > 0 && sueltas === 0) {
+      return `${total} u. (${paquetes} ${ref.nombre})`;
+    }
+  } else if (safeArr(p.empaques).length > 0) {
+    const emp = p.empaques[0];
+    const paq = Math.floor(total / (emp.unidades || 1));
+    const suelt = total % (emp.unidades || 1);
+    if (paq > 0 && suelt > 0) return `${total} u. (${paq} ${emp.nombre} + ${suelt} u.)`;
+    if (paq > 0 && suelt === 0) return `${total} u. (${paq} ${emp.nombre})`;
+  }
+  return `${total} u.`;
 }
 window.formatStockDisplay = formatStockDisplay;
 
@@ -505,7 +528,6 @@ function renderTabla(list) {
     const lotesHtml = p.lotes ? p.lotes.map((l, i) => {
       const v = l.vencimiento ? new Date(l.vencimiento) : null;
       const d = v ? Math.ceil((v-now)/86400000) : null;
-      const empaqueNombre = getNombreEmpaque(p, l.empaqueId || 'unidad_base');
       const bdg = l.cantidad===0?'<span class="lote-badge lote-agotado">Agotado</span>':
                   (d===null?'<span class="lote-badge lote-vigente">S/Venc</span>':
                   d<0?'<span class="lote-badge lote-rojo">Vencido</span>':
@@ -513,7 +535,7 @@ function renderTabla(list) {
                   d<=30?'<span class="lote-badge lote-amarillo">30d</span>':
                   '<span class="lote-badge lote-vigente">Vigente</span>');
       const ofertaTag = l.enOfertaPorVencimiento && safeNum(l.cantidad) > 0 ? ' <span class="lote-badge lote-oferta">OFERTA VENC.</span>' : '';
-      return `<tr><td>Lote ${i+1}</td><td><b>${l.cantidad} ${empaqueNombre === 'Unidad' ? 'u.' : empaqueNombre}</b></td><td>Bs.${safeNum(l.costo).toFixed(2)}</td><td>${l.vencimiento||'—'}</td><td>${l.fechaIngreso||'—'}</td><td>${bdg}${ofertaTag}</td></tr>`;
+      return `<tr><td>Lote ${i+1}</td><td><b>${l.cantidad} u.</b></td><td>Bs.${safeNum(l.costo).toFixed(2)}</td><td>${l.vencimiento||'—'}</td><td>${l.fechaIngreso||'—'}</td><td>${bdg}${ofertaTag}</td></tr>`;
     }).join('') : '';
 
     const lotesActivos = p.lotes ? p.lotes.filter(l => l.cantidad > 0).length : 0;
@@ -525,7 +547,7 @@ function renderTabla(list) {
         <div style="font-size:0.75rem; color:var(--text3); margin-bottom:4px;">Detalle de lotes:</div>
         ${p.lotes.map((l, idx) => `
           <div style="background:var(--bg3); padding:6px 8px; border-radius:4px; margin-bottom:4px; font-size:0.75rem; display:grid; grid-template-columns:1fr 1fr; gap:4px;">
-            <div>Cant: <b>${l.cantidad} ${getNombreEmpaque(p, l.empaqueId || 'unidad_base')}</b></div>
+            <div>Cant: <b>${l.cantidad} u.</b></div>
             <div>Vence: <b>${l.vencimiento||'-'}</b></div>
             <div>Costo: Bs.${safeNum(l.costo).toFixed(2)}</div>
             <div>Ingreso: ${l.fechaIngreso||'-'}</div>
@@ -612,129 +634,336 @@ function renderTabla(list) {
   }
 }
 
-// ── WIZARD PRODUCTO (3 PASOS) ──
-let wizardPaquetes = [];
+// ── WIZARD PRODUCTO (3 PASOS) & FORMATOS DE VENTA MIXTA ──
+let productoTieneVencimiento = false;
+let formatoCompraActual = 'paquete'; // 'paquete' | 'unidad'
+let formatosVentaTemp = []; // Formatos adicionales dinámicos (Six pack, Caja, etc.)
+let tempProductData = null;
+let existingProductMatch = null;
+
+// Controla si el campo de ml se muestra (solo para bebidas/líquidos)
+window.checkMlVisibility = function() {
+  const cat = document.getElementById('fCategoria')?.value || '';
+  const ub = document.getElementById('fUnidadBase')?.value || '';
+  const wrap = document.getElementById('wrapMlPorUnidad');
+  if (!wrap) return;
+  const isLiquidCat = ['Licores', 'Cervezas', 'Sodas', 'Jugos'].includes(cat);
+  const isLiquidUnit = ['lata', 'botella', 'ml', 'litro'].includes(ub);
+  if (isLiquidCat || isLiquidUnit) {
+    wrap.style.display = 'block';
+  } else {
+    wrap.style.display = 'none';
+    const input = document.getElementById('fMlPorUnidad');
+    if (input) input.value = '';
+  }
+};
+
+// Toggle Paso 1: ¿Tiene fecha de vencimiento?
+window.toggleTieneVencimiento = function(tiene) {
+  productoTieneVencimiento = !!tiene;
+  const btnSi = document.getElementById('btnVenceSi');
+  const btnNo = document.getElementById('btnVenceNo');
+  const wrap = document.getElementById('wrapFechaVencimiento');
+  if (btnSi) btnSi.className = tiene ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+  if (btnNo) btnNo.className = tiene ? 'btn btn-secondary btn-sm' : 'btn btn-primary btn-sm';
+  if (wrap) wrap.style.display = tiene ? 'block' : 'none';
+  if (!tiene) {
+    const inp = document.getElementById('fVencimiento');
+    if (inp) inp.value = '';
+  }
+};
+
+// Toggle Paso 2: ¿Compró por paquete o unidad suelta?
+window.toggleFormatoCompra = function(formato) {
+  formatoCompraActual = formato;
+  const btnPaq = document.getElementById('btnFormatoPaquete');
+  const btnUni = document.getElementById('btnFormatoUnidad');
+  const areaPaq = document.getElementById('areaCompraPaquete');
+  const areaUni = document.getElementById('areaCompraUnidad');
+  const labelCant = document.getElementById('labelCantidadInicial');
+
+  if (formato === 'paquete') {
+    if (btnPaq) btnPaq.className = 'btn btn-primary btn-sm';
+    if (btnUni) btnUni.className = 'btn btn-secondary btn-sm';
+    if (areaPaq) areaPaq.style.display = 'block';
+    if (areaUni) areaUni.style.display = 'none';
+    if (labelCant) {
+      const paqNombre = document.getElementById('paqueteNombre')?.value || 'paquetes/cajas';
+      labelCant.textContent = '¿Cuántos ' + paqNombre + ' entraron ahora?';
+    }
+  } else {
+    if (btnPaq) btnPaq.className = 'btn btn-secondary btn-sm';
+    if (btnUni) btnUni.className = 'btn btn-primary btn-sm';
+    if (areaPaq) areaPaq.style.display = 'none';
+    if (areaUni) areaUni.style.display = 'block';
+    if (labelCant) {
+      const ub = document.getElementById('fUnidadBase')?.value || 'unidades';
+      labelCant.textContent = '¿Cuántas ' + ub + ' entraron ahora?';
+    }
+  }
+  onCostoCompraChanged();
+};
+
+// Función única de cálculo del costo unitario actual
+function calcularCostoUnitarioActual() {
+  if (formatoCompraActual === 'paquete') {
+    const costPaq = parseFloat(document.getElementById('costoPaquete')?.value) || 0;
+    const unids = parseInt(document.getElementById('paqueteUnidades')?.value) || 1;
+    return unids > 0 ? (costPaq / unids) : 0;
+  } else {
+    return parseFloat(document.getElementById('costoUnidad')?.value) || 0;
+  }
+}
+window.calcularCostoUnitarioActual = calcularCostoUnitarioActual;
+
+function onCostoCompraChanged() {
+  const costoUni = calcularCostoUnitarioActual();
+  const elDisplay = document.getElementById('costoUnitarioDisplay');
+  if (elDisplay) elDisplay.textContent = 'Bs. ' + costoUni.toFixed(2);
+  renderFormatosVentaList();
+  actualizarResumenStockInicial();
+}
+window.onCostoCompraChanged = onCostoCompraChanged;
+
+// Cálculo de referencia en vivo por formato (ahorro/descuento y margen sobre costo automático)
+function calcularReferenciaFormato(unidadesFormato, precioFormato, precioUnidadSuelta, costoUnitario) {
+  const precioSueltoEquivalente = unidadesFormato * precioUnidadSuelta;
+  const ahorroCliente = precioSueltoEquivalente - precioFormato;
+  const porcentajeDescuentoCliente = precioSueltoEquivalente > 0 ? (ahorroCliente / precioSueltoEquivalente) * 100 : 0;
+
+  const costoTotalFormato = unidadesFormato * costoUnitario;
+  const gananciaFormato = precioFormato - costoTotalFormato;
+  const margenPorcentaje = precioFormato > 0 ? (gananciaFormato / precioFormato) * 100 : 0;
+
+  return {
+    precioSueltoEquivalente,
+    ahorroCliente,
+    porcentajeDescuentoCliente,
+    costoTotalFormato,
+    gananciaFormato,
+    margenPorcentaje
+  };
+}
+window.calcularReferenciaFormato = calcularReferenciaFormato;
+
+function agregarFormatoVenta() {
+  const id = 'fmt_' + genId();
+  formatosVentaTemp.push({ id, nombre: '', unidades: null, precio: null });
+  renderFormatosVentaList();
+}
+window.agregarFormatoVenta = agregarFormatoVenta;
+
+function eliminarFormatoVenta(id) {
+  formatosVentaTemp = formatosVentaTemp.filter(f => f.id !== id);
+  renderFormatosVentaList();
+}
+window.eliminarFormatoVenta = eliminarFormatoVenta;
+
+function actualizarFormato(id, campo, valor) {
+  const f = formatosVentaTemp.find(x => x.id === id);
+  if (f) {
+    f[campo] = campo === 'nombre' ? valor : (parseFloat(valor) || 0);
+  }
+}
+window.actualizarFormato = actualizarFormato;
+
+function renderFormatosVentaList() {
+  const cont = document.getElementById('formatosVentaList');
+  if (!cont) return;
+
+  // Track active focus to prevent cursor jumping
+  const activeId = document.activeElement ? document.activeElement.id : null;
+  let cursorStart = null;
+  let cursorEnd = null;
+  if (document.activeElement && document.activeElement.type === 'text') {
+    try {
+      cursorStart = document.activeElement.selectionStart;
+      cursorEnd = document.activeElement.selectionEnd;
+    } catch(e) {}
+  }
+
+  const precioUnidadSuelta = parseFloat(document.getElementById('precioUnidad_unidad')?.value) || 0;
+  const costoUnitario = calcularCostoUnitarioActual();
+
+  const elDisplay = document.getElementById('costoUnitarioDisplay');
+  if (elDisplay) elDisplay.textContent = 'Bs. ' + costoUnitario.toFixed(2);
+
+  // Referencia para la fila fija de Unidad
+  let refUnidadHtml = '';
+  if (precioUnidadSuelta > 0 && costoUnitario > 0) {
+    const gan = precioUnidadSuelta - costoUnitario;
+    const mar = (gan / precioUnidadSuelta) * 100;
+    const clase = mar < 0 ? 'alerta-roja' : mar < 15 ? 'alerta-amarilla' : 'alerta-verde';
+    refUnidadHtml = `
+      <div class="formato-referencia ${clase}">
+        Ganancia por unidad: <b>Bs. ${gan.toFixed(2)}</b> (Margen: <b>${Math.round(mar)}%</b>)
+        ${mar < 0 ? ' ⚠️ ¡Estás vendiendo por debajo del costo unitario!' : ''}
+      </div>`;
+  }
+
+  // Filas adicionales dinámicas
+  const filas = formatosVentaTemp.map(f => {
+    let refHtml = '';
+    if (f.unidades > 0 && f.precio > 0) {
+      const r = calcularReferenciaFormato(f.unidades, f.precio, precioUnidadSuelta, costoUnitario);
+      const clase = r.margenPorcentaje < 0 ? 'alerta-roja' : r.margenPorcentaje < 15 ? 'alerta-amarilla' : 'alerta-verde';
+      refHtml = `
+        <div class="formato-referencia ${clase}">
+          💡 ${f.unidades} sueltas costarían <b>Bs. ${r.precioSueltoEquivalente.toFixed(2)}</b>
+          — ${r.ahorroCliente >= 0 ? 'descuento cliente de' : 'recargo de'} <b>Bs. ${Math.abs(r.ahorroCliente).toFixed(2)} (${Math.abs(r.porcentajeDescuentoCliente).toFixed(1)}%)</b><br>
+          Tu ganancia en este formato: <b>Bs. ${r.gananciaFormato.toFixed(2)}</b> (Margen: <b>${Math.round(r.margenPorcentaje)}%</b>)
+          ${r.margenPorcentaje < 0 ? ' ⚠️ ¡Estás vendiendo este paquete por debajo de tu costo!' : ''}
+        </div>`;
+    }
+    return `
+      <div class="formato-row" data-id="${f.id}">
+        <div class="formato-row-inputs">
+          <input type="text" id="fmt_nombre_${f.id}" class="form-input" placeholder="Nombre (ej. Six Pack, Caja de 24)" value="${escHTML(f.nombre || '')}"
+                 oninput="actualizarFormato('${f.id}','nombre',this.value); renderFormatosVentaList();">
+          <input type="number" id="fmt_unids_${f.id}" class="form-input" placeholder="¿Cuántas u. trae? *" min="2" step="1" value="${f.unidades ?? ''}"
+                 oninput="actualizarFormato('${f.id}','unidades',this.value); renderFormatosVentaList();">
+          <input type="number" id="fmt_precio_${f.id}" class="form-input" placeholder="Precio venta Bs. *" min="0" step="0.01" value="${f.precio ?? ''}"
+                 oninput="actualizarFormato('${f.id}','precio',this.value); renderFormatosVentaList();">
+          <button type="button" class="btn-icon danger" onclick="eliminarFormatoVenta('${f.id}')" title="Eliminar formato"><i data-lucide="trash-2"></i></button>
+        </div>
+        ${refHtml}
+      </div>`;
+  }).join('');
+
+  const unidadVal = document.getElementById('precioUnidad_unidad')?.value || '';
+  cont.innerHTML = `
+    <div class="formato-row" data-id="unidad">
+      <div class="formato-row-inputs">
+        <span class="formato-nombre-fija">🔘 Unidad (1 u.)</span>
+        <input type="hidden" id="formatoUnidades_unidad" value="1" />
+        <span style="font-size:0.8rem;color:var(--text3)">1 unidad base</span>
+        <input type="number" id="precioUnidad_unidad" class="form-input" placeholder="Precio Bs. *" step="0.01" min="0" oninput="renderFormatosVentaList()" value="${unidadVal}" required />
+        <div></div>
+      </div>
+      <div id="ref_unidad">${refUnidadHtml}</div>
+    </div>
+    ${filas}`;
+  if (window.lucide && window.lucide.createIcons) lucide.createIcons();
+
+  // Restore focus
+  if (activeId) {
+    const el = document.getElementById(activeId);
+    if (el) {
+      el.focus();
+      try {
+        if (cursorStart !== null && el.type === 'text') {
+          el.setSelectionRange(cursorStart, cursorEnd);
+        }
+      } catch (e) {}
+    }
+  }
+}
+window.renderFormatosVentaList = renderFormatosVentaList;
+
+// Resumen del stock inicial e inversión (Paso 3)
+window.actualizarResumenStockInicial = function() {
+  const cantIngreso = parseFloat(document.getElementById('fCantidadInicial')?.value) || 0;
+  let totalUnids = 0;
+  let totalInversion = 0;
+
+  if (formatoCompraActual === 'paquete') {
+    const unidsPorPaq = parseInt(document.getElementById('paqueteUnidades')?.value) || 1;
+    const costoPaq = parseFloat(document.getElementById('costoPaquete')?.value) || 0;
+    totalUnids = cantIngreso * unidsPorPaq;
+    totalInversion = cantIngreso * costoPaq;
+  } else {
+    const costoUni = parseFloat(document.getElementById('costoUnidad')?.value) || 0;
+    totalUnids = cantIngreso;
+    totalInversion = cantIngreso * costoUni;
+  }
+
+  const elUnids = document.getElementById('stockInicialUnidadesCalculadas');
+  const elInv = document.getElementById('stockInicialInversionTotal');
+
+  if (elUnids) {
+    if (formatoCompraActual === 'paquete' && cantIngreso > 0) {
+      const paqNombre = document.getElementById('paqueteNombre')?.value || 'paquetes/cajas';
+      const unidsPorPaq = parseInt(document.getElementById('paqueteUnidades')?.value) || 1;
+      elUnids.textContent = totalUnids + ' unidades (' + cantIngreso + ' × ' + paqNombre + ' de ' + unidsPorPaq + ')';
+    } else {
+      elUnids.textContent = totalUnids + ' unidades';
+    }
+  }
+  if (elInv) elInv.textContent = 'Bs. ' + totalInversion.toFixed(2);
+};
 
 function actualizarWizardStep(step) {
-  document.querySelectorAll('.wizard-pane').forEach((pane, i) => { pane.style.display = (i + 1 === step) ? 'block' : 'none'; });
-  document.querySelectorAll('.wizard-step').forEach(btn => btn.classList.toggle('active', parseInt(btn.dataset.step) === step));
+  document.querySelectorAll('.wizard-pane').forEach((pane, i) => {
+    pane.style.display = (i + 1 === step) ? 'block' : 'none';
+  });
+  document.querySelectorAll('.wizard-step').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.step) === step);
+  });
   const prevBtn = document.getElementById('wizardPrev');
   const nextBtn = document.getElementById('wizardNext');
   const submitBtn = document.getElementById('wizardSubmit');
   if (prevBtn) prevBtn.style.display = step === 1 ? 'none' : 'inline-block';
   if (nextBtn) nextBtn.style.display = step === 3 ? 'none' : 'inline-block';
   if (submitBtn) submitBtn.style.display = step === 3 ? 'inline-block' : 'none';
+
   const sub = document.getElementById('formSubtitle');
-  if (sub) sub.textContent = 'Paso ' + step + ' de 3: ' + (step === 1 ? 'Identidad del producto' : step === 2 ? 'Paquetes (conversiones)' : 'Precios sugeridos');
-  const btnTxt = document.getElementById('wizardSubmit');
-  if (btnTxt) btnTxt.textContent = document.getElementById('editId').value ? 'Guardar cambios' : '✅ Crear producto';
+  if (sub) {
+    sub.textContent = 'Paso ' + step + ' de 3: ' + (
+      step === 1 ? 'Identidad y Vencimiento' :
+      step === 2 ? 'Compra y Precios' :
+      'Stock y Alerta'
+    );
+  }
+  if (step === 2) {
+    onCostoCompraChanged();
+  }
+  if (step === 3) {
+    actualizarResumenStockInicial();
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 window.wizardNextStep = function() {
-  const step = parseInt(document.getElementById('wizardStep').value || '1');
+  const step = parseInt(document.getElementById('wizardStep')?.value || '1');
   if (step === 1) {
-    if (!document.getElementById('fNombre').value.trim()) { toast('El nombre del producto es obligatorio', 'error'); return; }
-    if (!document.getElementById('fCategoria').value) { toast('Selecciona una categoría', 'error'); return; }
-    if (!document.getElementById('fUnidadBase').value) { toast('Selecciona la unidad base', 'error'); return; }
+    const nombre = document.getElementById('fNombre')?.value.trim();
+    const cat = document.getElementById('fCategoria')?.value;
+    const ub = document.getElementById('fUnidadBase')?.value;
+    if (!nombre) { toast('El nombre del producto es obligatorio', 'error'); return; }
+    if (!cat) { toast('Selecciona una categoría', 'error'); return; }
+    if (!ub) { toast('Selecciona la unidad base', 'error'); return; }
   }
-  if (step === 2 && wizardPaquetes.length === 0) {
-    if (!confirm('No definiste ningún paquete. ¿Continuar vendiendo solo unidades sueltas?')) return;
+  if (step === 2) {
+    const precioUnit = parseFloat(document.getElementById('precioUnidad_unidad')?.value) || 0;
+    if (precioUnit <= 0) {
+      toast('Ingresa el precio de venta por unidad', 'error');
+      return;
+    }
+    const costo = calcularCostoUnitarioActual();
+    if (costo <= 0) {
+      toast(formatoCompraActual === 'paquete' ? 'Ingresa el costo del paquete de compra' : 'Ingresa el costo por unidad', 'error');
+      return;
+    }
+    // Validar formatos adicionales si los hay
+    for (const f of formatosVentaTemp) {
+      if (!f.nombre || !f.nombre.trim()) { toast('Completa el nombre de todos los formatos de venta agregados', 'error'); return; }
+      if (!f.unidades || f.unidades < 2) { toast('Las unidades por paquete deben ser al menos 2 en "' + f.nombre + '"', 'error'); return; }
+      if (!f.precio || f.precio <= 0) { toast('Ingresa el precio de venta para "' + f.nombre + '"', 'error'); return; }
+    }
   }
-  if (step < 3) { document.getElementById('wizardStep').value = String(step + 1); actualizarWizardStep(step + 1); calcMargenPreview(); }
+  if (step < 3) {
+    document.getElementById('wizardStep').value = String(step + 1);
+    actualizarWizardStep(step + 1);
+  }
 };
 
 window.wizardPrevStep = function() {
-  const step = parseInt(document.getElementById('wizardStep').value || '1');
-  if (step > 1) { document.getElementById('wizardStep').value = String(step - 1); actualizarWizardStep(step - 1); }
-};
-
-function renderPaquetesUI() {
-  const list = document.getElementById('paquetesList');
-  if (list) {
-    list.innerHTML = wizardPaquetes.length === 0
-      ? '<p style="font-size:0.8rem;color:var(--text3)">Sin paquetes aún — el producto se venderá solo en unidades sueltas.</p>'
-      : wizardPaquetes.map((paq, i) => `
-          <div class="paquete-chip">
-            <div class="paquete-chip-info">
-              <strong>${escHTML(paq.nombre)}</strong>
-              <span>${paq.unidades} unidades por paquete${paq.predeterminado ? ' · <b style="color:var(--primary)">Predeterminado</b>' : ''}</span>
-            </div>
-            <div class="paquete-chip-actions">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="togglePaqueteDefault(${i})">${paq.predeterminado ? 'Quitar default' : 'Hacer default'}</button>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="editarPaqueteWizard(${i})">✏️</button>
-              <button type="button" class="btn btn-danger btn-sm" onclick="eliminarPaqueteWizard(${i})">✕</button>
-            </div>
-          </div>`).join('');
+  const step = parseInt(document.getElementById('wizardStep')?.value || '1');
+  if (step > 1) {
+    document.getElementById('wizardStep').value = String(step - 1);
+    actualizarWizardStep(step - 1);
   }
-  const preview = document.getElementById('paquetesPreview');
-  if (preview) {
-    preview.innerHTML = wizardPaquetes.length
-      ? '<div class="margen-preview" style="display:block;padding:10px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--border)"><div class="margen-item"><span>Paquetes:</span><span>' + wizardPaquetes.map(q => `${escHTML(q.nombre)} (${q.unidades} u)`).join(' · ') + '</span></div></div>'
-      : '';
-  }
-}
-
-window.guardarPaquete = function() {
-  const nombre = document.getElementById('paqueteNombre').value.trim();
-  const unidades = parseInt(document.getElementById('paqueteUnidades').value || '0');
-  const predeterminado = document.getElementById('paquetePredeterminado').checked;
-  if (!nombre || unidades < 2) { toast('Nombre y unidades (mínimo 2) son obligatorios', 'error'); return; }
-  if (wizardPaquetes.some(q => q.nombre.toLowerCase() === nombre.toLowerCase())) { toast('Ese paquete ya existe', 'error'); return; }
-  const idxEdit = document.getElementById('editPaqueteIdx').value;
-  if (idxEdit !== '') {
-    const paq = wizardPaquetes[parseInt(idxEdit)];
-    if (paq) { paq.nombre = nombre; paq.unidades = unidades; paq.predeterminado = predeterminado; }
-    document.getElementById('editPaqueteIdx').value = '';
-    toast('Paquete actualizado', 'success');
-  } else {
-    wizardPaquetes.push({ id: genId(), nombre, unidades, predeterminado });
-    if (predeterminado) wizardPaquetes.forEach((q, j) => { if (j < wizardPaquetes.length - 1) q.predeterminado = false; });
-    toast('Paquete agregado', 'success');
-  }
-  cancelarPaquete();
-  renderPaquetesUI();
 };
-
-window.cancelarPaquete = function() {
-  const n = document.getElementById('paqueteNombre'); if (n) n.value = '';
-  const u = document.getElementById('paqueteUnidades'); if (u) u.value = '';
-  const c = document.getElementById('paquetePredeterminado'); if (c) c.checked = false;
-  const e = document.getElementById('editPaqueteIdx'); if (e) e.value = '';
-};
-
-window.editarPaqueteWizard = function(i) {
-  const paq = wizardPaquetes[i]; if (!paq) return;
-  document.getElementById('editPaqueteIdx').value = i;
-  document.getElementById('paqueteNombre').value = paq.nombre;
-  document.getElementById('paqueteUnidades').value = paq.unidades;
-  document.getElementById('paquetePredeterminado').checked = paq.predeterminado;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-};
-
-window.eliminarPaqueteWizard = function(i) {
-  if (!confirm('¿Eliminar este paquete?')) return;
-  wizardPaquetes.splice(i, 1);
-  renderPaquetesUI();
-};
-
-window.togglePaqueteDefault = function(i) {
-  wizardPaquetes.forEach((q, j) => { q.predeterminado = j === i; });
-  renderPaquetesUI();
-};
-
-function calcMargenPreview() {
-  const wrap = document.getElementById('margenPreview');
-  if (!wrap) return;
-  const precioUnidad = parseFloat(document.getElementById('fPrecioUnidad').value) || 0;
-  const editId = document.getElementById('editId').value;
-  const p = editId ? (window.productos || []).find(x => x.id === editId) : null;
-  const costo = p ? getCostoPromedio(p) : 0;
-  if (!precioUnidad || costo <= 0) { wrap.style.display = 'none'; return; }
-  wrap.style.display = 'block';
-  const gan = precioUnidad - costo;
-  document.getElementById('prevGanancia').textContent = 'Bs. ' + gan.toFixed(2);
-  document.getElementById('prevMargen').textContent = Math.round((gan / precioUnidad) * 100) + '%';
-}
 
 function resetProductForm() {
   const form = document.getElementById('productForm');
@@ -743,9 +972,13 @@ function resetProductForm() {
   if (editId) editId.value = '';
   const step = document.getElementById('wizardStep');
   if (step) step.value = '1';
-  wizardPaquetes = [];
-  renderPaquetesUI();
-  cancelarPaquete();
+
+  formatosVentaTemp = [];
+  productoTieneVencimiento = false;
+  toggleTieneVencimiento(false);
+  toggleFormatoCompra('paquete');
+  checkMlVisibility();
+
   actualizarWizardStep(1);
   const title = document.getElementById('formTitle');
   if (title) title.textContent = '+ Agregar Producto';
@@ -755,34 +988,103 @@ function resetProductForm() {
 }
 window.resetProductForm = resetProductForm;
 
-document.getElementById('btnNuevoProducto').addEventListener('click', () => { resetProductForm(); navegarA('agregar'); });
-document.getElementById('btnCancelForm').addEventListener('click', () => navegarA('inventario'));
-document.getElementById('fPrecioUnidad').addEventListener('input', calcMargenPreview);
+document.getElementById('btnNuevoProducto')?.addEventListener('click', () => { resetProductForm(); navegarA('agregar'); });
+document.getElementById('btnCancelForm')?.addEventListener('click', () => navegarA('inventario'));
 
-// UNIFICAR MODAL LOGIC (mantener compatibilidad)
-let tempProductData = null;
-let existingProductMatch = null;
+// PREVENIR ENTER ACCIDENTAL EN PASOS 1 Y 2
+document.getElementById('productForm')?.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+    e.preventDefault();
+    const step = parseInt(document.getElementById('wizardStep')?.value || '1');
+    if (step < 3) {
+      wizardNextStep();
+    }
+  }
+});
 
-document.getElementById('productForm').addEventListener('submit', function(e) {
+// SUBMIT PRODUCT FORM (Nueva Arquitectura)
+document.getElementById('productForm')?.addEventListener('submit', function(e) {
   e.preventDefault();
   const id = document.getElementById('editId').value;
   const nombre = document.getElementById('fNombre').value.trim();
   const categoria = document.getElementById('fCategoria').value;
   const unidadBase = document.getElementById('fUnidadBase').value;
-  if (!nombre || !categoria || !unidadBase) { toast('Completa los campos obligatorios del Paso 1', 'error'); return; }
-  const precioUnidad = parseFloat(document.getElementById('fPrecioUnidad').value) || 0;
-  if (precioUnidad <= 0) { toast('El precio por unidad es obligatorio (Paso 3)', 'error'); return; }
-  const precioPaquete = parseFloat(document.getElementById('fPrecioPaquete').value) || 0;
-  const stockMin = parseInt(document.getElementById('fStockMin').value) || 24;
-  if (wizardPaquetes.length && precioPaquete <= 0) { toast('Definiste paquetes: el precio por paquete es obligatorio (Paso 3)', 'error'); return; }
+  if (!nombre || !categoria || !unidadBase) {
+    toast('Completa el nombre, categoría y unidad (Paso 1)', 'error');
+    actualizarWizardStep(1);
+    return;
+  }
 
-  const empaques = wizardPaquetes.map((q, i) => ({
-    id: 'paq_' + i,
-    nombre: q.nombre,
-    unidades: q.unidades,
-    predeterminado: q.predeterminado
-  }));
-  if (empaques.length && !empaques.some(q => q.predeterminado)) empaques[0].predeterminado = true;
+  const precioUnidad = parseFloat(document.getElementById('precioUnidad_unidad')?.value) || 0;
+  if (precioUnidad <= 0) {
+    toast('El precio de venta por unidad es obligatorio (Paso 2)', 'error');
+    actualizarWizardStep(2);
+    return;
+  }
+
+  const costoUnitario = calcularCostoUnitarioActual();
+  if (costoUnitario <= 0) {
+    toast('Ingresa el costo de compra (Paso 2)', 'error');
+    actualizarWizardStep(2);
+    return;
+  }
+
+  // 1) FORMATO DE COMPRA
+  let formatosCompra = [];
+  let unidadesPorFormatoCompra = 1;
+  let costoTotalCompra = 0;
+
+  if (formatoCompraActual === 'paquete') {
+    const paqNom = (document.getElementById('paqueteNombre')?.value || 'Caja de 12').trim();
+    const paqUnids = parseInt(document.getElementById('paqueteUnidades')?.value) || 12;
+    costoTotalCompra = parseFloat(document.getElementById('costoPaquete')?.value) || 0;
+    unidadesPorFormatoCompra = paqUnids;
+    formatosCompra = [{ id: 'compra_' + genId(), nombre: paqNom, unidades: paqUnids }];
+  } else {
+    costoTotalCompra = costoUnitario;
+    unidadesPorFormatoCompra = 1;
+    formatosCompra = [];
+  }
+
+  // 2) FORMATOS DE VENTA (Siempre Unidad fija + adicionales)
+  const formatosVenta = [
+    { id: 'unidad', nombre: 'Unidad', unidades: 1, precio: precioUnidad, esBase: true },
+    ...formatosVentaTemp
+      .filter(f => f && f.nombre && f.unidades > 0)
+      .map(f => ({ id: f.id, nombre: f.nombre.trim(), unidades: f.unidades, precio: f.precio || 0 }))
+  ];
+
+  // Advertencia si vende a pérdida
+  const formatoConPerdida = formatosVenta.find(f => {
+    const r = calcularReferenciaFormato(f.unidades, f.precio, precioUnidad, costoUnitario);
+    return r.margenPorcentaje < 0;
+  });
+  if (formatoConPerdida) {
+    const continuar = confirm(`⚠️ El formato "${formatoConPerdida.nombre}" se vendería por debajo de tu costo de compra (margen negativo). ¿Deseas guardar de todas formas?`);
+    if (!continuar) return;
+  }
+
+  const stockMin = parseInt(document.getElementById('fStockMin')?.value) || 24;
+  const fechaVenc = productoTieneVencimiento ? (document.getElementById('fVencimiento')?.value || '') : '';
+  const cantInicial = parseFloat(document.getElementById('fCantidadInicial')?.value) || 0;
+
+  // 3) LOTE INICIAL (SIEMPRE EN UNIDADES BASE)
+  let lotes = [];
+  let stockTotal = 0;
+  if (!id && cantInicial > 0) {
+    const cantidadBase = cantInicial * unidadesPorFormatoCompra;
+    stockTotal = cantidadBase;
+    lotes.push({
+      id: genId(),
+      cantidadBaseUnidades: cantidadBase,
+      cantidad: cantidadBase,
+      costoTotalLote: costoTotalCompra * cantInicial,
+      costoPorUnidad: costoUnitario,
+      vencimiento: fechaVenc,
+      fechaIngreso: new Date().toISOString().slice(0, 10),
+      nota: 'Stock inicial'
+    });
+  }
 
   const data = {
     nombre,
@@ -793,74 +1095,184 @@ document.getElementById('productForm').addEventListener('submit', function(e) {
     mlPorUnidad: safeNum(document.getElementById('fMlPorUnidad').value) || null,
     stockMinUnidades: stockMin,
     stockMin,
-    empaques,
+    formatosVenta,
+    formatosCompra,
+    empaques: formatosCompra, // retrocompatibilidad
     precioVentaUnidad: precioUnidad,
     venta: precioUnidad,
-    precioVentaPaquete: precioPaquete || 0,
+    precioVentaPaquete: formatosVenta.find(f => f.unidades > 1)?.precio || 0,
+    tieneVencimiento: productoTieneVencimiento,
+    vencimiento: fechaVenc || null,
+    costo: costoUnitario,
+    costoPromedioUnidad: costoUnitario,
+    costoReferencia: costoUnitario,
     nota: document.getElementById('fNota').value.trim(),
-    lotes: id ? undefined : [],
-    stock: 0,
-    costo: 0,
-    vencimiento: null
+    cantInicialCompra: cantInicial,
+    costoTotalCompraInicial: costoTotalCompra * cantInicial
   };
-  if (id && (data.lotes === undefined)) delete data.lotes;
-  if (window.currentPhotoBase64) data.foto = window.currentPhotoBase64;
 
   if (!id) {
-    const match = productos.find(p => p.nombre.toLowerCase() === nombre.toLowerCase() && p.categoria === categoria && (p.marca || '').toLowerCase() === (data.marca || '').toLowerCase());
-    if (match) {
-      if (!confirm('Ya existe "' + match.nombre + '" en el inventario. ¿Crear de todos modos como producto duplicado?')) return;
+    data.lotes = lotes;
+    data.stock = stockTotal;
+  }
+  if (window.currentPhotoBase64) data.foto = window.currentPhotoBase64;
+
+  // DETECCIÓN ANTI-DUPLICADOS (si es producto nuevo)
+  if (!id) {
+    const existing = productos.find(p => p.nombre.trim().toLowerCase() === nombre.toLowerCase());
+    if (existing) {
+      tempProductData = data;
+      existingProductMatch = existing;
+      const infoEl = document.getElementById('unificarInfo');
+      if (infoEl) {
+        infoEl.innerHTML = `
+          <div style="font-weight:700;font-size:1rem;margin-bottom:4px">${escHTML(existing.nombre)}</div>
+          <div style="color:var(--text2);font-size:.85rem;margin-bottom:8px">Categoría: <b>${existing.categoria}</b> · Stock actual: <b>${formatStockDisplay(existing)}</b></div>
+          <div style="font-size:.82rem;color:var(--primary);background:var(--bg3);padding:8px 12px;border-radius:6px">
+            Se agregará un nuevo lote con <b>${data.stock} unidades base</b> (Vence: ${data.vencimiento || 'Sin vencimiento'}).
+          </div>
+        `;
+      }
+      document.getElementById('unificarOverlay').style.display = 'flex';
+      return;
     }
   }
 
   guardarProductoFinal(id, data);
 });
 
+// Guardado del producto y sincronización
 function guardarProductoFinal(id, data) {
   const btn = document.getElementById('btnSpinner');
   if (btn) btn.style.display = 'inline-block';
+
   if (id) {
     const idx = productos.findIndex(p => p.id === id);
     if (idx > -1) {
       const antes = JSON.parse(JSON.stringify(productos[idx]));
-      const antiguoVenta = safeNum(antes.venta);
-      const antiguoPaquete = safeNum(antes.precioVentaPaquete);
+      const antiguoVenta = safeNum(antes.precioVentaUnidad || antes.venta);
       const nuevo = { ...productos[idx], ...data };
       if (!data.foto && productos[idx].foto) nuevo.foto = productos[idx].foto;
-      if (antiguoVenta !== safeNum(nuevo.venta) || antiguoPaquete !== safeNum(nuevo.precioVentaPaquete)) {
-        registrarHistorialPrecio(productos[idx], 'edicion', 'Precio unidad: Bs.' + antiguoVenta.toFixed(2) + ' → Bs.' + safeNum(nuevo.venta).toFixed(2) + (antiguoPaquete !== safeNum(nuevo.precioVentaPaquete) ? ' · Paquete: Bs.' + antiguoPaquete.toFixed(2) + ' → Bs.' + safeNum(nuevo.precioVentaPaquete).toFixed(2) : ''));
+
+      // Recalcular stock y costo con base en lotes
+      nuevo.stock = getTotalUnidadesBase(nuevo);
+      nuevo.costoPromedioUnidad = getCostoPromedio(nuevo);
+      nuevo.costo = nuevo.costoPromedioUnidad;
+      nuevo.vencimiento = getVencimientoMasCercano(nuevo);
+
+      if (antiguoVenta !== safeNum(nuevo.precioVentaUnidad)) {
+        registrarHistorialPrecio(productos[idx], 'edicion', 'Precio unidad: Bs.' + antiguoVenta.toFixed(2) + ' → Bs.' + safeNum(nuevo.precioVentaUnidad).toFixed(2));
       }
       productos[idx] = nuevo;
     }
     toast('Producto actualizado', 'success');
+    save();
+    if (btn) btn.style.display = 'none';
+    renderDashboard(); if (window.renderCategoryGrid) renderCategoryGrid();
+    navegarA('inventario'); filterAndRender();
+    if (window.syncSaveProducto) { const p = productos.find(x => x.id === id); if (p) window.syncSaveProducto(p); }
   } else {
-    const nuevo = { ...data, id: genId(), enOfertaManual: false, enOferta: false, precioOferta: 0, precioOfertaUnidad: 0, precioOfertaPaquete: 0, fechaFinOferta: '', ofertaLote: { activa: false, dias: 14, descuento: 10 }, fechaRegistro: new Date().toISOString(), foto: data.foto || '' };
+    const nuevo = {
+      ...data,
+      id: genId(),
+      enOfertaManual: false,
+      enOferta: false,
+      precioOferta: 0,
+      precioOfertaUnidad: 0,
+      precioOfertaPaquete: 0,
+      fechaFinOferta: '',
+      ofertaLote: { activa: false, dias: 14, descuento: 10 },
+      fechaRegistro: new Date().toISOString(),
+      foto: data.foto || ''
+    };
     productos.unshift(nuevo);
-    toast('Producto agregado', 'success');
+    save();
+
+    // 🌟 REGISTRO DE AUDITORÍA EN HISTORIAL DE ENTRADAS (Si inició con stock)
+    if (nuevo.stock > 0 && nuevo.lotes && nuevo.lotes.length > 0) {
+      let entradas = [];
+      try { entradas = JSON.parse(localStorage.getItem('tiaeli_entradas') || '[]'); } catch { entradas = []; }
+      const entradaIni = {
+        id: genId(),
+        productoId: nuevo.id,
+        productoNombre: nuevo.nombre,
+        empaqueId: 'unidad_base',
+        empaqueNombre: nuevo.unidadBase || 'unidad',
+        cantidad: nuevo.stock,
+        unidadesTotales: nuevo.stock,
+        costo: data.costoTotalCompraInicial || (nuevo.costoPromedioUnidad * nuevo.stock),
+        costoPorUnidad: nuevo.costoPromedioUnidad,
+        vencimiento: nuevo.vencimiento || '',
+        proveedor: 'Inventario Inicial',
+        nota: 'Stock inicial al crear producto',
+        fecha: Date.now(),
+        usuario: (typeof usuarioActual === 'function' && usuarioActual()) || '—'
+      };
+      entradas.unshift(entradaIni);
+      localStorage.setItem('tiaeli_entradas', JSON.stringify(entradas));
+      if (window.syncSaveEntrada) window.syncSaveEntrada(entradaIni);
+    }
+
+    if (btn) btn.style.display = 'none';
+    renderDashboard(); if (window.renderCategoryGrid) renderCategoryGrid();
+    navegarA('inventario'); filterAndRender();
+    if (window.syncSaveProducto) window.syncSaveProducto(nuevo);
+    toast('¡Producto "' + nuevo.nombre + '" guardado con ' + formatStockDisplay(nuevo) + '!', 'success');
   }
-  save();
-  if (btn) btn.style.display = 'none';
-  renderDashboard(); if (window.renderCategoryGrid) renderCategoryGrid();
-  navegarA('inventario'); filterAndRender();
-  if (window.syncSaveProducto) { const p = id ? productos.find(x => x.id === id) : productos[0]; if (p) window.syncSaveProducto(p); }
 }
 
+// Botones del modal de unificación
 document.getElementById('unificarCancelBtn')?.addEventListener('click', () => {
   document.getElementById('unificarOverlay').style.display = 'none';
-  guardarProductoFinal(null, tempProductData);
+  if (tempProductData) {
+    guardarProductoFinal(null, tempProductData);
+    tempProductData = null;
+    existingProductMatch = null;
+  }
 });
+
 document.getElementById('unificarConfirmBtn')?.addEventListener('click', () => {
   document.getElementById('unificarOverlay').style.display = 'none';
   if (existingProductMatch && tempProductData) {
-    const newLotes = JSON.parse(JSON.stringify(tempProductData.lotes));
+    const newLotes = JSON.parse(JSON.stringify(tempProductData.lotes || []));
     existingProductMatch.lotes = [...(existingProductMatch.lotes || []), ...newLotes];
-    existingProductMatch.stock = getStockTotal(existingProductMatch);
+    existingProductMatch.stock = getTotalUnidadesBase(existingProductMatch);
     existingProductMatch.vencimiento = getVencimientoMasCercano(existingProductMatch);
-    existingProductMatch.costo = getCostoPromedio(existingProductMatch);
+    existingProductMatch.costoPromedioUnidad = getCostoPromedio(existingProductMatch);
+    existingProductMatch.costo = existingProductMatch.costoPromedioUnidad;
     existingProductMatch.updatedAt = Date.now();
-    save(); toast('Lotes agregados al producto existente', 'success');
+
+    // Registrar en auditoría de entradas
+    if (newLotes.length > 0 && tempProductData.stock > 0) {
+      let entradas = [];
+      try { entradas = JSON.parse(localStorage.getItem('tiaeli_entradas') || '[]'); } catch { entradas = []; }
+      const entradaUnif = {
+        id: genId(),
+        productoId: existingProductMatch.id,
+        productoNombre: existingProductMatch.nombre,
+        empaqueId: 'unidad_base',
+        empaqueNombre: existingProductMatch.unidadBase || 'unidad',
+        cantidad: tempProductData.stock,
+        unidadesTotales: tempProductData.stock,
+        costo: tempProductData.costoTotalCompraInicial || (tempProductData.costoPromedioUnidad * tempProductData.stock),
+        costoPorUnidad: tempProductData.costoPromedioUnidad,
+        vencimiento: tempProductData.vencimiento || '',
+        proveedor: 'Unificación de Stock',
+        nota: 'Nuevo lote unificado al producto',
+        fecha: Date.now(),
+        usuario: (typeof usuarioActual === 'function' && usuarioActual()) || '—'
+      };
+      entradas.unshift(entradaUnif);
+      localStorage.setItem('tiaeli_entradas', JSON.stringify(entradas));
+      if (window.syncSaveEntrada) window.syncSaveEntrada(entradaUnif);
+    }
+
+    save();
+    toast('Lotes agregados al producto existente "' + existingProductMatch.nombre + '"', 'success');
     renderDashboard(); navegarA('inventario'); filterAndRender();
     if (window.syncSaveProducto) window.syncSaveProducto(existingProductMatch);
+    tempProductData = null;
+    existingProductMatch = null;
   }
 });
 
@@ -894,7 +1306,8 @@ function abrirHistorialPrecios(id) {
   const p = productos.find(x => x.id === id);
   if (!p) return;
   document.getElementById('hpProductoNombre').textContent = p.nombre;
-  document.getElementById('hpProductoInfo').textContent = 'Unidad: Bs.' + safeNum(p.precioVentaUnidad || p.venta).toFixed(2) + (safeNum(p.precioVentaPaquete) > 0 ? ' · Paquete: Bs.' + safeNum(p.precioVentaPaquete).toFixed(2) : '');
+  const precioUni = (p.formatosVenta?.find(f => f.id === 'unidad')?.precio) || p.precioVentaUnidad || p.venta || 0;
+  document.getElementById('hpProductoInfo').textContent = 'Unidad: Bs.' + safeNum(precioUni).toFixed(2);
   const items = historialPrecios.filter(h => h.productoId === id).slice(0, 50);
   const list = document.getElementById('historialPreciosList');
   if (!items.length) { list.innerHTML = '<div class="empty-state"><span class="es-icon">💰</span><p>Sin cambios de precio registrados todavía.</p></div>'; }
@@ -914,7 +1327,7 @@ function abrirHistorialPrecios(id) {
 }
 window.abrirHistorialPrecios = abrirHistorialPrecios;
 
-// ── EDIT ──
+// ── EDIT PRODUCTO ──
 function editarProducto(id) {
   const p = productos.find(x => x.id === id); if (!p) return;
   resetProductForm();
@@ -922,20 +1335,61 @@ function editarProducto(id) {
   document.getElementById('fNombre').value = p.nombre;
   document.getElementById('fCategoria').value = p.categoria;
   document.getElementById('fUnidadBase').value = p.unidadBase || p.unidad || 'unidad';
+  checkMlVisibility();
   document.getElementById('fMlPorUnidad').value = p.mlPorUnidad || '';
-  document.getElementById('fStockMin').value = p.stockMinUnidades || p.stockMin || 24;
   document.getElementById('fMarca').value = p.marca || '';
   document.getElementById('fNota').value = p.nota || '';
-  document.getElementById('fPrecioUnidad').value = p.precioVentaUnidad || p.venta || 0;
-  document.getElementById('fPrecioPaquete').value = p.precioVentaPaquete || 0;
+
+  // Vencimiento
+  if (p.vencimiento || p.tieneVencimiento) {
+    toggleTieneVencimiento(true);
+    if (document.getElementById('fVencimiento')) document.getElementById('fVencimiento').value = p.vencimiento || '';
+  } else {
+    toggleTieneVencimiento(false);
+  }
+
+  // Formatos de compra
+  const compras = safeArr(p.formatosCompra).length > 0 ? p.formatosCompra : safeArr(p.empaques);
+  if (compras.length > 0) {
+    toggleFormatoCompra('paquete');
+    const paq = compras[0];
+    if (document.getElementById('paqueteNombre')) document.getElementById('paqueteNombre').value = paq.nombre || 'Caja de 12';
+    if (document.getElementById('paqueteUnidades')) document.getElementById('paqueteUnidades').value = paq.unidades || 12;
+    const costoPaq = p.costo ? (p.costo * (paq.unidades || 1)) : 0;
+    if (document.getElementById('costoPaquete')) document.getElementById('costoPaquete').value = costoPaq > 0 ? costoPaq.toFixed(2) : '';
+  } else {
+    toggleFormatoCompra('unidad');
+    if (document.getElementById('costoUnidad')) document.getElementById('costoUnidad').value = p.costo ? safeNum(p.costo).toFixed(2) : '';
+  }
+
+  // Formatos de venta
+  const fmtsVenta = safeArr(p.formatosVenta);
+  const fmtUnidad = fmtsVenta.find(f => f.id === 'unidad' || f.esBase) || { precio: p.precioVentaUnidad || p.venta || 0 };
+  const precUniInput = document.getElementById('precioUnidad_unidad');
+  if (precUniInput) precUniInput.value = fmtUnidad.precio || '';
+
+  // Formatos adicionales
+  formatosVentaTemp = fmtsVenta
+    .filter(f => f.id !== 'unidad' && !f.esBase)
+    .map(f => ({ id: f.id || ('fmt_' + genId()), nombre: f.nombre, unidades: f.unidades, precio: f.precio }));
+
+  renderFormatosVentaList();
+
+  document.getElementById('fStockMin').value = p.stockMinUnidades || p.stockMin || 24;
+
   document.getElementById('formTitle').textContent = 'Editar: ' + p.nombre;
-  wizardPaquetes = safeArr(p.empaques).map((q, i) => ({ id: q.id, nombre: q.nombre, unidades: q.unidades, predeterminado: q.predeterminado }));
-  renderPaquetesUI();
   const hpWrap = document.getElementById('historialPreciosBtnWrap');
   if (hpWrap) hpWrap.innerHTML = '<button type="button" class="btn btn-secondary btn-sm" onclick="abrirHistorialPrecios(\'' + p.id + '\')">💰 Historial de precios</button>';
-  if (p.foto) { window.currentPhotoBase64 = p.foto; const prev = document.getElementById('photoPreview'); if (prev) prev.innerHTML = `<img src="${p.foto}" style="width:100%;height:100%;object-fit:cover;border-radius:7px" /><input type="file" id="fFoto" accept="image/*" onchange="handlePhotoUpload(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer" />`; }
-  else { window.currentPhotoBase64 = null; if (window.resetPhoto) resetPhoto(); }
-  navegarA('agregar'); window.scrollTo(0, 0);
+  if (p.foto) {
+    window.currentPhotoBase64 = p.foto;
+    const prev = document.getElementById('photoPreview');
+    if (prev) prev.innerHTML = `<img src="${p.foto}" style="width:100%;height:100%;object-fit:cover;border-radius:7px" /><input type="file" id="fFoto" accept="image/*" onchange="handlePhotoUpload(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer" />`;
+  } else {
+    window.currentPhotoBase64 = null;
+    if (window.resetPhoto) resetPhoto();
+  }
+  navegarA('agregar');
+  window.scrollTo(0, 0);
 }
 window.editarProducto = editarProducto;
 
@@ -980,16 +1434,17 @@ function abrirOferta(id) {
 }
 window.abrirOferta = abrirOferta;
 document.getElementById('ofertaClose')?.addEventListener('click', () => { document.getElementById('ofertaOverlay').style.display = 'none'; });
-document.getElementById('ofertaCancelBtn')?.addEventListener('click', () => { document.getElementById('ofertaOverlay').style.display = 'none'; });
-document.getElementById('ofertaOverlay')?.addEventListener('click', function(e) { if (e.target === this) this.style.display = 'none'; });
-document.getElementById('ofertaConfirmBtn')?.addEventListener('click', () => {
+document.getElementById('ofertaManualCancelBtn')?.addEventListener('click', () => { document.getElementById('ofertaOverlay').style.display = 'none'; });
+document.getElementById('ofertaManualConfirmBtn')?.addEventListener('click', () => {
   const p = productos.find(x => x.id === ofertaCurrentId);
   if (!p) return;
   const precioU = parseFloat(document.getElementById('ofertaPrecioUnidad').value) || 0;
   const precioP = parseFloat(document.getElementById('ofertaPrecioPaquete').value) || 0;
-  const fechaFin = document.getElementById('ofertaFechaFin').value || '';
-  if (precioU <= 0 && precioP <= 0) {
-    p.enOfertaManual = false; p.enOferta = false; p.precioOfertaUnidad = 0; p.precioOfertaPaquete = 0; p.precioOferta = 0; p.fechaFinOferta = '';
+  const fechaFin = document.getElementById('ofertaFechaFin').value;
+  if (!precioU && !precioP) {
+    p.enOfertaManual = false; p.enOferta = false;
+    p.precioOferta = 0; p.precioOfertaUnidad = 0; p.precioOfertaPaquete = 0; p.fechaFinOferta = '';
+    registrarHistorialPrecio(p, 'oferta', 'Oferta manual desactivada');
     save(); filterAndRender(); renderDashboard();
     document.getElementById('ofertaOverlay').style.display = 'none';
     toast('Oferta manual desactivada', 'info');
@@ -1022,7 +1477,7 @@ document.getElementById('ofertaLoteConfirmBtn')?.addEventListener('click', () =>
 });
 
 // ── VENCIMIENTOS POR LOTES ──
-let activeVencDias = 7;
+activeVencDias = 7;
 function renderVencimientos(dias) {
   activeVencDias = dias;
   document.querySelectorAll('.vtab').forEach(t => t.classList.toggle('active', parseInt(t.dataset.dias)===dias||t.dataset.dias==='9999'&&dias===9999));
@@ -1053,7 +1508,7 @@ function renderVencimientos(dias) {
       <div class="venc-emoji">${x.diasRestantes<0?'🚫':x.diasRestantes<=7?'⚠️':'📅'}</div>
       <div class="venc-info">
         <div class="venc-name">${x.p.nombre} (Lote ${x.i+1})</div>
-        <div class="venc-meta"><span>Vence: ${new Date(x.l.vencimiento).toLocaleDateString('es-BO')}</span><span>Stock: ${x.l.cantidad} ${getNombreEmpaque(x.p, x.l.empaqueId || 'unidad_base')}${x.l.enOfertaPorVencimiento ? ' · <b style="color:var(--orange)">EN OFERTA</b>' : ''}</span></div>
+        <div class="venc-meta"><span>Vence: ${new Date(x.l.vencimiento).toLocaleDateString('es-BO')}</span><span>Stock: ${x.l.cantidad} u.${x.l.enOfertaPorVencimiento ? ' · <b style="color:var(--orange)">EN OFERTA</b>' : ''}</span></div>
       </div>
       ${diaTag}
       <div class="venc-actions"><button class="btn btn-warning btn-sm" onclick="abrirOferta('${x.p.id}')">Oferta</button></div>

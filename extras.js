@@ -355,11 +355,12 @@ function renderComboComponentes() {
   cont.innerHTML = comboComponents.map((comp, i) => {
     const p = (window.productos||[]).find(x=>x.id===comp.productoId);
     if (!p) return '';
-    const stock = Array.isArray(p.lotes) ? p.lotes.reduce((acc,l)=>acc+l.cantidad,0) : 0;
+    const stock = typeof getStockTotal === 'function' ? getStockTotal(p) : (typeof getTotalUnidadesBase === 'function' ? getTotalUnidadesBase(p) : (p.stock || 0));
+    const precioV = typeof getPrecioVentaEfectivo === 'function' ? getPrecioVentaEfectivo(p) : (p.venta || 0);
     return `<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);padding:10px;border-radius:8px">
       <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
-         <span style="font-weight:600; font-size:0.9rem; color:var(--text);">${p.nombre} ${p.marca?' - '+p.marca:''}</span>
-         <span style="font-size:0.75rem; color:var(--text3)">Disp: <b>${stock}</b> | Costo: Bs.${(p.costo||0).toFixed(2)} | Venta: Bs.${(p.venta||0).toFixed(2)}</span>
+         <span style="font-weight:600; font-size:0.9rem; color:var(--text);">${escHTML(p.nombre)} ${p.marca?' - '+escHTML(p.marca):''}</span>
+         <span style="font-size:0.75rem; color:var(--text3)">Disp: <b>${stock} u.</b> | Costo: Bs.${(p.costo||0).toFixed(2)} | Venta: Bs.${precioV.toFixed(2)}</span>
       </div>
       <input type="number" class="form-input" style="width:70px; height:38px; padding:4px 8px;" value="${comp.cantidad}" min="1" onchange="updateCompCant(${i},this.value)" />
       <button class="btn-icon danger" style="width:38px; height:38px; border-radius:8px;" onclick="removeComp(${i})">&#10005;</button>
@@ -385,11 +386,12 @@ if (cmSearchInput) {
     }
     
     res.innerHTML = matches.map(p => {
-      const stock = Array.isArray(p.lotes) ? p.lotes.reduce((acc,l)=>acc+l.cantidad,0) : 0;
+      const stock = typeof getStockTotal === 'function' ? getStockTotal(p) : (typeof getTotalUnidadesBase === 'function' ? getTotalUnidadesBase(p) : (p.stock || 0));
+      const precioV = typeof getPrecioVentaEfectivo === 'function' ? getPrecioVentaEfectivo(p) : (p.venta || 0);
       return `<div style="padding:12px; border-bottom:1px solid var(--border); cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:var(--trans);" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='transparent'" onclick="addCompFromSearch('${p.id}', '${p.nombre.replace(/'/g,"\\'")}')">
         <div style="display:flex; flex-direction:column; gap:2px;">
-          <span style="font-weight:600; font-size:0.85rem; color:var(--text);">${p.nombre} ${p.marca?' - '+p.marca:''}</span>
-          <span style="font-size:0.75rem; color:var(--text3)">Disp: <b>${stock}</b> | Costo: Bs.${(p.costo||0).toFixed(2)} | Venta: Bs.${(p.venta||0).toFixed(2)}</span>
+          <span style="font-weight:600; font-size:0.85rem; color:var(--text);">${escHTML(p.nombre)} ${p.marca?' - '+escHTML(p.marca):''}</span>
+          <span style="font-size:0.75rem; color:var(--text3)">Disp: <b>${stock} u.</b> | Costo: Bs.${(p.costo||0).toFixed(2)} | Venta: Bs.${precioV.toFixed(2)}</span>
         </div>
         <span style="font-size:1.2rem; color:var(--primary); font-weight:bold;">+</span>
       </div>`;

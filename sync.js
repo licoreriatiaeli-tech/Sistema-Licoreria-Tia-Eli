@@ -9,7 +9,6 @@
   let _db = null;
   let _syncReady = false;
   let _listeners = [];   // Guardamos los unsubscribers de onSnapshot
-  let _pendingWrites = 0;
   let _renderTimerP, _renderTimerV, _renderTimerC;
   let _localChanges = new Map(); // Track local changes by id: { data, timestamp, type }
 
@@ -36,144 +35,111 @@
     if (label) label.textContent = state === 'syncing' ? 'Sincronizando...' : 'Sincronizar';
   }
 
-  function setSpinner(on) {
-    ['syncIcon','syncIconMobile'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) on ? el.classList.add('spinning') : el.classList.remove('spinning');
-    });
-    const btn = document.getElementById('syncBtn');
-    if (btn) on ? btn.classList.add('syncing') : btn.classList.remove('syncing');
-  }
-
   // ── INICIALIZAR FIREBASE ──
   window.initFirebase = async function() {
     try {
       const cfg = window.firebaseConfig;
       if (!cfg || !cfg.apiKey || cfg.apiKey === 'TU_API_KEY_AQUI') {
         setStatus('offline', 'Sin config');
-        console.warn('[Sync] firebase-config.js no configurado.');
         return;
       }
 
-      // Inicializar solo si no existe ya la app
       if (!firebase.apps.length) {
         firebase.initializeApp(cfg);
       }
 
       _db = firebase.firestore();
 
-      // Habilitar persistencia offline (caché en el navegador/celular)
       try {
         await _db.enablePersistence({ synchronizeTabs: true });
-        console.log('[Sync] Persistencia offline habilitada ✅');
       } catch (err) {
-        if (err.code === 'failed-precondition') {
-          console.warn('[Sync] Persistencia solo en 1 tab a la vez.');
-        } else if (err.code === 'unimplemented') {
-          console.warn('[Sync] Este navegador no soporta persistencia offline.');
-        }
+        console.warn('[Sync] Persistencia:', err.code);
       }
 
       _syncReady = true;
       window.db = _db;
       setStatus('online', 'Conectado ☁️');
-
-      // Escuchar cambios en tiempo real
       _iniciarListeners();
-
-      console.log('[Sync] Firebase listo ✅');
     } catch (e) {
       console.error('[Sync] Error inicializando Firebase:', e);
       setStatus('error', 'Error');
-      alert("❌ ERROR GRAVE DE CONEXIÓN A FIREBASE:\n\n" + e.message + "\n\nRevisa que los datos en firebase-config.js estén copiados exactamente como te los dio Firebase.");
     }
   };
 
-  // ── LISTENERS EN TIEMPO REAL (onSnapshot) ──
-  // Cuando cualquier dispositivo cambia algo → se actualiza aquí automáticamente
+  // ── LISTENERS EN TIEMPO REAL ──
   function _iniciarListeners() {
     if (!_db) return;
 
-    // Limpiar listeners anteriores
     _listeners.forEach(unsub => unsub());
     _listeners = [];
 
-    // Helper: Smart merge remote data with local pending changes
     function smartMerge(collection, remoteArray, setterFn) {
-      const local = (window.productos || []); // fallback
       const merged = remoteArray.map(remoteDoc => {
         const key = `${collection}:${remoteDoc.id}`;
         const localChange = _localChanges.get(key);
         
         if (localChange && localChange.type !== 'delete') {
-          // Local has newer changes - use local but keep remote timestamp if newer
           const localData = localChange.data;
           const remoteUpdated = remoteDoc.updatedAt || remoteDoc.fechaRegistro || 0;
           const localUpdated = localData.updatedAt || localData.fechaRegistro || 0;
           
-          if (localUpdated >= remoteUpdated) {
-            // Local is newer or same - keep local
-            return localData;
-          }
-          // Remote is newer - merge remote but preserve local unsynced fields
+          if (localUpdated >= remoteUpdated) return localData;
           return { ...remoteDoc, ...localData, updatedAt: Math.max(remoteUpdated, localUpdated) };
         }
         return remoteDoc;
       });
       
-      // Add locally created items not yet in remote
       _localChanges.forEach((change, key) => {
         if (key.startsWith(collection + ':') && change.type === 'create') {
-          const exists = merged.some(d => d.id === change.data.id);
-          if (!exists) merged.push(change.data);
+          if (!merged.some(d => d.id === change.data.id)) merged.push(change.data);
         }
       });
       
-      // Remove locally deleted items
       const filtered = merged.filter(doc => {
         const key = `${collection}:${doc.id}`;
         const localChange = _localChanges.get(key);
         return !(localChange && localChange.type === 'delete');
       });
-      
-       setterFn(filtered);
-       // Map Firestore collection name to localStorage key
-       const LS_KEYS = {
-         [COLS.productos]: 'tiaeli_v2',
-         [COLS.ventas]:    'tiaeli_ventas',
-         [COLS.combos]:    'tiaeli_combos',
-         [COLS.clientes]:  'tiaeli_clientes',
-         [COLS.fiados]:    'tiaeli_fiados',
-         [COLS.pagos]:     'tiaeli_pagos',
-         [COLS.salidas]:   'tiaeli_salidas',
-         [COLS.entradas]:  'tiaeli_entradas',
-         [COLS.historialPrecios]: 'tiaeli_historial_precios'
-       };
-       const lsKey = LS_KEYS[collection];
-       if (lsKey) localStorage.setItem(lsKey, JSON.stringify(filtered));
-     }
+
+      setterFn(filtered);
+      const LS_KEYS = {
+        [COLS.productos]: 'tiaeli_v2',
+        [COLS.ventas]:    'tiaeli_ventas',
+        [COLS.combos]:    'tiaeli_combos',
+        [COLS.clientes]:  'tiaeli_clientes',
+        [COLS.fiados]:    'tiaeli_fiados',
+        [COLS.pagos]:     'tiaeli_pagos',
+        [COLS.salidas]:   'tiaeli_salidas',
+        [COLS.entradas]:  'tiaeli_entradas',
+        [COLS.historialPrecios]: 'tiaeli_historial_precios'
+      };
+      const lsKey = LS_KEYS[collection];
+      if (lsKey) localStorage.setItem(lsKey, JSON.stringify(filtered));
+    }
 
     // ── Productos ──
     const unsubProductos = _db.collection(COLS.productos)
       .onSnapshot({ includeMetadataChanges: false }, snap => {
         const remoto = snap.docs.map(d => d.data());
         smartMerge(COLS.productos, remoto, (merged) => {
-          if (window.setProductosGlobal) window.setProductosGlobal(merged);
-          else window.productos = merged;
+          const migrados = (typeof migrarProductoV3 === 'function') 
+            ? merged.map(migrarProductoV3) 
+            : merged;
+          if (window.setProductosGlobal) window.setProductosGlobal(migrados);
+          else window.productos = migrados;
         });
-        
+
         if (_renderTimerP) clearTimeout(_renderTimerP);
         _renderTimerP = setTimeout(() => {
           if (typeof filterAndRender === 'function') filterAndRender();
           if (typeof renderDashboard === 'function') renderDashboard();
+          if (typeof renderPOSProducts === 'function') renderPOSProducts();
         }, 150);
         console.log('[Sync] Productos actualizados desde nube:', remoto.length);
       }, err => {
         console.error('[Sync] Error listener productos:', err);
-        if (err.code === 'permission-denied') {
-          alert("⚠️ ERROR DE FIREBASE: Tus reglas de seguridad de Firestore han expirado o deniegan el acceso.\n\nVe a tu consola de Firebase > Firestore Database > Reglas (Rules) y cambia la regla a:\nallow read, write: if true;\n\nLuego publica los cambios.");
-        }
       });
+    _listeners.push(unsubProductos);
 
     // ── Ventas ──
     const unsubVentas = _db.collection(COLS.ventas)
@@ -194,6 +160,7 @@
         }, 150);
         console.log('[Sync] Ventas actualizadas desde nube:', remoto.length);
       }, err => console.error('[Sync] Error listener ventas:', err));
+    _listeners.push(unsubVentas);
 
     // ── Combos ──
     const unsubCombos = _db.collection(COLS.combos)

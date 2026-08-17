@@ -421,7 +421,7 @@ select.form-input{cursor:pointer}
 .btn-spinner{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:currentColor;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
 
 /* ════════════════ MODAL ════════════════ */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);animation:fadeO .2s ease}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);animation:fadeO .2s ease}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:520px;box-shadow:var(--shadow-lg);animation:modalIn .28s cubic-bezier(.34,1.2,.64,1);max-height:90vh;overflow-y:auto}
 @keyframes modalIn{from{transform:scale(.92) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);border-radius:16px 16px 0 0;z-index:1}
@@ -493,6 +493,7 @@ select.form-input{cursor:pointer}
 .pago-efectivo{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
 .pago-qr{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
 .pago-transferencia{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(37,99,235,.2)}
+.pago-fiado{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-border)}
 .stock-info-bar{padding:9px 12px;background:var(--bg3);border-radius:var(--radius-sm);font-size:.82rem;color:var(--text2);border:1px solid var(--border);transition:var(--trans)}
 .historial-resumen{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:4px}
 .hres-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px;text-align:center;transition:var(--trans)}
@@ -528,7 +529,7 @@ select.form-input{cursor:pointer}
 .discount-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;animation:secIn .2s ease}
 
 /* ════════════════ TOAST ════════════════ */
-.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:var(--bg);padding:13px 18px;border-radius:var(--radius);font-size:.84rem;font-weight:500;box-shadow:var(--shadow-lg);z-index:9999;opacity:0;transform:translateY(18px) scale(.95);transition:all .28s cubic-bezier(.34,1.2,.64,1);pointer-events:none;max-width:320px;border:1px solid transparent;display:flex;align-items:center;gap:10px}
+.toast{position:fixed;top:24px;right:24px;background:var(--text);color:var(--bg);padding:13px 18px;border-radius:var(--radius);font-size:.84rem;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,0.3);z-index:200000;opacity:0;transform:translateY(-20px) scale(.95);transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;max-width:340px;border:1px solid transparent;display:flex;align-items:center;gap:10px}
 .toast.show{opacity:1;transform:translateY(0) scale(1)}
 .toast.success{background:#16a34a;color:#fff}
 .toast.error{background:var(--red);color:#fff}
@@ -592,7 +593,7 @@ select.form-input{cursor:pointer}
   .caja-grid{grid-template-columns:1fr; display:flex; flex-direction:column;}
   .pos-panel { order: -1; margin-bottom:15px; } /* Mueve el carrito arriba en movil para mejor visibilidad */
   .combos-grid{grid-template-columns:1fr}
-  .toast{left:14px;right:14px;bottom:14px; max-width:calc(100vw - 28px);}
+  .toast{left:14px;right:14px;top:14px;bottom:auto; max-width:calc(100vw - 28px);}
 }
 @media(max-width:440px){
   .stats-grid{grid-template-columns:1fr 1fr}
@@ -1060,6 +1061,155 @@ select.form-input{cursor:pointer}
   opacity: 0.65;
 }
 
+/* ═══════════════════════════════════════════
+   POS FLOATING CART & BADGE (REDONDO DEL CARRITO)
+   ═══════════════════════════════════════════ */
+
+/* Backdrop overlay para cerrar el carrito tocando afuera */
+.pos-cart-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 99990;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.pos-cart-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Boton Circular Flotante (FAB) */
+.pos-cart-floating-btn {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--green, #16a34a), #15803d);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 24px rgba(22, 163, 74, 0.45), 0 2px 6px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 99995;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, background 0.2s;
+  outline: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.pos-cart-floating-btn:hover {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 0 12px 30px rgba(22, 163, 74, 0.6), 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Animacion de rebote en boton flotante al agregar item */
+.pos-cart-floating-btn.bounce {
+  animation: cartBtnBounce 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes cartBtnBounce {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.22) translateY(-4px); }
+  75% { transform: scale(0.94); }
+  100% { transform: scale(1); }
+}
+
+.pos-cart-floating-btn:active {
+  transform: scale(0.94);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+}
+
+/* Animacion de pulso cuando tiene items */
+.pos-cart-floating-btn.has-items {
+  animation: cartPulse 2.5s infinite;
+}
+@keyframes cartPulse {
+  0% { box-shadow: 0 8px 24px rgba(22, 163, 74, 0.45), 0 0 0 0 rgba(22, 195, 74, 0.4); }
+  70% { box-shadow: 0 8px 24px rgba(22, 163, 74, 0.45), 0 0 0 12px rgba(22, 195, 74, 0); }
+  100% { box-shadow: 0 8px 24px rgba(22, 163, 74, 0.45), 0 0 0 0 rgba(22, 195, 74, 0); }
+}
+
+/* Badge / Burbuja circular del carrito (Redondo con numero) */
+.pos-cart-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 12px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--surface, #18181b);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  transform-origin: center;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.pos-cart-badge.bump {
+  animation: badgePop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes badgePop {
+  0% { transform: scale(0.6); }
+  50% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+/* Header del Carrito Desplegable */
+.pos-cart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.pos-cart-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.pos-cart-close {
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  font-size: 1.5rem;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pos-cart-close:hover {
+  background: var(--bg);
+  color: var(--red);
+}
+
+.pos-cart-empty {
+  text-align: center;
+  padding: 35px 20px;
+  color: var(--text3);
+}
+
 /* Carrito Flotante Inferior */
 .pos-cart {
   position: fixed;
@@ -1088,6 +1238,12 @@ select.form-input{cursor:pointer}
 }
 
 @media (max-width: 768px) {
+  .pos-cart-floating-btn {
+    bottom: 20px;
+    right: 20px;
+    width: 58px;
+    height: 58px;
+  }
   .pos-cart {
     bottom: 85px;
     right: 15px;
@@ -1363,7 +1519,7 @@ select.form-input{cursor:pointer}
   animation: toastPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 @keyframes toastPop {
-  0% { transform: translateY(30px) scale(0.9); opacity: 0; }
+  0% { transform: translateY(-30px) scale(0.9); opacity: 0; }
   100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
@@ -1616,3 +1772,86 @@ select.form-input{cursor:pointer}
 .lote-badge.lote-oferta{background:var(--orange);color:#fff}
 .pos-card-sub2{font-size:.75rem;color:var(--orange);font-weight:600;margin-top:2px}
 .badge-oferta{background:var(--orange);color:#fff}
+
+/* ---------------- FORMATOS DE VENTA (Venta Mixta) ---------------- */
+.costo-automatico {
+  font-size: .88rem;
+  color: var(--text2);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.costo-automatico strong {
+  font-size: 1rem;
+  color: var(--primary);
+}
+.costo-automatico .hint {
+  font-size: .75rem;
+  color: var(--text3);
+}
+
+.formatos-venta-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.formato-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  transition: all var(--trans);
+}
+.formato-row-inputs {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1.2fr auto;
+  gap: 10px;
+  align-items: center;
+}
+@media (max-width: 600px) {
+  .formato-row-inputs {
+    grid-template-columns: 1fr 1fr;
+  }
+  .formato-row-inputs button {
+    grid-column: 1 / -1;
+  }
+}
+.formato-nombre-fija {
+  font-weight: 700;
+  font-size: .92rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.formato-referencia {
+  font-size: .78rem;
+  line-height: 1.4;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid transparent;
+  animation: secIn .2s ease;
+}
+.formato-referencia.alerta-verde {
+  background: var(--green-bg);
+  border-color: var(--green);
+  color: var(--text);
+}
+.formato-referencia.alerta-amarilla {
+  background: var(--orange-bg);
+  border-color: var(--orange);
+  color: var(--text);
+}
+.formato-referencia.alerta-roja {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: var(--red);
+  font-weight: 600;
+}
+

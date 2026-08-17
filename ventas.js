@@ -62,22 +62,29 @@ function nowLocal() {
 
 
 
-// ── DESCONTAR STOCK FEFO (unidades base, con apertura de paquetes) ──
+// ── DESCONTAR STOCK FEFO (SIEMPRE EN UNIDADES BASE) ──
 // Retorna { lotesAfectados, noCumplido } donde noCumplido > 0 = stock insuficiente
-// cantidadVendida viene en unidades del empaque indicado (1 = unidad base).
-// Si un lote es de paquete y solo se consumen unidades sueltas, el paquete
-// se "abre": el sobrante pasa a un sub-lote de unidad_base.
-function descontarStockFEFO(productoId, cantidadVendida, empaqueId) {
-  empaqueId = empaqueId || 'unidad_base';
+function descontarStockFEFO(productoId, cantidadVendida, formatoVentaId) {
   const producto = window.productos.find(p => p.id === productoId);
   if (!producto || !producto.lotes) return { lotesAfectados: [], noCumplido: cantidadVendida };
 
-  const unidadesPorEmp = (getUnidadesPorEmpaque(producto, empaqueId) || 1);
-  let restante = cantidadVendida * unidadesPorEmp; // en unidades base
+  let unidadesPorFormato = 1;
+  let formatoNombre = 'Unidad';
+  const formatos = safeArr(producto.formatosVenta);
+  const formato = formatos.find(f => f.id === formatoVentaId) || formatos[0];
+  if (formato) {
+    unidadesPorFormato = safeNum(formato.unidades) || 1;
+    formatoNombre = formato.nombre || 'Unidad';
+  } else if (formatoVentaId && formatoVentaId !== 'unidad_base') {
+    unidadesPorFormato = getUnidadesPorEmpaque(producto, formatoVentaId) || 1;
+    formatoNombre = getNombreEmpaque(producto, formatoVentaId);
+  }
+
+  let restante = cantidadVendida * unidadesPorFormato; // en unidades base
   const lotesAfectados = [];
 
   const lotesOrdenados = producto.lotes
-    .filter(lote => lote && safeNum(lote.cantidad) > 0)
+    .filter(lote => lote && safeNum(lote.cantidadBaseUnidades !== undefined ? lote.cantidadBaseUnidades : lote.cantidad) > 0)
     .sort((a, b) => {
       if (!a.vencimiento) return 1; if (!b.vencimiento) return -1;
       return new Date(a.vencimiento) - new Date(b.vencimiento);
@@ -85,60 +92,37 @@ function descontarStockFEFO(productoId, cantidadVendida, empaqueId) {
 
   for (const lote of lotesOrdenados) {
     if (restante <= 0) break;
-    const unidEmpLote = getUnidadesPorEmpaque(producto, lote.empaqueId || 'unidad_base') || 1;
-    const loteUnidades = safeNum(lote.cantidad) * unidEmpLote;
+    const loteUnidades = safeNum(lote.cantidadBaseUnidades !== undefined ? lote.cantidadBaseUnidades : lote.cantidad);
     if (loteUnidades <= 0) continue;
 
     const tomar = Math.min(loteUnidades, restante);
-    const costoUnidad = (safeNum(lote.costo) / unidEmpLote);
+    const costoUnidad = safeNum(lote.costoPorUnidad) || (safeNum(lote.costo) / (getUnidadesPorEmpaque(producto, lote.empaqueId) || 1));
 
-    if (unidEmpLote === 1 || tomar === loteUnidades) {
-      // Descuento directo (unidades sueltas o lote completo de paquete)
-      const descontar = (tomar === loteUnidades) ? lote.cantidad : tomar;
-      lote.cantidad -= descontar;
-      restante -= tomar;
-      lotesAfectados.push({
-        loteIndex: producto.lotes.findIndex(l => l.id === lote.id),
-        vencimiento: lote.vencimiento,
-        cantidadDescontada: tomar,
-        costoUnitario: costoUnidad,
-        empaqueId: lote.empaqueId || 'unidad_base'
-      });
-    } else {
-      // Consumir un paquete entero y "abrir" el sobrante como unidades sueltas
-      const paquetesTomar = Math.ceil(tomar / unidEmpLote);
-      const sobranteUnidades = paquetesTomar * unidEmpLote - tomar;
-      lote.cantidad -= paquetesTomar;
-      restante -= tomar;
-      lotesAfectados.push({
-        loteIndex: producto.lotes.findIndex(l => l.id === lote.id),
-        vencimiento: lote.vencimiento,
-        cantidadDescontada: tomar,
-        costoUnitario: costoUnidad,
-        empaqueId: lote.empaqueId || 'unidad_base'
-      });
-      if (sobranteUnidades > 0) {
-        producto.lotes.push({
-          id: genId(),
-          empaqueId: 'unidad_base',
-          cantidad: sobranteUnidades,
-          costo: costoUnidad,
-          costoPorUnidad: costoUnidad,
-          vencimiento: lote.vencimiento,
-          fechaIngreso: lote.fechaIngreso || new Date().toISOString().slice(0, 10),
-          nota: (lote.nota || '') + ' (abierto de paquete)'
-        });
-      }
-    }
+    lote.cantidadBaseUnidades = loteUnidades - tomar;
+    lote.cantidad = lote.cantidadBaseUnidades;
+    restante -= tomar;
+
+    lotesAfectados.push({
+      loteIndex: producto.lotes.findIndex(l => l.id === lote.id),
+      vencimiento: lote.vencimiento,
+      cantidadDescontada: tomar,
+      costoUnitario: costoUnidad,
+      formatoVendido: formatoNombre
+    });
   }
 
+  // Filtrar lotes activos
+  producto.lotes = producto.lotes.filter(l => l && safeNum(l.cantidadBaseUnidades !== undefined ? l.cantidadBaseUnidades : l.cantidad) > 0);
+
   // Recalcular stock y vencimiento global del producto
-  producto.stock = getStockTotal(producto);
+  producto.stock = getTotalUnidadesBase(producto);
   producto.vencimiento = getVencimientoMasCercano(producto);
-  producto.costo = getCostoPromedio(producto);
+  producto.costoPromedioUnidad = getCostoPromedio(producto);
+  producto.costo = producto.costoPromedioUnidad;
+  producto.updatedAt = Date.now();
 
   if (window.syncSaveProducto) window.syncSaveProducto(producto);
-  return { lotesAfectados, noCumplido: Math.ceil(restante / unidadesPorEmp) };
+  return { lotesAfectados, noCumplido: Math.ceil(restante / unidadesPorFormato) };
 }
 
 
@@ -162,7 +146,11 @@ function renderVentasStats() {
 }
 window.renderVentasStats = renderVentasStats;
 
-function pagoBadge(pago){const c=pago==='efectivo'?'pago-efectivo':pago==='qr'?'pago-qr':'pago-transferencia';return '<span class="pago-badge '+c+'">'+pago.toUpperCase()+'</span>';}
+function pagoBadge(pago){
+  const p = (pago || '').toLowerCase();
+  const c = p === 'efectivo' ? 'pago-efectivo' : p === 'qr' ? 'pago-qr' : p === 'fiado' ? 'pago-fiado' : 'pago-transferencia';
+  return '<span class="pago-badge ' + c + '">' + (pago || 'OTRO').toUpperCase() + '</span>';
+}
 
 // ── VENTAS HOY LIST ──
 function renderVentasHoy() {
@@ -414,16 +402,26 @@ window.renderPOSProducts = function() {
   filtrados.sort((a,b) => a.nombre.localeCompare(b.nombre));
 
    grid.innerHTML = filtrados.length ? filtrados.map(p => {
-    const stockUnid = getStockTotal(p);
+    const stockUnid = getTotalUnidadesBase(p);
     const outOfStock = stockUnid <= 0 ? 'out-of-stock' : '';
     const presentacion = p.presentacion ? escHTML(p.presentacion) : '';
     const marca = p.marca ? escHTML(p.marca) : '';
     const enOferta = getProductoEnOferta(p);
-    const precioUnidad = getPrecioVentaEfectivo(p);
-    const precioPaquete = safeNum(p.precioVentaPaquete) > 0 ? (enOferta && safeNum(p.precioOfertaPaquete) > 0 ? p.precioOfertaPaquete : p.precioVentaPaquete) : 0;
+    const formatos = safeArr(p.formatosVenta);
+    const fmtUnidad = formatos.find(f => f.id === 'unidad' || f.esBase) || { precio: getPrecioVentaEfectivo(p) };
+    const precioUnidad = enOferta && safeNum(p.precioOfertaUnidad || p.precioOferta) > 0 ? (p.precioOfertaUnidad || p.precioOferta) : safeNum(fmtUnidad.precio);
+
+    const paqFormatos = formatos.filter(f => f && f.unidades > 1);
     const stockLine = window.formatStockDisplay ? formatStockDisplay(p) : stockUnid + ' u.';
     const ofertaTag = enOferta ? '<span class="badge badge-oferta">OFERTA</span>' : '';
-    const paqTag = precioPaquete > 0 ? `<div class="pos-card-sub2">Paq.: Bs. ${precioPaquete.toFixed(2)}</div>` : '';
+    
+    let paqTag = '';
+    if (paqFormatos.length === 1) {
+      paqTag = `<div class="pos-card-sub2">${escHTML(paqFormatos[0].nombre)}: Bs. ${safeNum(paqFormatos[0].precio).toFixed(2)}</div>`;
+    } else if (paqFormatos.length > 1) {
+      paqTag = `<div class="pos-card-sub2" style="color:var(--primary)">+ ${paqFormatos.length} formatos disponibles</div>`;
+    }
+
     return `<div class="pos-card ${outOfStock}" onclick="addToPOS('${p.id}')">
               <div class="pos-card-name">${p.nombre} ${ofertaTag}</div>
               ${presentacion || marca ? '<div class="pos-card-sub">' + [marca, presentacion].filter(Boolean).join(' / ') + '</div>' : ''}
@@ -444,60 +442,99 @@ window.abrirSelectorEmpaquePOS = function(pid) {
   const p = (window.productos || []).find(x => x.id === pid);
   if (!p) return;
   posEmpaqueProductoId = pid;
-  const empaques = safeArr(p.empaques);
-  const stockUnid = getStockTotal(p);
+  const formatos = safeArr(p.formatosVenta).length > 0
+    ? p.formatosVenta
+    : [
+        { id: 'unidad', nombre: p.unidadBase || 'Unidad', unidades: 1, precio: getPrecioVentaEfectivo(p), esBase: true },
+        ...safeArr(p.empaques).map(e => ({ id: e.id, nombre: e.nombre, unidades: e.unidades, precio: p.precioVentaPaquete || 0 }))
+      ];
+
+  const stockUnid = getTotalUnidadesBase(p);
   const enOferta = getProductoEnOferta(p);
-  const precioUnidad = getPrecioVentaEfectivo(p);
+
   document.getElementById('posEmpaqueProductoNombre').textContent = p.nombre;
   document.getElementById('posEmpaqueStock').textContent = stockUnid > 0 ? (window.formatStockDisplay ? formatStockDisplay(p) : stockUnid + ' u.') : 'Agotado';
   const opts = document.getElementById('posEmpaqueOptions');
-  let html = `<button class="pos-empaque-opt" onclick="addToPOS('${pid}','unidad_base')">
-      <span class="po-name">${escHTML(p.unidadBase || 'Unidad')}</span>
-      <span class="po-price">Bs. ${precioUnidad.toFixed(2)}</span>
-    </button>`;
-  empaques.forEach(e => {
-    const precioP = enOferta && safeNum(p.precioOfertaPaquete) > 0 ? p.precioOfertaPaquete : (safeNum(p.precioVentaPaquete) || 0);
-    html += `<button class="pos-empaque-opt" onclick="addToPOS('${pid}','${escHTML(e.id)}')">
-      <span class="po-name">${escHTML(e.nombre)}</span>
-      <span class="po-sub">${e.unidades} u. · Bs. ${(safeNum(precioP) > 0 ? (precioP / e.unidades).toFixed(2) : (precioUnidad).toFixed(2))} /u</span>
-      <span class="po-price">Bs. ${safeNum(precioP).toFixed(2)}</span>
+  let html = '';
+
+  formatos.forEach(f => {
+    let precioFmt = safeNum(f.precio);
+    if (f.id === 'unidad' || f.esBase) {
+      if (enOferta && safeNum(p.precioOfertaUnidad || p.precioOferta) > 0) {
+        precioFmt = p.precioOfertaUnidad || p.precioOferta;
+      }
+    } else if (f.unidades > 1 && enOferta && safeNum(p.precioOfertaPaquete) > 0) {
+      precioFmt = p.precioOfertaPaquete;
+    }
+    const precioPorUnidad = (f.unidades && f.unidades > 0) ? (precioFmt / f.unidades) : precioFmt;
+    const subText = f.unidades > 1 ? `${f.unidades} u. · Bs. ${precioPorUnidad.toFixed(2)} /u` : '1 unidad base';
+
+    html += `<button class="pos-empaque-opt" onclick="addToPOS('${pid}','${escHTML(f.id)}')">
+      <span class="po-name">${escHTML(f.nombre || 'Formato')}</span>
+      <span class="po-sub">${subText}</span>
+      <span class="po-price">Bs. ${precioFmt.toFixed(2)}</span>
     </button>`;
   });
+
   opts.innerHTML = html;
   document.getElementById('posEmpaqueOverlay').style.display = 'flex';
 };
 window.abrirSelectorEmpaquePOS = abrirSelectorEmpaquePOS;
 
-window.addToPOS = function(pid, empaqueId) {
+window.addToPOS = function(pid, formatoId) {
   const p = (window.productos || []).find(x => x.id === pid);
   if (!p) return;
 
-  const stockUnid = getStockTotal(p);
+  const stockUnid = getTotalUnidadesBase(p);
   if (stockUnid <= 0) { toast('Producto agotado', 'warning'); return; }
 
-  empaqueId = empaqueId || 'unidad_base';
-  if (empaqueId === 'unidad_base' && safeArr(p.empaques).length > 0 && arguments.length === 1) {
-    // Sin formato elegido: preguntar
+  const formatos = safeArr(p.formatosVenta).length > 0
+    ? p.formatosVenta
+    : [
+        { id: 'unidad', nombre: p.unidadBase || 'Unidad', unidades: 1, precio: getPrecioVentaEfectivo(p), esBase: true },
+        ...safeArr(p.empaques).map(e => ({ id: e.id, nombre: e.nombre, unidades: e.unidades, precio: p.precioVentaPaquete || 0 }))
+      ];
+
+  // Si no se pasó un formatoId específico y el producto tiene más de 1 formato de venta: abrir selector
+  if (!formatoId && formatos.length > 1) {
     abrirSelectorEmpaquePOS(pid);
     return;
   }
+
   document.getElementById('posEmpaqueOverlay') && (document.getElementById('posEmpaqueOverlay').style.display = 'none');
 
-  const unidadesPorEmp = getUnidadesPorEmpaque(p, empaqueId) || 1;
-  const maxPosible = Math.floor(stockUnid / unidadesPorEmp);
-  if (maxPosible <= 0) { toast('Stock insuficiente para ese formato', 'warning'); return; }
+  formatoId = formatoId || 'unidad';
+  let formato = formatos.find(f => f.id === formatoId) || formatos[0] || { id: 'unidad', nombre: 'Unidad', unidades: 1, precio: getPrecioVentaEfectivo(p) };
 
-  const itemId = pid + '::' + empaqueId;
+  const unidadesPorFormato = safeNum(formato.unidades) || 1;
+  const maxPosible = Math.floor(stockUnid / unidadesPorFormato);
+  if (maxPosible <= 0) { toast('Stock insuficiente para vender en formato ' + formato.nombre, 'warning'); return; }
+
+  const itemId = pid + '::' + formato.id;
   const enOferta = getProductoEnOferta(p);
-  const precio = empaqueId === 'unidad_base' ? getPrecioVentaEfectivo(p) : (enOferta && safeNum(p.precioOfertaPaquete) > 0 ? p.precioOfertaPaquete : safeNum(p.precioVentaPaquete) || getPrecioVentaEfectivo(p) * unidadesPorEmp);
+  let precio = safeNum(formato.precio) || (getPrecioVentaEfectivo(p) * unidadesPorFormato);
+  if ((formato.id === 'unidad' || formato.esBase) && enOferta && safeNum(p.precioOfertaUnidad || p.precioOferta) > 0) {
+    precio = p.precioOfertaUnidad || p.precioOferta;
+  } else if (unidadesPorFormato > 1 && enOferta && safeNum(p.precioOfertaPaquete) > 0) {
+    precio = p.precioOfertaPaquete;
+  }
 
   const existing = posCart.find(item => item.id === itemId);
   const cantActual = existing ? existing.cant : 0;
-  if (cantActual + 1 > maxPosible) { toast('Stock disponible: ' + maxPosible + ' ' + (empaqueId === 'unidad_base' ? 'u.' : getNombreEmpaque(p, empaqueId)), 'warning'); return; }
+  if (cantActual + 1 > maxPosible) { toast('Stock disponible: ' + maxPosible + ' ' + formato.nombre, 'warning'); return; }
+
   if (existing) {
     existing.cant++;
   } else {
-    posCart.push({ id: itemId, p: p, cant: 1, precio: precio, empaqueId: empaqueId, unidadesPorEmpaque: unidadesPorEmp });
+    posCart.push({
+      id: itemId,
+      p: p,
+      cant: 1,
+      precio: precio,
+      formatoVenta: formato,
+      empaqueId: formato.id,
+      unidadesPorEmpaque: unidadesPorFormato
+    });
   }
   updatePOSCart();
 };
@@ -515,12 +552,12 @@ window.updatePOSQty = function(pid, delta) {
       item.p.comboRef.componentes.forEach(comp => {
         const pr = productos.find(px => px.id === comp.productoId);
         if (!pr) { stockMax = 0; return; }
-        const st = getStockTotal(pr);
+        const st = getTotalUnidadesBase(pr);
         const posib = Math.floor(st / comp.cantidad);
         if (posib < stockMax) stockMax = posib;
       });
     } else {
-      const stockUnid = getStockTotal(item.p);
+      const stockUnid = getTotalUnidadesBase(item.p);
       stockMax = Math.floor(stockUnid / (item.unidadesPorEmpaque || 1));
     }
     if (nuevo > stockMax) {
@@ -544,13 +581,27 @@ window.setPOSPayment = function(method) {
   if(qrOpts) qrOpts.style.display = method === 'qr' ? 'flex' : 'none';
 };
 
-window.togglePosCart = function() {
+window.togglePosCart = function(forceClose) {
   const cart = document.getElementById('posCartContainer');
-  if (posCart.length === 0) {
-    toast('El carrito está vacío', 'info');
+  const backdrop = document.getElementById('posCartBackdrop');
+  if (!cart) return;
+
+  if (forceClose === true) {
+    cart.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('active');
     return;
   }
-  if (cart) cart.classList.toggle('open');
+
+  if (posCart.length === 0 && !cart.classList.contains('open')) {
+    toast('El carrito está vacío. Agrega productos tocándolos.', 'info');
+    return;
+  }
+
+  const isOpen = cart.classList.toggle('open');
+  if (backdrop) {
+    if (isOpen) backdrop.classList.add('active');
+    else backdrop.classList.remove('active');
+  }
 };
 
 window.clearPOSCart = function() {
@@ -564,16 +615,47 @@ window.updatePOSCart = function() {
   const container = document.getElementById('posCartItems');
   const totalAmount = document.getElementById('posTotalAmount');
   const btnCheckout = document.getElementById('posCheckoutBtn');
+  const badge = document.getElementById('posCartBadge');
+  const floatingBtn = document.getElementById('posCartFloatingBtn');
+  const backdrop = document.getElementById('posCartBackdrop');
+  const cartContainer = document.getElementById('posCartContainer');
+
+  const totalUnits = posCart.reduce((sum, item) => sum + item.cant, 0);
+
+  // Actualizar contador del badge y estado del botón flotante
+  if (badge) {
+    badge.textContent = totalUnits;
+    if (totalUnits > 0) {
+      badge.classList.remove('bump');
+      void badge.offsetWidth; // Reflow para reiniciar animación
+      badge.classList.add('bump');
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  if (floatingBtn) {
+    if (totalUnits > 0) {
+      floatingBtn.classList.add('has-items');
+      floatingBtn.classList.remove('bounce');
+      void floatingBtn.offsetWidth;
+      floatingBtn.classList.add('bounce');
+    } else {
+      floatingBtn.classList.remove('has-items', 'bounce');
+    }
+  }
+
   if (!container) return;
 
   if (posCart.length === 0) {
-    container.innerHTML = '<div style="text-align:center;color:var(--text3);padding:20px;">Carrito vacío</div>';
+    container.innerHTML = '<div class="pos-cart-empty"><span style="font-size:2.2rem;margin-bottom:6px;display:block">🛒</span><p style="margin:0;font-weight:600;color:var(--text)">Carrito vacío</p><small style="color:var(--text3);font-size:0.8rem">Toca cualquier producto o combo para agregarlo</small></div>';
     if (totalAmount) totalAmount.innerText = 'Bs. 0.00';
     if (btnCheckout) btnCheckout.disabled = true;
     
-    const cartContainer = document.getElementById('posCartContainer');
     if (cartContainer && cartContainer.classList.contains('open')) {
       cartContainer.classList.remove('open');
+      if (backdrop) backdrop.classList.remove('active');
     }
     return;
   }
@@ -581,26 +663,25 @@ window.updatePOSCart = function() {
   if (btnCheckout) btnCheckout.disabled = false;
   let total = 0;
 
-   container.innerHTML = posCart.map(item => {
+  container.innerHTML = posCart.map(item => {
     const subtotal = item.cant * item.precio;
     total += subtotal;
     const present = item.p.presentacion || '';
-    const etiquetaEmp = item.empaqueId && item.empaqueId !== 'unidad_base' ? getNombreEmpaque(item.p, item.empaqueId) : '';
+    const etiquetaEmp = (item.formatoVenta && item.formatoVenta.id !== 'unidad' && item.formatoVenta.nombre) || (item.empaqueId && item.empaqueId !== 'unidad_base' ? getNombreEmpaque(item.p, item.empaqueId) : '');
     return `<div class="pos-cart-item">
               <div class="pos-cart-item-info">
-                <div class="pos-cart-item-name">${item.p.nombre}${present?' <small style="color:var(--text3);font-size:0.7rem">'+present+'</small>':''}${etiquetaEmp?' <small style="color:var(--primary);font-size:0.7rem">('+etiquetaEmp+')</small>':''}</div>
-                <div class="pos-cart-item-price">Bs. ${item.precio.toFixed(2)} c/u</div>
+                <div class="pos-cart-item-name">${escHTML(item.p.nombre)}${present?' <small style="color:var(--text3);font-size:0.75rem">'+escHTML(present)+'</small>':''}${etiquetaEmp?' <small style="color:var(--primary);font-size:0.75rem">('+escHTML(etiquetaEmp)+')</small>':''}</div>
+                <div class="pos-cart-item-price">Bs. ${item.precio.toFixed(2)} c/u &middot; <b>Subtotal: Bs. ${subtotal.toFixed(2)}</b></div>
               </div>
               <div class="pos-cart-item-controls">
-                <button class="pos-btn-qty" onclick="updatePOSQty('${item.id}', -1)">-</button>
+                <button class="pos-btn-qty" onclick="updatePOSQty('${item.id}', -1)" title="Restar">−</button>
                 <span class="pos-qty">${item.cant}</span>
-                <button class="pos-btn-qty" onclick="updatePOSQty('${item.id}', 1)">+</button>
+                <button class="pos-btn-qty" onclick="updatePOSQty('${item.id}', 1)" title="Sumar">+</button>
               </div>
             </div>`;
   }).join('');
 
   if (totalAmount) totalAmount.innerText = `Bs. ${total.toFixed(2)}`;
-
 };
 
 window.checkoutPOS = function() {
@@ -683,26 +764,27 @@ window.checkoutPOS = function() {
         ventas.unshift(venta);
         ventasRegistradas.push(venta);
       } else {
-        const empaqueId = item.empaqueId || 'unidad_base';
-        const unidadesPorEmp = item.unidadesPorEmpaque || 1;
-        const { lotesAfectados, noCumplido } = descontarStockFEFO(p.id, cant, empaqueId);
+        const formato = item.formatoVenta;
+        const formatoId = (formato && formato.id) || item.empaqueId || 'unidad';
+        const unidadesPorEmp = (formato && formato.unidades) || item.unidadesPorEmpaque || 1;
+        const { lotesAfectados, noCumplido } = descontarStockFEFO(p.id, cant, formatoId);
         if (noCumplido > 0) {
           console.warn('FEFO: no se pudo descontar', noCumplido, 'uds de', p.id);
         }
         const costoTotal = lotesAfectados.reduce((s, l) => s + (l.cantidadDescontada * l.costoUnitario), 0);
         const ganancia = total - costoTotal;
-        const esPaquete = empaqueId !== 'unidad_base';
-        const empNombre = esPaquete ? getNombreEmpaque(p, empaqueId) : '';
+        const esPaquete = unidadesPorEmp > 1;
+        const empNombre = esPaquete ? ((formato && formato.nombre) || getNombreEmpaque(p, formatoId)) : '';
 
          const venta = {
            id: genId(), tipo: 'individual',
            productoId: p.id, productoNombre: p.nombre, productomarca: p.marca||'',
            presentacion: p.presentacion || '',
-           categoria: p.categoria, cantidad: esPaquete ? cant * unidadesPorEmp : cant,
+           categoria: p.categoria, cantidad: cant * unidadesPorEmp,
            cantidadPacks: esPaquete ? cant : 0,
-           packLabel: esPaquete ? 'Paq.' : '',
+           packLabel: esPaquete ? empNombre : '',
            precioUnit: precio, subtotal, descuento: 0, total, costo: costoTotal,
-           ganancia, pago: posPaymentMethod, nota: 'Venta desde Caja Rápida',
+           ganancia, pago: posPaymentMethod, nota: 'Venta desde Caja Rápida' + (esPaquete ? ` (${cant} ${empNombre})` : ''),
            fecha: nowLocal(), fechaRegistro: fechaVenta,
            lotesAfectados
          };
@@ -773,26 +855,4 @@ window.addComboToPOS = function(cId) {
     });
   }
   updatePOSCart();
-  toast('Combo agregado al carrito', 'success');
-};
-
-window.filterPOSGrid = function() {
-  const query = (document.getElementById('posSearchInput').value || '').toLowerCase();
-  const filterCat = window.currentPOSFilter || 'Todas';
-  const prods = window.productos || [];
-  const grid = document.getElementById('posGrid');
-  if (!grid) return;
-  grid.innerHTML = prods.filter(p => {
-    const matchCat = filterCat === 'Todas' || p.categoria === filterCat;
-    const matchQ = p.nombre.toLowerCase().includes(query) || (p.marca && p.marca.toLowerCase().includes(query));
-    return matchCat && matchQ;
-  }).map(p => {
-    const stockMsg = p.stock > 0 ? `Stock: ${p.stock}` : `Agotado`;
-    const cl = p.stock > 0 ? 'pos-card' : 'pos-card out-of-stock';
-    return `<div class="${cl}" onclick="addPOSCart('${p.id}')">
-      <div class="pos-card-name">${p.nombre}</div>
-      <div class="pos-card-price">Bs. ${p.venta.toFixed(2)}</div>
-      <div class="pos-card-stock">${stockMsg}</div>
-    </div>`;
-  }).join('');
 };

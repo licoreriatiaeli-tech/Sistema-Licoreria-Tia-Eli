@@ -142,34 +142,34 @@ function savePagos() { localStorage.setItem('tiaeli_pagos', JSON.stringify(pagos
 window.setPagosGlobal = function(nuevos) { pagos = nuevos; window.pagos = nuevos; };
 
 // ==== HELPERS DE STOCK ====
-// Stock total expresado en UNIDADES BASE (considera empaques/paquetes)
+// Stock total expresado SIEMPRE en UNIDADES BASE
 function getStockTotal(p) {
   if (!p) return 0;
   if (typeof getTotalUnidadesBase === 'function') return getTotalUnidadesBase(p);
   if (!p.lotes || !Array.isArray(p.lotes)) return safeNum(p.stock);
-  return p.lotes.reduce((sum, l) => sum + safeNum(l && l.cantidad), 0);
+  return p.lotes.reduce((sum, l) => sum + safeNum(l && (l.cantidadBaseUnidades !== undefined ? l.cantidadBaseUnidades : l.cantidad)), 0);
 }
 function getVencimientoMasCercano(p) {
   if (!p) return null;
   if (!p.lotes || !Array.isArray(p.lotes) || p.lotes.length === 0) return p.vencimiento || null;
-  const activos = p.lotes.filter(l => l && safeNum(l.cantidad) > 0 && l.vencimiento);
+  const activos = p.lotes.filter(l => l && safeNum(l.cantidadBaseUnidades !== undefined ? l.cantidadBaseUnidades : l.cantidad) > 0 && l.vencimiento);
   if (!activos.length) return null;
   activos.sort((a, b) => new Date(a.vencimiento) - new Date(b.vencimiento));
   return activos[0].vencimiento;
 }
 function getCostoPromedio(p) {
   if (!p) return 0;
-  if (!p.lotes || !Array.isArray(p.lotes) || p.lotes.length === 0) return safeNum(p.costo);
-  const activos = p.lotes.filter(l => l && safeNum(l.cantidad) > 0);
-  if (!activos.length) return safeNum(p.costo);
+  if (!p.lotes || !Array.isArray(p.lotes) || p.lotes.length === 0) return safeNum(p.costoPromedioUnidad || p.costo);
+  const activos = p.lotes.filter(l => l && safeNum(l.cantidadBaseUnidades !== undefined ? l.cantidadBaseUnidades : l.cantidad) > 0);
+  if (!activos.length) return safeNum(p.costoPromedioUnidad || p.costo);
   let totalValor = 0, totalStock = 0;
   activos.forEach(l => {
-    const unidEmp = getUnidadesPorEmpaque(p, l.empaqueId || 'unidad_base');
-    const unidades = safeNum(l.cantidad) * (unidEmp || 1);
+    const unidades = safeNum(l.cantidadBaseUnidades !== undefined ? l.cantidadBaseUnidades : l.cantidad);
+    const costoUnit = safeNum(l.costoPorUnidad) || (safeNum(l.costo) / (getUnidadesPorEmpaque(p, l.empaqueId) || 1));
     totalStock += unidades;
-    totalValor += unidades * (safeNum(l.costo) / (unidEmp || 1));
+    totalValor += unidades * costoUnit;
   });
-  return totalStock > 0 ? totalValor / totalStock : 0;
+  return totalStock > 0 ? totalValor / totalStock : safeNum(p.costoPromedioUnidad || p.costo);
 }
 
 // ==== SALDOS CLIENTE ====
@@ -311,22 +311,57 @@ function abrirEntrada(productoId) {
   document.getElementById('entradaVencimiento').value = '';
   document.getElementById('entradaProveedor').value = '';
   document.getElementById('entradaNota').value = '';
-  document.getElementById('entradaModalTitle').textContent = 'Registrar Entrada';
-  // Poblar selector de empaque: unidad base + paquetes del producto
+  document.getElementById('entradaModalTitle').textContent = 'Registrar Entrada — ' + escHTML(p.nombre);
+  // Poblar selector de empaque: unidad base + formatos de compra y venta
   const selectEmp = document.getElementById('entradaTipoEmpaque');
+  // Combinar formatosCompra y formatosVenta
+  const formatosDisponibles = [];
+  const yaIds = new Set();
+  (p.formatosCompra || []).forEach(f => {
+    if (f && f.unidades > 1 && !yaIds.has(f.nombre)) {
+      formatosDisponibles.push({ id: f.id || ('fmt_' + genId()), nombre: f.nombre, unidades: f.unidades });
+      yaIds.add(f.nombre);
+    }
+  });
+  (p.formatosVenta || []).forEach(f => {
+    if (f && f.unidades > 1 && !yaIds.has(f.nombre)) {
+      formatosDisponibles.push({ id: f.id || ('fmt_' + genId()), nombre: f.nombre, unidades: f.unidades });
+      yaIds.add(f.nombre);
+    }
+  });
+  (p.empaques || []).forEach(f => {
+    if (f && f.unidades > 1 && !yaIds.has(f.nombre)) {
+      formatosDisponibles.push({ id: f.id || ('fmt_' + genId()), nombre: f.nombre, unidades: f.unidades });
+      yaIds.add(f.nombre);
+    }
+  });
+
   if (selectEmp) {
     const baseName = p.unidadBase || 'unidad';
-    const empaques = safeArr(p.empaques);
-    selectEmp.innerHTML = '<option value="unidad_base">' + escHTML(baseName) + ' (unidad)</option>' +
-      empaques.map((e, i) => '<option value="' + escHTML(e.id) + '">' + escHTML(e.nombre) + ' (' + e.unidades + ' u)</option>').join('');
-    selectEmp.value = getEmpaquePredeterminado(p) ? getEmpaquePredeterminado(p).id : 'unidad_base';
+    selectEmp.innerHTML = '<option value="unidad_base">' + escHTML(baseName) + ' suelta (1 unidad)</option>' +
+      formatosDisponibles.map(e => '<option value="' + escHTML(e.id) + '">' + escHTML(e.nombre) + ' (' + e.unidades + ' u. por paquete)</option>').join('');
+    selectEmp.value = formatosDisponibles.length > 0 ? formatosDisponibles[0].id : 'unidad_base';
   }
+  // Mostrar aviso si el producto NO tiene paquetes configurados
+  const avisoEl = document.getElementById('sinPaquetesAviso');
+  if (avisoEl) avisoEl.style.display = formatosDisponibles.length === 0 ? 'block' : 'none';
+  // Ocultar mini-form de paquete rápido
+  const rapidoForm = document.getElementById('configPaqueteRapidoForm');
+  if (rapidoForm) rapidoForm.style.display = 'none';
+  const rapidoNombre = document.getElementById('rapidoPaqueteNombre');
+  if (rapidoNombre) rapidoNombre.value = '';
+  const rapidoUnidades = document.getElementById('rapidoPaqueteUnidades');
+  if (rapidoUnidades) rapidoUnidades.value = '';
+  // Ocultar propuesta de actualizar precio
+  const actualizarRow = document.getElementById('actualizarPrecioVentaRow');
+  if (actualizarRow) actualizarRow.style.display = 'none';
   const resumenEl = document.getElementById('entradaResumen');
   if (resumenEl) resumenEl.style.display = 'none';
   document.getElementById('entradaOverlay').style.display = 'flex';
   actualizarEntradaResumen();
 }
 window.abrirEntrada = abrirEntrada;
+
 
 // Auto-cálculo: costo por unidad = costo del empaque ÷ unidades del empaque
 function actualizarEntradaResumen() {
@@ -335,26 +370,110 @@ function actualizarEntradaResumen() {
   const p = window.productos ? window.productos.find(x => x.id === entradaProductoId) : null;
   if (!p) return;
   const empaqueId = (document.getElementById('entradaTipoEmpaque') || {}).value || 'unidad_base';
-  const unidadesEmp = getUnidadesPorEmpaque(p, empaqueId) || 1;
+  let unidadesEmp = 1;
+  let nombreEmp = p.unidadBase || 'unidad';
+  if (empaqueId !== 'unidad_base') {
+    const todosFormatos = [...(p.formatosCompra || []), ...(p.formatosVenta || []), ...(p.empaques || [])];
+    const fmt = todosFormatos.find(f => f.id === empaqueId);
+    if (fmt) {
+      unidadesEmp = fmt.unidades || 1;
+      nombreEmp = fmt.nombre || 'Paquete';
+    }
+  }
+
   const cant = parseFloat(document.getElementById('entradaCantidad').value) || 0;
   const costoEmp = parseFloat(document.getElementById('entradaCosto').value) || 0;
   const costoUnidad = costoEmp > 0 ? costoEmp / unidadesEmp : 0;
   const total = cant * costoEmp;
   const elUnit = document.getElementById('entradaResumenUnit');
   const elQty = document.getElementById('entradaResumenQty');
+  const elQtyLabel = document.getElementById('entradaResumenQtyLabel');
   const elUnids = document.getElementById('entradaResumenUnids');
   const elTotal = document.getElementById('entradaResumenTotal');
+  const labelCantidad = document.getElementById('entradaCantidadLabel');
+  const labelCosto = document.getElementById('entradaCostoLabel');
+  if (labelCantidad) labelCantidad.innerHTML = '¿Cuántos ingresaron? (' + escHTML(nombreEmp) + ') <span class="required">*</span>';
+  if (labelCosto) labelCosto.innerHTML = '¿Cuánto costó cada ' + escHTML(nombreEmp) + '? (Bs.) <span class="required">*</span>';
   if (cant > 0 && costoEmp > 0) {
     resumenEl.style.display = 'block';
     if (elUnit) elUnit.textContent = 'Bs. ' + costoUnidad.toFixed(2) + ' / u.';
-    if (elQty) elQty.textContent = cant + ' ' + (empaqueId === 'unidad_base' ? 'u.' : getNombreEmpaque(p, empaqueId));
-    if (elUnids) elUnids.textContent = cant * unidadesEmp + ' u.';
+    const totalUnids = cant * unidadesEmp;
+    if (elQtyLabel) elQtyLabel.textContent = empaqueId === 'unidad_base' ? 'Cantidad ingresada' : cant + ' ' + nombreEmp + ' × ' + unidadesEmp + ' u.';
+    if (elQty) elQty.textContent = empaqueId === 'unidad_base' ? cant + ' u.' : '= ' + totalUnids + ' u.';
+    if (elUnids) elUnids.textContent = totalUnids + ' u.';
     if (elTotal) elTotal.textContent = 'Bs. ' + total.toFixed(2);
+    // Propuesta de actualizar precio de venta si el costo cambió más del 15%
+    const costoAnterior = safeNum(p.costoPromedioUnidad || p.costo);
+    const precioVentaActual = (typeof getPrecioVentaEfectivo === 'function' && getPrecioVentaEfectivo(p)) || safeNum(p.venta) || safeNum(p.precioVentaUnidad);
+    const actualizarRow = document.getElementById('actualizarPrecioVentaRow');
+    const precioActualSpan = document.getElementById('precioVentaActualSpan');
+    if (actualizarRow && precioVentaActual > 0 && costoAnterior > 0) {
+      const diferencia = Math.abs(costoUnidad - costoAnterior) / costoAnterior;
+      if (diferencia > 0.15) {
+        actualizarRow.style.display = 'block';
+        if (precioActualSpan) precioActualSpan.textContent = 'Bs. ' + precioVentaActual.toFixed(2);
+        const nuevoPrecioInput = document.getElementById('nuevoPrecioVentaInput');
+        if (nuevoPrecioInput && !nuevoPrecioInput.value) {
+          const margenPct = costoAnterior > 0 ? precioVentaActual / costoAnterior : 1.2;
+          nuevoPrecioInput.value = (costoUnidad * margenPct).toFixed(2);
+        }
+      } else {
+        if (actualizarRow) actualizarRow.style.display = 'none';
+      }
+    }
   } else {
     resumenEl.style.display = 'none';
   }
 }
 window.actualizarEntradaResumen = actualizarEntradaResumen;
+
+// Muestra el mini-form inline de configuración rápida de paquete
+window.mostrarConfigPaqueteRapido = function() {
+  const form = document.getElementById('configPaqueteRapidoForm');
+  if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+};
+
+// Guarda un paquete rápido desde el modal de entrada y actualiza el producto
+window.guardarPaqueteRapido = function() {
+  const pid = document.getElementById('entradaProductoId').value;
+  const nombre = (document.getElementById('rapidoPaqueteNombre').value || '').trim();
+  const unidades = parseInt(document.getElementById('rapidoPaqueteUnidades').value || '0');
+  if (!nombre || unidades < 2) { toast('Nombre y unidades (mínimo 2) son obligatorios', 'error'); return; }
+  const p = window.productos ? window.productos.find(x => x.id === pid) : null;
+  if (!p) { toast('Producto no encontrado', 'error'); return; }
+  if (!p.formatosCompra) p.formatosCompra = [];
+  if (!p.formatosVenta) p.formatosVenta = [{ id: 'unidad', nombre: 'Unidad', unidades: 1, precio: p.precioVentaUnidad || p.venta || 0, esBase: true }];
+  const nuevo = { id: 'fmt_' + genId(), nombre, unidades };
+  p.formatosCompra.push(nuevo);
+  p.formatosVenta.push({ id: nuevo.id, nombre, unidades, precio: 0 });
+  if (typeof save === 'function') save();
+  if (typeof window.syncSaveProducto === 'function') window.syncSaveProducto(p);
+  abrirEntrada(pid);
+  toast('Formato "' + nombre + '" configurado.', 'success');
+};
+
+// Aplica el nuevo precio de venta sugerido desde el modal de entrada
+window.aplicarNuevoPrecioVenta = function() {
+  const pid = document.getElementById('entradaProductoId').value;
+  const nuevoPrecio = parseFloat(document.getElementById('nuevoPrecioVentaInput').value) || 0;
+  if (!nuevoPrecio || nuevoPrecio <= 0) { toast('Ingresá un precio válido', 'error'); return; }
+  const p = window.productos ? window.productos.find(x => x.id === pid) : null;
+  if (!p) return;
+  const anterior = safeNum(p.venta);
+  p.venta = nuevoPrecio;
+  p.precioVentaUnidad = nuevoPrecio;
+  const fmtUni = safeArr(p.formatosVenta).find(f => f.id === 'unidad');
+  if (fmtUni) fmtUni.precio = nuevoPrecio;
+  if (typeof registrarHistorialPrecio === 'function') {
+    registrarHistorialPrecio(p, 'entrada', 'Precio unidad actualizado al registrar entrada: Bs.' + anterior.toFixed(2) + ' → Bs.' + nuevoPrecio.toFixed(2));
+  }
+  if (typeof save === 'function') save();
+  if (typeof window.syncSaveProducto === 'function') window.syncSaveProducto(p);
+  const row = document.getElementById('actualizarPrecioVentaRow');
+  if (row) row.style.display = 'none';
+  toast('Precio de venta actualizado a Bs. ' + nuevoPrecio.toFixed(2), 'success');
+};
+
 
 function confirmarEntrada() {
   const pid = document.getElementById('entradaProductoId').value;
@@ -367,23 +486,37 @@ function confirmarEntrada() {
   if (!pid || !cantidad || cantidad <= 0 || costoEmp < 0) { toast('Datos inválidos', 'error'); return; }
   const p = window.productos.find(x => x.id === pid);
   if (!p) { toast('Producto no encontrado', 'error'); return; }
-  const unidadesEmp = getUnidadesPorEmpaque(p, empaqueId) || 1;
+
+  let unidadesEmp = 1;
+  let nombreEmp = p.unidadBase || 'unidad';
+  if (empaqueId !== 'unidad_base') {
+    const todosFormatos = [...(p.formatosCompra || []), ...(p.formatosVenta || []), ...(p.empaques || [])];
+    const fmt = todosFormatos.find(f => f.id === empaqueId);
+    if (fmt) {
+      unidadesEmp = fmt.unidades || 1;
+      nombreEmp = fmt.nombre || 'Paquete';
+    }
+  }
+
+  const cantidadBase = cantidad * unidadesEmp;
+  const costoUnidad = unidadesEmp > 0 ? costoEmp / unidadesEmp : costoEmp;
 
   if (!p.lotes) p.lotes = [];
   p.lotes.push({
     id: genId(),
-    empaqueId: empaqueId,
-    cantidad: cantidad,
-    costo: costoEmp,
-    costoPorUnidad: unidadesEmp > 0 ? costoEmp / unidadesEmp : costoEmp,
+    cantidadBaseUnidades: cantidadBase,
+    cantidad: cantidadBase,
+    costoTotalLote: costoEmp * cantidad,
+    costoPorUnidad: costoUnidad,
     vencimiento: vencimiento || '',
     fechaIngreso: new Date().toISOString().slice(0, 10),
     nota: nota || (proveedor ? 'Proveedor: ' + proveedor : '')
   });
 
-  p.stock = getStockTotal(p);
+  p.stock = getTotalUnidadesBase(p);
   p.vencimiento = getVencimientoMasCercano(p);
-  p.costo = getCostoPromedio(p);
+  p.costoPromedioUnidad = getCostoPromedio(p);
+  p.costo = p.costoPromedioUnidad;
   p.updatedAt = Date.now();
 
   let entradas = [];
@@ -393,20 +526,20 @@ function confirmarEntrada() {
     productoId: pid,
     productoNombre: p.nombre,
     empaqueId: empaqueId,
-    empaqueNombre: empaqueId === 'unidad_base' ? (p.unidadBase || 'unidad') : getNombreEmpaque(p, empaqueId),
+    empaqueNombre: nombreEmp,
     cantidad: cantidad,
-    unidadesTotales: cantidad * unidadesEmp,
-    costo: costoEmp,
-    costoPorUnidad: unidadesEmp > 0 ? costoEmp / unidadesEmp : costoEmp,
+    unidadesTotales: cantidadBase,
+    costo: costoEmp * cantidad,
+    costoPorUnidad: costoUnidad,
     vencimiento: vencimiento,
     proveedor: proveedor,
     nota: nota,
     fecha: Date.now(),
-    usuario: usuarioActual()
+    usuario: (typeof usuarioActual === 'function' && usuarioActual()) || '—'
   });
   localStorage.setItem('tiaeli_entradas', JSON.stringify(entradas));
 
-  registrarActividad('entrada', 'Entrada: ' + p.nombre + ' (+' + cantidad + ' ' + (empaqueId === 'unidad_base' ? 'u' : getNombreEmpaque(p, empaqueId)) + ' = ' + cantidad * unidadesEmp + ' u.) — Costo: Bs.' + costoEmp.toFixed(2) + (vencimiento ? ' Vence: ' + vencimiento : ''));
+  registrarActividad('entrada', 'Entrada: ' + p.nombre + ' (+' + cantidad + ' ' + (empaqueId === 'unidad_base' ? 'u' : nombreEmp) + ' = ' + cantidadBase + ' u.) — Costo: Bs.' + (costoEmp * cantidad).toFixed(2) + (vencimiento ? ' Vence: ' + vencimiento : ''));
 
   if (typeof save === 'function') save();
   if (typeof window.syncSaveProducto === 'function') window.syncSaveProducto(p);
@@ -417,7 +550,7 @@ function confirmarEntrada() {
   if (typeof renderDashboard === 'function') renderDashboard();
   if (typeof renderPOSProducts === 'function') renderPOSProducts();
   if (typeof ejecutarJobOfertasLote === 'function') ejecutarJobOfertasLote();
-  toast('Entrada registrada', 'success');
+  toast('¡Entrada registrada! +' + cantidadBase + ' unidades base ingresadas', 'success');
 }
 
 // ==== FIADOS - LÓGICA COMPLETA ====
@@ -985,7 +1118,7 @@ function ejecutarJobOfertasLote(notificar) {
     if (typeof filterAndRender === 'function') filterAndRender();
     if (typeof renderDashboard === 'function') renderDashboard();
     if (typeof renderPOSProducts === 'function') renderPOSProducts();
-    if (typeof renderVencimientos === 'function') renderVencimientos(activeVencDias || 7);
+    if (typeof renderVencimientos === 'function') renderVencimientos(window.activeVencDias || 7);
   }
   if (notificar !== false && notifs.length) {
     toast('Lotes en oferta por vencimiento: ' + notifs.length, 'success');
