@@ -7,13 +7,16 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="version" content="v9" />
   <title>TIA ELI LICORERIA &ndash; Sistema de Inventario</title>
   <meta name="description" content="Sistema de control de inventario y ventas para TIA ELI LICORERIA." />
-  <link rel="manifest" href="manifest.json?v=8" />
+  <link rel="manifest" href="manifest.json?v=9" />
+  <link rel="icon" type="image/png" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=8" />
+  <link rel="stylesheet" href="style.css?v=9" />
 </head>
 <body>
 
@@ -1261,6 +1264,31 @@
       if (window.initFirebase) window.initFirebase();
       if (window.initGestion) window.initGestion();
     });
+
+    // ══ SERVICE WORKER: registro + actualización automática ══
+    // Estrategia network-first: siempre descarga lo nuevo si hay internet.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js?v=9', { updateViaCache: 'none' }).then(function(reg) {
+          reg.addEventListener('updatefound', function() {
+            var newWorker = reg.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener('statechange', function() {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                try { toast('Nueva versión disponible. Actualizando...', 'info'); } catch (e) {}
+                setTimeout(function() { window.location.reload(); }, 1500);
+              }
+            });
+          });
+          var refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', function() {
+            if (refreshing) return;
+            refreshing = true;
+            window.location.reload();
+          });
+        }).catch(function() {});
+      });
+    }
   </script>
 </body>
 </html>
