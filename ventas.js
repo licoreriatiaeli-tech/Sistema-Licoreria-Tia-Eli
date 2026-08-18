@@ -830,6 +830,8 @@ window.checkoutPOS = function() {
       pagoDetalle = mixto;
     }
 
+    const ventasRegistradas = [];
+
     posCart.forEach(item => {
       const p = item.p;
       const cant = item.cant;
