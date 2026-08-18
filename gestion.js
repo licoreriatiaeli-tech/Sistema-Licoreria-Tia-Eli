@@ -309,7 +309,6 @@ function abrirEntrada(productoId) {
   const costoVal = p.costo ? parseFloat(Number(p.costo).toFixed(2)) : '';
   document.getElementById('entradaCosto').value = costoVal;
   document.getElementById('entradaVencimiento').value = '';
-  document.getElementById('entradaProveedor').value = '';
   document.getElementById('entradaNota').value = '';
   document.getElementById('entradaModalTitle').textContent = 'Registrar Entrada — ' + escHTML(p.nombre);
   // Poblar selector de empaque: unidad base + formatos de compra y venta
@@ -614,7 +613,7 @@ function confirmarEntrada() {
   const cantidad = safeNum(document.getElementById('entradaCantidad').value);
   const costoEmp = safeNum(document.getElementById('entradaCosto').value);
   const vencimiento = document.getElementById('entradaVencimiento').value;
-  const proveedor = document.getElementById('entradaProveedor').value.trim();
+  const proveedor = '';
   const nota = document.getElementById('entradaNota').value.trim();
   if (!pid || !cantidad || cantidad <= 0 || costoEmp < 0) { toast('Datos inválidos', 'error'); return; }
   const p = window.productos.find(x => x.id === pid);

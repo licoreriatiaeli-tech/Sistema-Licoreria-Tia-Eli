@@ -460,7 +460,7 @@
 
             <!-- 1. FORMATO DE COMPRA (Para calcular costo unitario) -->
             <div style="background:var(--bg3);padding:16px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:18px">
-              <h4 style="margin-bottom:10px;font-size:0.95rem">🚚 1. ¿Cómo compraste este producto al proveedor?</h4>
+              <h4 style="margin-bottom:10px;font-size:0.95rem">🚚 1. ¿Cómo compraste este producto?</h4>
               
               <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
                 <button type="button" id="btnFormatoPaquete" class="btn btn-primary btn-sm" onclick="toggleFormatoCompra('paquete')">📦 Por Paquete / Caja / Fardo</button>
@@ -682,6 +682,15 @@
   </main>
 
   <div id="posFloatingElements" style="display: none;">
+
+    <!-- Botón Flotante del Carrito (FAB) -->
+    <button class="pos-cart-floating-btn" id="posCartFloatingBtn" onclick="togglePOSCart()" aria-label="Abrir carrito">
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+      <span class="pos-cart-badge" id="posCartBadge"></span>
+    </button>
+
+    <!-- Fondo oscuro cuando el carrito está abierto -->
+    <div class="pos-cart-backdrop" id="posCartBackdrop" onclick="closePOSCart()"></div>
 
     <!-- Carrito Flotante Inferior -->
     <div class="pos-cart" id="posCartContainer">
@@ -969,7 +978,6 @@
         <div class="entrada-section entrada-section-optional">
           <div class="entrada-section-title">📋 Información adicional <span class="opcional-tag">Opcional</span></div>
           <div class="form-group"><label>Fecha de vencimiento</label><input type="date" id="entradaVencimiento" class="form-input" /></div>
-          <div class="form-group"><label>Proveedor</label><input type="text" id="entradaProveedor" class="form-input" placeholder="Nombre del proveedor" /></div>
           <div class="form-group"><label>Nota</label><textarea id="entradaNota" class="form-input form-textarea" placeholder="Observaciones adicionales..." rows="2"></textarea></div>
         </div>
         <div class="form-actions">
