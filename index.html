@@ -259,15 +259,15 @@
 
         <!-- ══ CAJA RÁPIDA (UNIFICADA) ══ -->
     <section class="section" id="section-pos">
-      <div class="section-header" style="padding: 15px 20px 0;">
+      <div class="section-header pos-section-pad-top">
         <div><h1>Registrar Venta</h1><p class="section-sub">Caja rápida para PC y Celular</p></div>
         <button class="btn btn-secondary" id="btnCierreCaja">Cierre de Caja</button>
       </div>
 
       <!-- Filtros y Búsqueda -->
-        <div class="pos-filters-wrap" style="display: flex; gap: 8px; align-items: center; padding: 0 20px 10px; flex-wrap: wrap;">
-          <input type="search" id="posSearchInput" class="pos-shadcn-input" placeholder="Buscar producto..." onkeyup="filterPOSGrid()" style="flex: 1; min-width: 140px;" />
-          <div class="pos-filters" id="posFilters" style="flex: 2; padding: 0; min-width: 200px;">
+        <div class="pos-filters-wrap">
+          <input type="search" id="posSearchInput" class="pos-shadcn-input" placeholder="Buscar producto..." onkeyup="filterPOSGrid()" />
+          <div class="pos-filters" id="posFilters">
             <button class="pos-filter-btn active" onclick="setPOSFilter('Todas')">Todas</button>
             <button class="pos-filter-btn" onclick="setPOSFilter('Cervezas')">Cervezas</button>
             <button class="pos-filter-btn" onclick="setPOSFilter('Licores')">Licores</button>
@@ -276,7 +276,7 @@
           </div>
         </div>
 
-      <div style="padding: 0 20px;">
+      <div class="pos-section-pad">
         <h2 class="section-title" style="margin-top:10px; font-size: 1rem;">Combos disponibles</h2>
         <div id="combosVentaList" style="margin-bottom: 10px;"></div>
       </div>
@@ -285,14 +285,14 @@
         
         
         <!-- Grilla de productos -->
-        <div class="pos-grid" id="posGrid" style="padding: 0 20px;">
+        <div class="pos-grid" id="posGrid">
           <!-- Dinámico -->
         </div>
 
 
       </div>
       
-      <div style="padding: 20px 20px 80px;">
+      <div class="pos-section-pad" style="padding-bottom: 80px;">
         <h2 class="section-title">Ventas de hoy</h2>
         <div id="ventasHoyList" class="ventas-hoy-list"></div>
       </div>
