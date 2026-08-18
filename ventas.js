@@ -134,8 +134,17 @@ function renderVentasStats() {
   const manana = new Date(hoy); manana.setDate(manana.getDate() + 1); const mananaTs = manana.getTime();
   const vh=(window.ventas||[]).filter(v => typeof v.fecha === 'number' ? (v.fecha >= hoyTs && v.fecha < mananaTs) : new Date(v.fecha) >= hoy);
   const total=vh.reduce((s,v)=>s+v.total,0);
-  const ef=vh.filter(v=>v.pago==='efectivo').reduce((s,v)=>s+v.total,0);
-  const qr=vh.filter(v=>v.pago!=='efectivo').reduce((s,v)=>s+v.total,0);
+  let ef=0, qr=0;
+  vh.forEach(v => {
+    if (v.pago === 'mixto' && v.pagoDetalle) {
+      ef += v.pagoDetalle.efectivo || 0;
+      qr += v.pagoDetalle.qr || 0;
+    } else if (v.pago === 'efectivo') {
+      ef += v.total;
+    } else {
+      qr += v.total;
+    }
+  });
   const set=(id,val,prefix='')=>{
     const el=document.getElementById(id);
     if(el) el.innerHTML = window.odoHtml ? window.odoHtml(val, String(val).includes('.')?'money':'int', prefix) : prefix + val;
@@ -146,8 +155,13 @@ function renderVentasStats() {
 }
 window.renderVentasStats = renderVentasStats;
 
-function pagoBadge(pago){
+function pagoBadge(pago, pagoDetalle){
   const p = (pago || '').toLowerCase();
+  if (p === 'mixto' && pagoDetalle) {
+    const eff = pagoDetalle.efectivo || 0;
+    const qr = pagoDetalle.qr || 0;
+    return '<span class="pago-badge pago-mixto" title="Efectivo: Bs. ' + eff.toFixed(2) + ' | QR: Bs. ' + qr.toFixed(2) + '">MIXTO</span>';
+  }
   const c = p === 'efectivo' ? 'pago-efectivo' : p === 'qr' ? 'pago-qr' : p === 'fiado' ? 'pago-fiado' : 'pago-transferencia';
   return '<span class="pago-badge ' + c + '">' + (pago || 'OTRO').toUpperCase() + '</span>';
 }
@@ -173,7 +187,7 @@ function renderVentasHoy() {
     return `<div class="venta-card">
       <div class="venta-card-left">
         <div class="venta-card-nombre">${safePN} ${etq}</div>
-        <div class="venta-card-meta"><span>${hora}</span><span>${desc}</span>${pagoBadge(v.pago)}${safeNota ? '<span>'+safeNota+'</span>' : ''}</div>
+        <div class="venta-card-meta"><span>${hora}</span><span>${desc}</span>${pagoBadge(v.pago, v.pagoDetalle)}${safeNota ? '<span>'+safeNota+'</span>' : ''}</div>
         ${lotesInfo}
       </div>
       <div class="venta-card-total">
@@ -251,13 +265,22 @@ function renderHistorial() {
   if(pago)lista=lista.filter(v=>v.pago===pago);
   lista.sort((a,b) => (typeof b.fecha === 'number' ? b.fecha : new Date(b.fecha).getTime()) - (typeof a.fecha === 'number' ? a.fecha : new Date(a.fecha).getTime()));
   const tv=lista.reduce((s,v)=>s+v.total,0),tg=lista.reduce((s,v)=>s+v.ganancia,0);
-  const ef=lista.filter(v=>v.pago==='efectivo').reduce((s,v)=>s+v.total,0);
-  const qr=lista.filter(v=>v.pago!=='efectivo').reduce((s,v)=>s+v.total,0);
+  let ef=0, qr=0;
+  lista.forEach(v => {
+    if (v.pago === 'mixto' && v.pagoDetalle) {
+      ef += v.pagoDetalle.efectivo || 0;
+      qr += v.pagoDetalle.qr || 0;
+    } else if (v.pago === 'efectivo') {
+      ef += v.total;
+    } else {
+      qr += v.total;
+    }
+  });
   const histResumen = document.getElementById('histResumen');
   if (histResumen) {
     histResumen.innerHTML=[
       [tv, 'Total vendido', 'Bs.', 2],
-      [lista.length, 'Transacciones', '', 0],
+      [lista.length, 'Ventas', '', 0],
       [tg, 'Ganancia', 'Bs.', 2],
       [ef, 'Efectivo', 'Bs.', 2],
       [qr, 'QR/Transfer.', 'Bs.', 2]
@@ -307,7 +330,7 @@ let mobileHtml = [];
             <div class="mobile-card-name">${v.productoNombre} ${etq}</div>
             <div style="font-size:0.75rem; color:var(--text3);">${fs}</div>
           </div>
-          ${pagoBadge(v.pago)}
+          ${pagoBadge(v.pago, v.pagoDetalle)}
         </div>
         <div class="mobile-card-body" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
           <div class="mobile-card-field"><span>Cantidad</span><span><b>${v.cantidad}</b></span></div>
@@ -332,7 +355,7 @@ let mobileHtml = [];
       </div>
     `);
 
-    return dateSeparatorRow + `<tr><td style="font-size:.76rem;color:var(--text2);white-space:nowrap">${fs}</td><td><div class="prod-name">${v.productoNombre}${etq}</div>${lotesInfo}</td><td><b>${v.cantidad}</b></td><td class="price-cost">Bs.${(v.precioUnit||v.total).toFixed(2)}</td><td style="color:var(--red)">${v.descuento>0?'-Bs.'+v.descuento.toFixed(2):'-'}</td><td class="price-venta"><b>Bs.${v.total.toFixed(2)}</b></td><td>${pagoBadge(v.pago)}</td><td class="price-ganancia ${v.ganancia>=0?'pos':'neg'}">Bs.${v.ganancia.toFixed(2)}</td><td style="color:var(--text3);font-size:.76rem;max-width:110px">${v.nota||'-'}</td><td><button class="btn-icon danger" onclick="eliminarVenta('${v.id}')">\u2715</button></td></tr>`;
+    return dateSeparatorRow + `<tr><td style="font-size:.76rem;color:var(--text2);white-space:nowrap">${fs}</td><td><div class="prod-name">${v.productoNombre}${etq}</div>${lotesInfo}</td><td><b>${v.cantidad}</b></td><td class="price-cost">Bs.${(v.precioUnit||v.total).toFixed(2)}</td><td style="color:var(--red)">${v.descuento>0?'-Bs.'+v.descuento.toFixed(2):'-'}</td><td class="price-venta"><b>Bs.${v.total.toFixed(2)}</b></td><td>${pagoBadge(v.pago, v.pagoDetalle)}</td><td class="price-ganancia ${v.ganancia>=0?'pos':'neg'}">Bs.${v.ganancia.toFixed(2)}</td><td style="color:var(--text3);font-size:.76rem;max-width:110px">${v.nota||'-'}</td><td><button class="btn-icon danger" onclick="eliminarVenta('${v.id}')">\u2715</button></td></tr>`;
   }).join('');
   
   if (mobileCards) mobileCards.innerHTML = mobileHtml.join('');
@@ -588,11 +611,25 @@ window.setPOSPayment = function(method) {
   posPaymentMethod = method;
   const btnCash = document.getElementById('posPayCash');
   const btnQR = document.getElementById('posPayQR');
+  const btnMixto = document.getElementById('posPayMixto');
   const qrOpts = document.getElementById('posQROptions');
+  const mixtoModal = document.getElementById('posMixtoModal');
   
   if(btnCash) btnCash.classList.toggle('active', method === 'efectivo');
   if(btnQR) btnQR.classList.toggle('active', method === 'qr');
+  if(btnMixto) btnMixto.classList.toggle('active', method === 'mixto');
   if(qrOpts) qrOpts.style.display = method === 'qr' ? 'flex' : 'none';
+  if(mixtoModal) mixtoModal.style.display = method === 'mixto' ? 'block' : 'none';
+  
+  if (method === 'mixto') {
+    const total = posCart.reduce((sum, item) => sum + item.cant * item.precio, 0);
+    const totalEl = document.getElementById('posMixtoTotal');
+    if (totalEl) totalEl.textContent = 'Bs. ' + total.toFixed(2);
+    document.getElementById('posMixtoEfectivo').value = '';
+    document.getElementById('posMixtoQR').value = '';
+    document.getElementById('posMixtoError').textContent = '';
+    document.getElementById('posMixtoOk').textContent = '';
+  }
 };
 
 window.togglePosCart = function(forceClose) {
@@ -791,22 +828,23 @@ window.checkoutPOS = function() {
           lotesAfectados.forEach(l => {
             l.comboItemNombre = productoNombre;
             lotesAfectadosTotales.push(l);
-          });
-        });
+});
+      });
 
-        const venta = {
-          id: genId(), tipo: 'combo',
-          productoId: combo.id, productoNombre: p.nombre, productomarca: '',
-          categoria: 'Combo', cantidad: cant,
-          cantidadPacks: 1, packLabel: '',
-          precioUnit: precio, subtotal, descuento: 0, total, costo: costoTotal,
-          ganancia: total - costoTotal, pago: posPaymentMethod, nota: 'Combo desde Caja Rápida',
-          fecha: nowLocal(), fechaRegistro: fechaVenta,
-          lotesAfectados: lotesAfectadosTotales
-        };
-        ventas.unshift(venta);
-        ventasRegistradas.push(venta);
-      } else {
+      const venta = {
+        id: genId(), tipo: 'combo',
+        productoId: combo.id, productoNombre: p.nombre, productomarca: '',
+        categoria: 'Combo', cantidad: cant,
+        cantidadPacks: 1, packLabel: '',
+        precioUnit: precio, subtotal, descuento: 0, total, costo: costoTotal,
+        ganancia: total - costoTotal, pago: posPaymentMethod, nota: 'Combo desde Caja Rápida',
+        fecha: nowLocal(), fechaRegistro: fechaVenta,
+        lotesAfectados: lotesAfectadosTotales
+      };
+      if (pagoDetalle) venta.pagoDetalle = pagoDetalle;
+      ventas.unshift(venta);
+      ventasRegistradas.push(venta);
+    } else {
         const formato = item.formatoVenta;
         const formatoId = (formato && formato.id) || item.empaqueId || 'unidad';
         const unidadesPorEmp = (formato && formato.unidades) || item.unidadesPorEmpaque || 1;
@@ -819,18 +857,27 @@ window.checkoutPOS = function() {
         const esPaquete = unidadesPorEmp > 1;
         const empNombre = esPaquete ? ((formato && formato.nombre) || getNombreEmpaque(p, formatoId)) : '';
 
-         const venta = {
-           id: genId(), tipo: 'individual',
-           productoId: p.id, productoNombre: p.nombre, productomarca: p.marca||'',
-           presentacion: p.presentacion || '',
-           categoria: p.categoria, cantidad: cant * unidadesPorEmp,
-           cantidadPacks: esPaquete ? cant : 0,
-           packLabel: esPaquete ? empNombre : '',
-           precioUnit: precio, subtotal, descuento: 0, total, costo: costoTotal,
-           ganancia, pago: posPaymentMethod, nota: 'Venta desde Caja Rápida' + (esPaquete ? ` (${cant} ${empNombre})` : ''),
-           fecha: nowLocal(), fechaRegistro: fechaVenta,
-           lotesAfectados
-         };
+        // Obtener detalle de pago mixto si aplica
+        let pagoDetalle = null;
+        if (posPaymentMethod === 'mixto') {
+          const mixto = validarMixto();
+          if (!mixto) { toast('Complete correctamente el pago mixto', 'error'); return; }
+          pagoDetalle = mixto;
+        }
+
+        const venta = {
+          id: genId(), tipo: 'individual',
+          productoId: p.id, productoNombre: p.nombre, productomarca: p.marca||'',
+          presentacion: p.presentacion || '',
+          categoria: p.categoria, cantidad: cant * unidadesPorEmp,
+          cantidadPacks: esPaquete ? cant : 0,
+          packLabel: esPaquete ? empNombre : '',
+          precioUnit: precio, subtotal, descuento: 0, total, costo: costoTotal,
+          ganancia, pago: posPaymentMethod, nota: 'Venta desde Caja Rápida' + (esPaquete ? ` (${cant} ${empNombre})` : ''),
+          fecha: nowLocal(), fechaRegistro: fechaVenta,
+          lotesAfectados
+        };
+        if (pagoDetalle) venta.pagoDetalle = pagoDetalle;
         ventas.unshift(venta);
         ventasRegistradas.push(venta);
       }

@@ -286,7 +286,7 @@
         <div class="search-wrap"><span class="search-icon">&#128269;</span><input type="text" id="hSearch" class="search-input" placeholder="Buscar producto..." /></div>
         <input type="date" id="hFechaDesde" class="filter-select" />
         <input type="date" id="hFechaHasta" class="filter-select" />
-        <select id="hPago" class="filter-select"><option value="">Todos los pagos</option><option value="efectivo">Efectivo</option><option value="qr">QR</option><option value="transferencia">Transferencia</option></select>
+        <select id="hPago" class="filter-select"><option value="">Todos los pagos</option><option value="efectivo">Efectivo</option><option value="qr">QR</option><option value="transferencia">Transferencia</option><option value="mixto">Mixto</option></select>
         <button class="btn btn-secondary" id="btnFiltrarHistorial">Filtrar</button>
       </div>
       <div class="historial-resumen" id="histResumen"></div>
@@ -713,6 +713,24 @@
         <div class="pos-payment-methods">
           <button class="pos-pay-btn active" id="posPayCash" onclick="setPOSPayment('efectivo')">Efectivo</button>
           <button class="pos-pay-btn" id="posPayQR" onclick="setPOSPayment('qr')">QR</button>
+          <button class="pos-pay-btn" id="posPayMixto" onclick="setPOSPayment('mixto')">Mixto</button>
+        </div>
+        
+        <!-- Modal de pago mixto -->
+        <div id="posMixtoModal" style="display:none; margin-top:10px; padding:12px; background:var(--bg2); border-radius:var(--radius); border:1px solid var(--border);">
+          <div style="font-weight:600; margin-bottom:8px; color:var(--text);">Pago Mixto — Total: <span id="posMixtoTotal">Bs. 0.00</span></div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:8px;">
+            <div class="form-group" style="flex:1; min-width:120px;">
+              <label style="font-size:0.8rem">Efectivo (Bs.)</label>
+              <input type="number" id="posMixtoEfectivo" class="form-input" min="0" step="0.01" placeholder="0.00" oninput="validarMixto()" />
+            </div>
+            <div class="form-group" style="flex:1; min-width:120px;">
+              <label style="font-size:0.8rem">QR / Transferencia (Bs.)</label>
+              <input type="number" id="posMixtoQR" class="form-input" min="0" step="0.01" placeholder="0.00" oninput="validarMixto()" />
+            </div>
+          </div>
+          <div id="posMixtoError" style="color:var(--red); font-size:0.75rem; min-height:18px;"></div>
+          <div id="posMixtoOk" style="color:var(--green); font-size:0.75rem; min-height:18px;"></div>
         </div>
         
         <div id="posQROptions" style="display:none; gap: 6px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap;">
