@@ -249,6 +249,7 @@ function renderHistorial() {
     lista = lista.filter(v => (typeof v.fecha === 'number' ? v.fecha : new Date(v.fecha).getTime()) <= d);
   }
   if(pago)lista=lista.filter(v=>v.pago===pago);
+  lista.sort((a,b) => (typeof b.fecha === 'number' ? b.fecha : new Date(b.fecha).getTime()) - (typeof a.fecha === 'number' ? a.fecha : new Date(a.fecha).getTime()));
   const tv=lista.reduce((s,v)=>s+v.total,0),tg=lista.reduce((s,v)=>s+v.ganancia,0);
   const ef=lista.filter(v=>v.pago==='efectivo').reduce((s,v)=>s+v.total,0);
   const qr=lista.filter(v=>v.pago!=='efectivo').reduce((s,v)=>s+v.total,0);
@@ -278,16 +279,28 @@ function renderHistorial() {
     return;
   }
   
-  let mobileHtml = [];
+let mobileHtml = [];
+  let lastDateStr = null;
   tbody.innerHTML = lista.map((v, i) => {
-    const fd=new Date(typeof v.fecha === 'number' ? v.fecha : v.fecha);const fs=fd.toLocaleDateString('es-BO')+' '+fd.toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'});
-    const etq=v.tipo==='combo'?' <span class="combo-tag">COMBO</span>':(v.packLabel?' <span class="pack-tag">'+v.packLabel+'</span>':(v.presentacion?' <span class="pack-tag">'+escHTML(v.presentacion)+'</span>':''));
+    const fd = new Date(typeof v.fecha === 'number' ? v.fecha : v.fecha);
+    const fs = fd.toLocaleDateString('es-BO') + ' ' + fd.toLocaleTimeString('es-BO', {hour:'2-digit',minute:'2-digit'});
+    const dateOnly = fd.toLocaleDateString('es-BO');
+    const etq = v.tipo === 'combo' ? ' <span class="combo-tag">COMBO</span>' : (v.packLabel ? ' <span class="pack-tag">' + v.packLabel + '</span>' : (v.presentacion ? ' <span class="pack-tag">' + escHTML(v.presentacion) + '</span>' : ''));
     let lotesInfo = '';
     if (v.lotesAfectados && v.lotesAfectados.length) {
-      lotesInfo = '<ul class="lotes-afectados-list">' + v.lotesAfectados.map(la => `<li>Lote ${la.loteIndex+1} (${la.cantidadDescontada} ud) ${la.vencimiento?'- '+la.vencimiento:''}</li>`).join('') + '</ul>';
+      lotesInfo = '<ul class="lotes-afectados-list">' + v.lotesAfectados.map(la => `<li>Lote ${la.loteIndex+1} (${la.cantidadDescontada} ud) ${la.vencimiento ? '- ' + la.vencimiento : ''}</li>`).join('') + '</ul>';
     }
 
-    mobileHtml.push(`
+    // Separador de fecha si cambia
+    let dateSeparatorRow = '';
+    let dateSeparatorMobile = '';
+    if (dateOnly !== lastDateStr) {
+      dateSeparatorRow = `<tr class="hist-date-separator"><td colspan="10"><span>${dateOnly}</span></td></tr>`;
+      dateSeparatorMobile = `<div class="hist-date-header">${dateOnly}</div>`;
+      lastDateStr = dateOnly;
+    }
+
+    mobileHtml.push(dateSeparatorMobile + `
       <div class="mobile-card" style="animation-delay:${Math.min(i*30, 600)}ms">
         <div class="mobile-card-header" style="justify-content:space-between; align-items:flex-start;">
           <div style="display:flex; flex-direction:column; gap:2px;">
@@ -319,7 +332,7 @@ function renderHistorial() {
       </div>
     `);
 
-    return `<tr><td style="font-size:.76rem;color:var(--text2);white-space:nowrap">${fs}</td><td><div class="prod-name">${v.productoNombre}${etq}</div>${lotesInfo}</td><td><b>${v.cantidad}</b></td><td class="price-cost">Bs.${(v.precioUnit||v.total).toFixed(2)}</td><td style="color:var(--red)">${v.descuento>0?'-Bs.'+v.descuento.toFixed(2):'-'}</td><td class="price-venta"><b>Bs.${v.total.toFixed(2)}</b></td><td>${pagoBadge(v.pago)}</td><td class="price-ganancia ${v.ganancia>=0?'pos':'neg'}">Bs.${v.ganancia.toFixed(2)}</td><td style="color:var(--text3);font-size:.76rem;max-width:110px">${v.nota||'-'}</td><td><button class="btn-icon danger" onclick="eliminarVenta('${v.id}')">\u2715</button></td></tr>`;
+    return dateSeparatorRow + `<tr><td style="font-size:.76rem;color:var(--text2);white-space:nowrap">${fs}</td><td><div class="prod-name">${v.productoNombre}${etq}</div>${lotesInfo}</td><td><b>${v.cantidad}</b></td><td class="price-cost">Bs.${(v.precioUnit||v.total).toFixed(2)}</td><td style="color:var(--red)">${v.descuento>0?'-Bs.'+v.descuento.toFixed(2):'-'}</td><td class="price-venta"><b>Bs.${v.total.toFixed(2)}</b></td><td>${pagoBadge(v.pago)}</td><td class="price-ganancia ${v.ganancia>=0?'pos':'neg'}">Bs.${v.ganancia.toFixed(2)}</td><td style="color:var(--text3);font-size:.76rem;max-width:110px">${v.nota||'-'}</td><td><button class="btn-icon danger" onclick="eliminarVenta('${v.id}')">\u2715</button></td></tr>`;
   }).join('');
   
   if (mobileCards) mobileCards.innerHTML = mobileHtml.join('');

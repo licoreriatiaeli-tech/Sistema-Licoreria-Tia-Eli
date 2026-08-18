@@ -633,6 +633,33 @@ select.form-input{cursor:pointer}
 .lotes-afectados-list li { list-style: none; padding-left: 10px; position: relative; }
 .lotes-afectados-list li::before { content: '└'; position: absolute; left: 0; top: 0; }
 
+/* Separadores de fecha en Historial */
+.hist-date-separator td {
+  background: var(--bg3);
+  border-top: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 12px !important;
+}
+.hist-date-separator td span {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.hist-date-header {
+  background: var(--bg3);
+  border-top: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 12px;
+  margin: 16px -16px 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* ════════════════ ODOMETER (SLOT MACHINE) ════════════════ */
 .odo-counter {
   display: inline-flex;
