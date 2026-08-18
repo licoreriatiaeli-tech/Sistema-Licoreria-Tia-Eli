@@ -632,6 +632,25 @@ window.setPOSPayment = function(method) {
   }
 };
 
+window.validarMixto = function() {
+  const total = posCart.reduce((sum, item) => sum + item.cant * item.precio, 0);
+  const efectivo = parseFloat(document.getElementById('posMixtoEfectivo').value) || 0;
+  const qr = parseFloat(document.getElementById('posMixtoQR').value) || 0;
+  const errorEl = document.getElementById('posMixtoError');
+  const okEl = document.getElementById('posMixtoOk');
+  const suma = efectivo + qr;
+  const diff = Math.abs(suma - total);
+  
+  if (diff > 0.01) {
+    if (errorEl) errorEl.textContent = 'La suma debe ser igual al total: Bs. ' + total.toFixed(2) + ' (actual: Bs. ' + suma.toFixed(2) + ')';
+    if (okEl) okEl.textContent = '';
+    return false;
+  }
+  if (errorEl) errorEl.textContent = '';
+  if (okEl) okEl.textContent = '✓ Correcto: Efectivo Bs. ' + efectivo.toFixed(2) + ' + QR Bs. ' + qr.toFixed(2);
+  return { efectivo, qr };
+};
+
 window.togglePosCart = function(forceClose) {
   const cart = document.getElementById('posCartContainer');
   const backdrop = document.getElementById('posCartBackdrop');
