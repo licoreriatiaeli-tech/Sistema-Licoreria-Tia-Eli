@@ -169,6 +169,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .menu-toggle:hover{background:rgba(255,255,255,.1)}
 .topbar-brand{font-family:'Outfit',sans-serif;font-weight:900;color:#fff;font-size:1rem;letter-spacing:.3px}
 .topbar-right{display:flex;align-items:center;gap:8px}
+.topbar-theme-btn{background:none;border:1px solid rgba(255,255,255,.15);color:#fff;width:36px;height:36px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--trans);flex-shrink:0}
+.topbar-theme-btn:hover{background:rgba(255,255,255,.12)}
+.topbar-theme-btn .lucide{width:18px;height:18px}
+[data-theme="light"] .topbar-theme-btn{border-color:rgba(0,0,0,.12)}
+[data-theme="light"] .topbar-theme-btn .theme-icon-sun{display:none}
+[data-theme="dark"] .topbar-theme-btn .theme-icon-moon{display:none}
+[data-theme="light"] .topbar-theme-btn{color:#09090b}
 
 /* OVERLAY */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:150;backdrop-filter:blur(4px);animation:fadeO .2s ease}
@@ -1492,6 +1499,9 @@ select.form-input{cursor:pointer}
 }
 [data-theme="light"] .topbar-brand { color: #09090b !important; }
 [data-theme="light"] .menu-toggle { color: #09090b !important; }
+[data-theme="light"] .sync-btn-mobile { color: #09090b !important; border-color: rgba(0,0,0,.15) !important; background: rgba(0,0,0,.05) !important; }
+[data-theme="light"] .sync-btn-mobile:hover { background: rgba(0,0,0,.1) !important; }
+[data-theme="light"] .user-chip { color: #09090b !important; }
 
 /* Botones con efecto de pulsación y resplandor */
 .btn-primary {
@@ -2269,7 +2279,7 @@ select.form-input{cursor:pointer}
     right: 0;
     background: var(--surface);
     border-top: 1px solid var(--border);
-    z-index: 1000;
+    z-index: 900;
     padding: 6px 0 8px;
     box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
     backdrop-filter: blur(10px);
@@ -2476,8 +2486,23 @@ select.form-input{cursor:pointer}
   }
   
   .sidebar {
-    z-index: 999;
+    z-index: 1100;
     box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+    height: calc(100vh - 60px);
+    bottom: 60px;
+    top: 0;
+  }
+  
+  .sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 8px;
+  }
+  
+  .sidebar-footer {
+    flex-shrink: 0;
+    border-top: 1px solid rgba(255,255,255,.07);
+    padding: 10px 10px 8px;
   }
 }
 
