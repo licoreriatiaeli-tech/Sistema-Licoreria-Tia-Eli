@@ -868,6 +868,37 @@
         <div class="form-group" style="margin-bottom:12px"><label>Nombre del Combo *</label><input type="text" id="cmNombre" class="form-input" placeholder="Ej: Combo Verano" /></div>
         <div class="form-group" style="margin-bottom:12px"><label>Descripci&oacute;n</label><input type="text" id="cmDesc" class="form-input" placeholder="Descripci&oacute;n del combo" /></div>
         <div class="form-group" style="margin-bottom:16px"><label>Precio de venta sugerido (Bs.)</label><input type="number" id="cmPrecio" class="form-input" placeholder="0.00" step="0.01" /></div>
+        
+        <!-- Resumen de costos y ganancia en tiempo real -->
+        <div id="cmResumenCostos" style="display:none; margin-bottom:16px; padding:14px; background:linear-gradient(135deg,var(--bg3) 0%,var(--bg2) 100%); border:1px solid var(--border); border-radius:var(--radius);">
+          <div style="font-weight:700; margin-bottom:10px; color:var(--text); display:flex; align-items:center; gap:8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary)"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+            Resumen de Costos y Ganancia
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; font-size:0.85rem;">
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <span style="color:var(--text3); font-size:0.7rem;">COSTO TOTAL</span>
+              <span id="cmCostoTotal" style="font-weight:700; font-size:1.1rem; color:var(--red);">Bs. 0.00</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <span style="color:var(--text3); font-size:0.7rem;">GANANCIA</span>
+              <span id="cmGanancia" style="font-weight:700; font-size:1.1rem; color:var(--green);">Bs. 0.00</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <span style="color:var(--text3); font-size:0.7rem;">MARGEN</span>
+              <span id="cmMargen" style="font-weight:700; font-size:1.1rem; color:var(--primary);">0%</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <span style="color:var(--text3); font-size:0.7rem;">PRECIO SUGERIDO (+30%)</span>
+              <span id="cmPrecioSugerido" style="font-weight:700; font-size:1.1rem; color:var(--blue);">Bs. 0.00</span>
+            </div>
+          </div>
+          <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border); display:flex; align-items:center; gap:8px; font-size:0.8rem; color:var(--text3);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            El costo se calcula con el costo promedio unitario de cada producto. Ajusta el precio de venta arriba.
+          </div>
+        </div>
+        
         <div class="section-title" style="margin-bottom:10px">Componentes</div>
         <div class="search-wrap" style="margin-bottom: 12px; position: relative; overflow: visible;">
           <span class="search-icon">&#128269;</span>

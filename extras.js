@@ -350,6 +350,9 @@ function renderComboComponentes() {
   if (!cont) return;
   if (comboComponents.length === 0) {
     cont.innerHTML = '<div style="color:var(--text3); font-size:0.85rem; padding:10px 0; text-align:center;">No hay componentes. Busca y agrega uno arriba.</div>';
+    // Ocultar resumen si no hay componentes
+    const resumen = document.getElementById('cmResumenCostos');
+    if (resumen) resumen.style.display = 'none';
     return;
   }
   cont.innerHTML = comboComponents.map((comp, i) => {
@@ -366,10 +369,61 @@ function renderComboComponentes() {
       <button class="btn-icon danger" style="width:38px; height:38px; border-radius:8px;" onclick="removeComp(${i})">&#10005;</button>
     </div>`;
   }).join('');
+  // Mostrar y actualizar resumen de costos
+  actualizarResumenCombo();
 }
 
-function updateCompCant(i, val) { comboComponents[i].cantidad = parseInt(val)||1; }
+function updateCompCant(i, val) { comboComponents[i].cantidad = parseInt(val)||1; renderComboComponentes(); }
 function removeComp(i) { comboComponents.splice(i,1); renderComboComponentes(); }
+
+// ── Resumen de costos y ganancia del combo en tiempo real ──
+function actualizarResumenCombo() {
+  const resumen = document.getElementById('cmResumenCostos');
+  if (!resumen) return;
+  if (comboComponents.length === 0) {
+    resumen.style.display = 'none';
+    return;
+  }
+  resumen.style.display = 'block';
+  
+  let costoTotal = 0;
+  comboComponents.forEach(comp => {
+    const p = (window.productos||[]).find(x=>x.id===comp.productoId);
+    if (!p) return;
+    const costoUnit = p.costo || 0;
+    costoTotal += costoUnit * comp.cantidad;
+  });
+  
+  const precioVenta = parseFloat(document.getElementById('cmPrecio').value) || 0;
+  const ganancia = precioVenta - costoTotal;
+  const margen = costoTotal > 0 ? ((ganancia / costoTotal) * 100) : 0;
+  const precioSugerido = costoTotal * 1.3; // +30%
+  
+  const elCosto = document.getElementById('cmCostoTotal');
+  const elGanancia = document.getElementById('cmGanancia');
+  const elMargen = document.getElementById('cmMargen');
+  const elPrecioSug = document.getElementById('cmPrecioSugerido');
+  
+  if (elCosto) elCosto.textContent = 'Bs. ' + costoTotal.toFixed(2);
+  if (elGanancia) elGanancia.textContent = 'Bs. ' + ganancia.toFixed(2) + (ganancia >= 0 ? ' ✓' : ' ✗');
+  if (elMargen) elMargen.textContent = margen.toFixed(1) + '%';
+  if (elPrecioSug) elPrecioSug.textContent = 'Bs. ' + precioSugerido.toFixed(2);
+  
+  // Auto-llenar precio sugerido si está vacío
+  const inputPrecio = document.getElementById('cmPrecio');
+  if (inputPrecio && (!inputPrecio.value || parseFloat(inputPrecio.value) === 0)) {
+    inputPrecio.value = precioSugerido.toFixed(2);
+  }
+  
+  // Colores dinámicos
+  if (elGanancia) elGanancia.style.color = ganancia >= 0 ? 'var(--green)' : 'var(--red)';
+  if (elMargen) elMargen.style.color = margen >= 30 ? 'var(--green)' : (margen >= 15 ? 'var(--orange)' : 'var(--red)');
+}
+
+// Actualizar también al cambiar el precio manual
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'cmPrecio') actualizarResumenCombo();
+});
 
 const cmSearchInput = document.getElementById('cmSearchInput');
 if (cmSearchInput) {
