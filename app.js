@@ -256,6 +256,11 @@ function navegarA(sectionId) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (nav) nav.classList.add('active');
   
+  // Update mobile bottom nav
+  document.querySelectorAll('.mobile-nav-item').forEach(m => m.classList.remove('active'));
+  const mobileNav = document.getElementById('nav-' + sectionId);
+  if (mobileNav) mobileNav.classList.add('active');
+  
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('overlay').classList.remove('active');
   window.scrollTo({top: 0, behavior: 'smooth'});
