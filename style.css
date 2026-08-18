@@ -2657,3 +2657,155 @@ select.form-input{cursor:pointer}
   font-weight: 600;
 }
 
+
+/* ════════════════ MOBILE OVERRIDES & FIXES ════════════════ */
+
+/* Clases extraídas del HTML */
+.dash-bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.split-grid-sm {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+/* Fixes específicos para móvil */
+@media (max-width: 768px) {
+    /* Problema #1: Grid del Dashboard Bottom */
+    .dash-bottom-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .split-grid-sm {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Problema #3: FAB y Nav Bar Solapados */
+    .pos-cart-floating-btn {
+        bottom: 76px !important; /* Arriba de la barra de navegación */
+    }
+    .pos-cart {
+        bottom: 140px !important;
+    }
+    .main-content {
+        padding-bottom: 90px !important;
+    }
+
+    /* Fase 2: Toolbar Inventario/Historial apilados */
+    .toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+    .toolbar .search-wrap,
+    .toolbar .filter-select,
+    .toolbar .btn {
+        width: 100% !important;
+    }
+    
+    /* Fase 2: Fiados Cards */
+    .fiado-actions {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        width: 100%;
+        margin-top: 10px;
+    }
+    .fiado-cliente-card {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    /* Fase 2: Modales */
+    .modal-body {
+        overscroll-behavior: contain !important;
+    }
+    
+    /* Fase 3: Shadow optimizations */
+    .mobile-card {
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1) !important;
+    }
+    .pos-cart-floating-btn {
+        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4) !important;
+    }
+}
+
+/* Problema #6: Hover Effects en touchscreens */
+@media (hover: none) {
+    .stat-card:hover, .chart-card:hover, .venta-card:hover, 
+    .combo-card:hover, .producto-card:hover, .mobile-card:hover {
+        transform: none !important;
+        box-shadow: var(--shadow) !important;
+    }
+    .btn-primary:hover, .btn-secondary:hover {
+        transform: none !important;
+    }
+}
+
+/* Reducir animaciones si es preferido o en general para móvil se maneja via prefers-reduced-motion */
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* ════════════════ FIXES FASE 2 MÓVIL ════════════════ */
+
+/* Hacer que el Sidebar ocupe el espacio correcto sin verse corto */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 80vw !important;
+        max-width: 320px !important;
+    }
+}
+
+/* Corregir contraste de Johan en modo claro/oscuro (blanco/negro) */
+
+
+
+/* En la topbar, modo claro, que no sea blanco sobre blanco */
+[data-theme="light"] .topbar-theme-btn {
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+[data-theme="light"] .topbar-theme-btn:hover {
+    background: var(--bg3) !important;
+}
+
+/* Botones de Categorías en POS (Cervezas, Licores, etc.) - Hacerlos píldoras, no círculos */
+.pos-filter-btn {
+    border-radius: 20px !important;
+    padding: 10px 18px !important;
+    min-height: 44px !important;
+    white-space: nowrap !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: auto !important;
+}
+
+/* FAB Botón de Carrito - Ocultar si está vacío y subirlo */
+.pos-cart-floating-btn {
+    bottom: 85px !important; /* Más arriba de la barra de navegación */
+    right: 20px !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.pos-cart-floating-btn.empty-cart {
+    transform: scale(0) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Corrección específica para el chip de usuario en el sidebar (siempre debe ser claro) */
+#userChip, #userChip .user-name {
+    color: #f4f4f5 !important;
+}
+
+/* El chip de la barra superior debe adaptarse al tema (oscuro en modo claro) */
+[data-theme="light"] #userChipMobile, [data-theme="light"] #userChipMobile .user-name {
+    color: #09090b !important;
+}

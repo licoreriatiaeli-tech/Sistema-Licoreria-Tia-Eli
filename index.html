@@ -2,7 +2,7 @@
 <html lang="es" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#09090b" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -35,9 +35,22 @@
         </svg>
       </button>
     </div>
-    <div class="sync-status-bar">
-      <span class="sync-dot" id="syncDot"></span>
-      <span id="syncText">Conectado</span>
+    <div class="sync-status-bar" style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncText">Conectado</span>
+      </div>
+      <div class="theme-toggle-footer" title="Cambiar tema" style="padding: 0;">
+        <label class="theme-toggle-switch" onclick="toggleTheme()" style="cursor:pointer; transform: scale(0.85); transform-origin: right center;">
+          <input type="checkbox" id="themeToggleFooter" onchange="toggleTheme()" style="display:none" />
+          <span class="theme-toggle-track">
+            <span class="theme-toggle-thumb" id="themeThumbFooter">
+              <i data-lucide="sun" class="theme-icon-sun"></i>
+              <i data-lucide="moon" class="theme-icon-moon"></i>
+            </span>
+          </span>
+        </label>
+      </div>
     </div>
 
 <nav class="sidebar-nav">
@@ -83,19 +96,7 @@
     </nav>
 
     <div class="sidebar-footer">
-      <div id="userChip" class="user-chip" onclick="mostrarLogin(true)" title="Cambiar usuario" style="display:none"></div>
-
-      <div class="theme-toggle-footer" title="Cambiar tema">
-        <label class="theme-toggle-switch" onclick="toggleTheme()" style="cursor:pointer">
-          <input type="checkbox" id="themeToggleFooter" onchange="toggleTheme()" style="display:none" />
-          <span class="theme-toggle-track">
-            <span class="theme-toggle-thumb" id="themeThumbFooter">
-              <i data-lucide="sun" class="theme-icon-sun"></i>
-              <i data-lucide="moon" class="theme-icon-moon"></i>
-            </span>
-          </span>
-        </label>
-      </div>
+      <div id="userChip" class="user-chip" onclick="mostrarLogin(true)" title="Cambiar usuario" style="display:none; width: 100%; justify-content: center;"></div>
 
       <div style="display:flex;gap:6px;margin-top:10px">
         <button class="btn-backup" onclick="exportarDatos()" title="Descargar copia de seguridad">
@@ -195,7 +196,7 @@
       </div>
 
       <!-- Top vendidos + Categorias -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px" id="dashBottom">
+      <div class="dash-bottom-grid" id="dashBottom">
         <div>
           <div class="section-title">Top Productos Vendidos</div>
           <div class="top-productos" id="topProductosList">
@@ -711,7 +712,7 @@
   <div id="posFloatingElements" style="display: none;">
 
     <!-- Botón Flotante del Carrito (FAB) -->
-    <button class="pos-cart-floating-btn" id="posCartFloatingBtn" onclick="togglePOSCart()" aria-label="Abrir carrito">
+    <button class="pos-cart-floating-btn empty-cart" id="posCartFloatingBtn" onclick="togglePOSCart()" aria-label="Abrir carrito">
       <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
       <span class="pos-cart-badge" id="posCartBadge"></span>
     </button>
@@ -1126,7 +1127,7 @@
             <input type="text" id="fiadoProductoNombre" class="form-input" placeholder="Escribí para buscar..." oninput="buscarProductoFiadoSimple(this.value)" autocomplete="off" />
             <div id="fiadoProductoSugerencias" style="display:none"></div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <div class="split-grid-sm">
             <div class="form-group"><label>Precio (Bs.)</label><input type="number" id="fiadoProductoPrecio" class="form-input" min="0" step="0.01" placeholder="0.00" /></div>
             <div class="form-group"><label>Cantidad</label><input type="number" id="fiadoProductoCantidad" class="form-input" min="1" value="1" /></div>
           </div>

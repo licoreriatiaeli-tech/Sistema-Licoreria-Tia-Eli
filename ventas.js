@@ -700,6 +700,15 @@ window.clearPOSCart = function() {
 };
 
 window.updatePOSCart = function() {
+  const fab = document.getElementById('posCartFloatingBtn');
+  if (fab) {
+    if (posCart.length === 0) {
+      fab.classList.add('empty-cart');
+    } else {
+      fab.classList.remove('empty-cart');
+    }
+  }
+
   const container = document.getElementById('posCartItems');
   const totalAmount = document.getElementById('posTotalAmount');
   const btnCheckout = document.getElementById('posCheckoutBtn');

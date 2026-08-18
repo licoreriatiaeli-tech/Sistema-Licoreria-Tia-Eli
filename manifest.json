@@ -20,5 +20,11 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "scope": "/",
+  "categories": [
+    "business",
+    "finance",
+    "productivity"
   ]
 }
