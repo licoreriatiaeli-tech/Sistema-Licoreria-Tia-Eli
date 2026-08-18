@@ -573,7 +573,6 @@ window.addToPOS = function(pid, formatoId) {
     });
   }
   updatePOSCart();
-  autoOpenPOSCart();
 };
 
 window.updatePOSQty = function(pid, delta) {
@@ -692,16 +691,6 @@ window.closePOSCart = function() {
   if (backdrop) backdrop.classList.remove('active');
   if (floatingBtn) floatingBtn.setAttribute('aria-expanded', 'false');
 };
-
-// Auto-abrir carrito al agregar primer item
-function autoOpenPOSCart() {
-  const cartContainer = document.getElementById('posCartContainer');
-  if (cartContainer && !cartContainer.classList.contains('open') && posCart.length > 0) {
-    cartContainer.classList.add('open');
-    const backdrop = document.getElementById('posCartBackdrop');
-    if (backdrop) backdrop.classList.add('active');
-  }
-}
 
 window.clearPOSCart = function() {
   if (posCart.length === 0) return;

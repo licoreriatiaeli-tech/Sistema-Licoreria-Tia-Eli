@@ -783,6 +783,14 @@ function actualizarFormato(id, campo, valor) {
 }
 window.actualizarFormato = actualizarFormato;
 
+// Debounced render to prevent cursor jumping on input
+let _renderDebounceTimer = null;
+function renderFormatosVentaListDebounced() {
+  clearTimeout(_renderDebounceTimer);
+  _renderDebounceTimer = setTimeout(renderFormatosVentaList, 300);
+}
+window.renderFormatosVentaListDebounced = renderFormatosVentaListDebounced;
+
 function renderFormatosVentaList() {
   const cont = document.getElementById('formatosVentaList');
   if (!cont) return;
@@ -835,11 +843,11 @@ function renderFormatosVentaList() {
       <div class="formato-row" data-id="${f.id}">
         <div class="formato-row-inputs">
           <input type="text" id="fmt_nombre_${f.id}" class="form-input" placeholder="Nombre (ej. Six Pack, Caja de 24)" value="${escHTML(f.nombre || '')}"
-                 oninput="actualizarFormato('${f.id}','nombre',this.value); renderFormatosVentaList();">
+                 oninput="actualizarFormato('${f.id}','nombre',this.value); renderFormatosVentaListDebounced();">
           <input type="number" id="fmt_unids_${f.id}" class="form-input" placeholder="¿Cuántas u. trae? *" min="2" step="1" value="${f.unidades ?? ''}"
-                 oninput="actualizarFormato('${f.id}','unidades',this.value); renderFormatosVentaList();">
+                 onchange="actualizarFormato('${f.id}','unidades',this.value); renderFormatosVentaList();">
           <input type="number" id="fmt_precio_${f.id}" class="form-input" placeholder="Precio venta Bs. *" min="0" step="0.01" value="${f.precio ?? ''}"
-                 oninput="actualizarFormato('${f.id}','precio',this.value); renderFormatosVentaList();">
+                 onchange="actualizarFormato('${f.id}','precio',this.value); renderFormatosVentaList();">
           <button type="button" class="btn-icon danger" onclick="eliminarFormatoVenta('${f.id}')" title="Eliminar formato"><i data-lucide="trash-2"></i></button>
         </div>
         ${refHtml}
@@ -853,7 +861,7 @@ function renderFormatosVentaList() {
         <span class="formato-nombre-fija">🔘 Unidad (1 u.)</span>
         <input type="hidden" id="formatoUnidades_unidad" value="1" />
         <span style="font-size:0.8rem;color:var(--text3)">1 unidad base</span>
-        <input type="number" id="precioUnidad_unidad" class="form-input" placeholder="Precio Bs. *" step="0.01" min="0" oninput="renderFormatosVentaList()" value="${unidadVal}" required />
+        <input type="number" id="precioUnidad_unidad" class="form-input" placeholder="Precio Bs. *" step="0.01" min="0" onchange="renderFormatosVentaList()" value="${unidadVal}" required />
         <div></div>
       </div>
       <div id="ref_unidad">${refUnidadHtml}</div>
