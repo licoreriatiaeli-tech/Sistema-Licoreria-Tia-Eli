@@ -803,7 +803,13 @@ window.checkoutPOS = function() {
       }
     }
 
-    const ventasRegistradas = [];
+    // Obtener detalle de pago mixto ANTES del bucle (una sola vez por checkout)
+    let pagoDetalle = null;
+    if (posPaymentMethod === 'mixto') {
+      const mixto = validarMixto();
+      if (!mixto) { toast('Complete correctamente el pago mixto', 'error'); return; }
+      pagoDetalle = mixto;
+    }
 
     posCart.forEach(item => {
       const p = item.p;
@@ -856,14 +862,6 @@ window.checkoutPOS = function() {
         const ganancia = total - costoTotal;
         const esPaquete = unidadesPorEmp > 1;
         const empNombre = esPaquete ? ((formato && formato.nombre) || getNombreEmpaque(p, formatoId)) : '';
-
-        // Obtener detalle de pago mixto si aplica
-        let pagoDetalle = null;
-        if (posPaymentMethod === 'mixto') {
-          const mixto = validarMixto();
-          if (!mixto) { toast('Complete correctamente el pago mixto', 'error'); return; }
-          pagoDetalle = mixto;
-        }
 
         const venta = {
           id: genId(), tipo: 'individual',
