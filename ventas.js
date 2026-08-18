@@ -537,6 +537,7 @@ window.addToPOS = function(pid, formatoId) {
     });
   }
   updatePOSCart();
+  autoOpenPOSCart();
 };
 
 window.updatePOSQty = function(pid, delta) {
@@ -603,6 +604,35 @@ window.togglePosCart = function(forceClose) {
     else backdrop.classList.remove('active');
   }
 };
+
+window.togglePOSCart = function() {
+  const cartContainer = document.getElementById('posCartContainer');
+  const backdrop = document.getElementById('posCartBackdrop');
+  const floatingBtn = document.getElementById('posCartFloatingBtn');
+  if (!cartContainer) return;
+  const isOpen = cartContainer.classList.toggle('open');
+  if (backdrop) backdrop.classList.toggle('active', isOpen);
+  if (floatingBtn) floatingBtn.setAttribute('aria-expanded', isOpen);
+};
+
+window.closePOSCart = function() {
+  const cartContainer = document.getElementById('posCartContainer');
+  const backdrop = document.getElementById('posCartBackdrop');
+  const floatingBtn = document.getElementById('posCartFloatingBtn');
+  if (cartContainer) cartContainer.classList.remove('open');
+  if (backdrop) backdrop.classList.remove('active');
+  if (floatingBtn) floatingBtn.setAttribute('aria-expanded', 'false');
+};
+
+// Auto-abrir carrito al agregar primer item
+function autoOpenPOSCart() {
+  const cartContainer = document.getElementById('posCartContainer');
+  if (cartContainer && !cartContainer.classList.contains('open') && posCart.length > 0) {
+    cartContainer.classList.add('open');
+    const backdrop = document.getElementById('posCartBackdrop');
+    if (backdrop) backdrop.classList.add('active');
+  }
+}
 
 window.clearPOSCart = function() {
   if (posCart.length === 0) return;
