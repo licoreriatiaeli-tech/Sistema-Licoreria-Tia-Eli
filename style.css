@@ -187,8 +187,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 /* ════════════════ SECTIONS ════════════════ */
 .section{display:none}
-.section.active{display:block;animation:secIn .3s var(--trans-slow) forwards}
-@keyframes secIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.section.active{display:block}
 .section-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:26px;flex-wrap:wrap}
 .section-header h1{font-family:'Outfit',sans-serif;font-size:1.65rem;font-weight:900;color:var(--text);line-height:1.15;letter-spacing:-.3px}
 .section-sub{color:var(--text3);font-size:.82rem;margin-top:4px}
@@ -724,18 +723,10 @@ select.form-input{cursor:pointer}
   padding-bottom: 12px;
 }
 
-/* ════════════════ ANIMACIONES PREMIUM ════════════════ */
+/* ════════════════ ANIMACIONES SUAVES Y RÁPIDAS ════════════════ */
 @keyframes sectionEnter {
-  from { opacity: 0; transform: translateY(12px); filter: blur(2px); }
-  to { opacity: 1; transform: none; filter: none; }
-}
-@keyframes sectionExit {
-  from { opacity: 1; transform: translateY(0); filter: blur(0); }
-  to { opacity: 0; transform: translateY(-8px); filter: blur(1px); }
-}
-@keyframes rowReveal {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 @keyframes numberBump {
   0% { transform: scale(1); }
@@ -749,16 +740,14 @@ select.form-input{cursor:pointer}
 
 /* Clases de Navegación */
 .section { display: none; }
-.section.active { display: block; animation: sectionEnter .35s cubic-bezier(.22, .61, .36, 1) both; }
-.section.exiting { display: block !important; animation: sectionExit .2s ease both; pointer-events: none; }
+.section.active { display: block; animation: sectionEnter .15s ease both; }
+.section.exiting { display: none; }
 
 /* Tabla y Filas */
 .inventory-row {
-  animation: rowReveal .3s cubic-bezier(.22, .61, .36, 1) both;
-  transition: background-color 0.2s ease, transform 0.2s ease;
+  transition: background-color 0.15s ease;
 }
 .inventory-row:hover {
-  transform: translateY(-1px);
   background-color: var(--surface2);
 }
 

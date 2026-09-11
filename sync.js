@@ -131,9 +131,10 @@
 
         if (_renderTimerP) clearTimeout(_renderTimerP);
         _renderTimerP = setTimeout(() => {
-          if (typeof filterAndRender === 'function') filterAndRender();
+          const activeSec = document.querySelector('.section.active')?.id?.replace('section-', '') || 'dashboard';
+          if (activeSec === 'inventario' && typeof filterAndRender === 'function') filterAndRender();
+          if (activeSec === 'pos' && typeof renderPOSProducts === 'function') renderPOSProducts();
           if (typeof renderDashboard === 'function') renderDashboard();
-          if (typeof renderPOSProducts === 'function') renderPOSProducts();
         }, 150);
         console.log('[Sync] Productos actualizados desde nube:', remoto.length);
       }, err => {
@@ -154,8 +155,9 @@
 
         if (_renderTimerV) clearTimeout(_renderTimerV);
         _renderTimerV = setTimeout(() => {
-          if (typeof renderVentasHoy === 'function') renderVentasHoy();
-          if (typeof renderVentasStats === 'function') renderVentasStats();
+          const activeSec = document.querySelector('.section.active')?.id?.replace('section-', '') || 'dashboard';
+          if ((activeSec === 'ventas' || activeSec === 'pos') && typeof renderVentasHoy === 'function') renderVentasHoy();
+          if (activeSec === 'ventas' && typeof renderVentasStats === 'function') renderVentasStats();
           if (typeof renderDashboard === 'function') renderDashboard();
         }, 150);
         console.log('[Sync] Ventas actualizadas desde nube:', remoto.length);

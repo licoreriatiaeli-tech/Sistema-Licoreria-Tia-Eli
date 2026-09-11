@@ -31,6 +31,27 @@ window.activeVencDias = activeVencDias;
 
 let productos = [];
 try {
+  // One-time stock reset migration requested by user
+  if (localStorage.getItem('tiaeli_stock_reset_v1') !== 'true') {
+    let prods = [];
+    try { prods = JSON.parse(localStorage.getItem('tiaeli_v2') || '[]'); } catch(e) {}
+    if (prods.length > 0) {
+      prods.forEach(p => {
+        p.stock = 0;
+        p.stockUnidades = 0;
+        if (p.lotes && Array.isArray(p.lotes)) {
+          p.lotes.forEach(l => {
+            l.cantidad = 0;
+            l.cantidadBaseUnidades = 0;
+            l.costoTotalLote = 0;
+          });
+        }
+      });
+      localStorage.setItem('tiaeli_v2', JSON.stringify(prods));
+    }
+    localStorage.setItem('tiaeli_stock_reset_v1', 'true');
+  }
+
   productos = JSON.parse(localStorage.getItem('tiaeli_v2') || '[]');
 } catch (e) {
   console.warn('localStorage corrupto, reseteando:', e);
@@ -144,16 +165,20 @@ function migrarProductoV3(p) {
   // 3. Normalizar Lotes a cantidadBaseUnidades
   if (!Array.isArray(p.lotes) || p.lotes.length === 0) {
     const st = safeNum(p.stock);
-    p.lotes = [{
-      id: genId(),
-      cantidadBaseUnidades: st,
-      cantidad: st,
-      costoTotalLote: safeNum(p.costo) * st,
-      costoPorUnidad: safeNum(p.costo),
-      vencimiento: p.vencimiento || '',
-      fechaIngreso: p.fechaRegistro || new Date().toISOString().slice(0, 10),
-      nota: 'Stock inicial migrado'
-    }];
+    if (st > 0) {
+      p.lotes = [{
+        id: genId(),
+        cantidadBaseUnidades: st,
+        cantidad: st,
+        costoTotalLote: safeNum(p.costo) * st,
+        costoPorUnidad: safeNum(p.costo),
+        vencimiento: p.vencimiento || '',
+        fechaIngreso: p.fechaRegistro || new Date().toISOString().slice(0, 10),
+        nota: 'Stock inicial migrado'
+      }];
+    } else {
+      p.lotes = [];
+    }
   } else {
     p.lotes.forEach(l => {
       if (l.cantidadBaseUnidades === undefined) {
@@ -229,13 +254,11 @@ function navegarA(sectionId) {
   
   if (currentSec && currentSec !== sec) {
     currentSec.classList.remove('active');
-    currentSec.classList.add('exiting');
-    setTimeout(() => {
-      currentSec.classList.remove('exiting');
-      if (sec) sec.classList.add('active');
-    }, 200); // Wait for exit animation
-  } else {
-    if (sec) sec.classList.add('active');
+    currentSec.classList.remove('exiting');
+  }
+  if (sec) {
+    sec.classList.remove('exiting');
+    sec.classList.add('active');
   }
 
   // Toggle posFloatingElements visibility
@@ -333,11 +356,7 @@ function renderDashboard() {
   const anim = (id, val, pre, suf, dec) => {
     const el = document.getElementById(id); 
     if (!el) return; 
-    if (window.odoHtml) {
-      el.innerHTML = window.odoHtml(val, dec?'money':'int', pre, suf);
-    } else {
-      el.textContent = (pre||'') + (dec?val.toFixed(dec):val) + (suf||'');
-    }
+    el.textContent = (pre||'') + (dec ? Number(val).toFixed(dec) : val) + (suf||'');
   };
   anim('stat-total', total, '', '', 0);
   anim('stat-stock', enStock, '', '', 0);
@@ -346,8 +365,6 @@ function renderDashboard() {
   anim('stat-valor', valor, 'Bs.', '', 0);
   anim('stat-ventas-hoy', ventasHoy, 'Bs.', '', 0);
   anim('stat-fiados', fiadosPendiente, 'Bs.', '', 2);
-  if (window.initOdometers) window.initOdometers();
-  if (window.playTitleAnimation) window.playTitleAnimation();
 
   const badge = document.getElementById('badge-vencimientos');
   if (badge) { if (lotesVenc > 0) { badge.textContent = lotesVenc; badge.style.display = 'inline'; } else badge.style.display = 'none'; }
@@ -548,7 +565,7 @@ function renderTabla(list) {
         <td>${l.fechaIngreso||'—'}</td>
         <td>${bdg}${ofertaTag}</td>
         <td class="lote-actions">
-          <input type="number" min="0" max="${l.cantidadBaseUnidades}" value="${l.cantidad}" onchange="ajustarCantidadLote('${p.id}', '${l.id}', this.valueAsNumber)" style="width:60px">
+          <input type="number" min="0" value="${l.cantidad}" onchange="ajustarCantidadLote('${p.id}', '${l.id}', this.valueAsNumber)" style="width:60px">
           <button onclick="eliminarLote('${p.id}', '${l.id}')" title="Quitar lote (no se podrá deshacer)" class="btn-quitar-lote">×</button>
         </td>
       </tr>`;
@@ -572,7 +589,7 @@ function renderTabla(list) {
       </div>` : '';
 
     mobileHtml.push(`
-      <div class="mobile-card" style="animation-delay:${Math.min(i*30, 600)}ms">
+      <div class="mobile-card">
         <div class="mobile-card-header">
           <div style="display:flex; align-items:center; gap:8px;">
             ${foto}
@@ -601,7 +618,7 @@ function renderTabla(list) {
       </div>
     `);
 
-    return `<tr class="row-new inventory-row" style="animation-delay:${Math.min(i*30, 600)}ms">
+    return `<tr class="inventory-row">
       <td>${expandBtn}</td>
       <td>
         <div class="product-cell">
@@ -613,7 +630,7 @@ function renderTabla(list) {
         </div>
       </td>
       <td><span class="cat-badge">${p.categoria}</span></td>
-      <td><span class="value-animated" id="val-stock-${p.id}"><b style="${stockUnidades===0?'color:var(--red)':stockUnidades<=stockMin?'color:var(--orange)':''}">${window.odoHtml?window.odoHtml(stockUnidades):stockUnidades}</b></span> <span style="color:var(--text3);font-size:.75rem">${stockDisplay}</span></td>
+      <td><span class="value-animated" id="val-stock-${p.id}"><b style="${stockUnidades===0?'color:var(--red)':stockUnidades<=stockMin?'color:var(--orange)':''}">${stockUnidades}</b></span> <span style="color:var(--text3);font-size:.75rem">${stockDisplay}</span></td>
       <td class="price-cost"><span class="value-animated" id="val-cost-${p.id}">${costoProm>0?'Bs.'+costoProm.toFixed(2):'—'}</span></td>
       <td class="price-venta"><span class="value-animated" id="val-venta-${p.id}">Bs.${pv.toFixed(2)}</span></td>
       <td class="price-ganancia ${gan>=0?'pos':'neg'}"><span class="value-animated" id="val-gan-${p.id}">${costoProm>0?'Bs.'+gan.toFixed(2):'—'}</span></td>
@@ -641,7 +658,6 @@ function renderTabla(list) {
     </tr>`;
   }).join('');
 
-  if (window.initOdometers) window.initOdometers();
   if (mobileCards) {
     mobileCards.innerHTML = mobileHtml.join('');
   }

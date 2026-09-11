@@ -226,7 +226,7 @@ window.abrirSalida = abrirSalida;
 
 function confirmarSalida() {
   const pid = document.getElementById('salidaProductoId').value;
-  const cantidad = safeNum(document.getElementById('salidaCantidad').value);
+  let cantidad = safeNum(document.getElementById('salidaCantidad').value);
   const motivo = document.getElementById('salidaMotivo').value;
   const nota = document.getElementById('salidaNota').value.trim();
   if (!pid || !cantidad || cantidad <= 0) { toast('Cantidad inválida', 'error'); return; }
@@ -243,10 +243,11 @@ function confirmarSalida() {
     noCumplido = res.noCumplido || 0;
   } else {
     noCumplido = cantidad;
-    for (const lote of p.lotes) {
+    for (const lote of (p.lotes || [])) {
       if (lote.cantidad <= 0) continue;
       const d = Math.min(lote.cantidad, cantidad);
       lote.cantidad -= d;
+      lote.cantidadBaseUnidades = lote.cantidad;
       cantidad -= d;
       lotesAfectados.push({ vencimiento: lote.vencimiento, cantidadDescontada: d, costoUnitario: lote.costo || p.costo || 0 });
       if (cantidad <= 0) break;
@@ -451,12 +452,11 @@ window.ajustarCantidadLote = function(pid, lid, nuevaCant) {
   const idx = p.lotes.findIndex(l => l && l.id === lid);
   if (idx < 0) return;
   let cant = safeNum(nuevaCant);
-  if (cant < 0) cant = 0;
+  if (cant < 0 || isNaN(cant)) cant = 0;
   const l = p.lotes[idx];
-  const cantActual = safeNum(l.cantidadBaseUnidades !== undefined ? l.cantidadBaseUnidades : l.cantidad);
-  if (cant > cantActual + getTotalUnidadesBase(p) - cantActual) cant = cantActual;
   l.cantidadBaseUnidades = cant;
   l.cantidad = cant;
+  l.costoTotalLote = cant * safeNum(l.costoPorUnidad || (p.costo || 0));
   p.stock = getTotalUnidadesBase(p);
   p.vencimiento = getVencimientoMasCercano(p);
   p.costoPromedioUnidad = getCostoPromedio(p);
@@ -466,6 +466,8 @@ window.ajustarCantidadLote = function(pid, lid, nuevaCant) {
   if (typeof window.syncSaveProducto === 'function') window.syncSaveProducto(p);
   registrarActividad('entrada', `Lote #${idx+1} ajustado a ${cant} u. — ${p.nombre}`);
   if (typeof filterAndRender === 'function') filterAndRender();
+  if (typeof renderDashboard === 'function') renderDashboard();
+  if (typeof renderPOSProducts === 'function') renderPOSProducts();
 };
 
 // Muestra/oculta detalle extra cuando se elige crear un lote nuevo vs. agregar a uno existente

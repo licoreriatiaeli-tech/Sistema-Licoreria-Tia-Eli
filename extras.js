@@ -20,20 +20,12 @@ window.odoHtml = function(value, format='int', prefix='', suffix='') {
 }
 
 window.playTitleAnimation = function() {
-  setTimeout(() => {
-    const el = document.getElementById('shop-title');
-    if (!el) return;
-    el.innerHTML = '';
-    const text = 'TIA ELI LICORERIA';
-    text.split('').forEach((char, i) => {
-      const span = document.createElement('span');
-      span.textContent = char === ' ' ? '\u00A0' : char;
-      span.className = 'split-char';
-      span.style.animationDelay = `${i * 0.05}s`;
-      el.appendChild(span);
-    });
-  }, 250); // Wait for section transition to complete
-}
+  const el = document.getElementById('shop-title');
+  if (!el) return;
+  if (!el.textContent || el.textContent.trim() === '') {
+    el.textContent = 'TIA ELI LICORERIA';
+  }
+};
 
 window.initOdometers = function(delay = 250) {
   setTimeout(() => {

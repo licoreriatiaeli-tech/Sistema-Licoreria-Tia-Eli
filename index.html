@@ -7,16 +7,16 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="version" content="v9" />
+  <meta name="version" content="v10" />
   <title>TIA ELI LICORERIA &ndash; Sistema de Inventario</title>
   <meta name="description" content="Sistema de control de inventario y ventas para TIA ELI LICORERIA." />
-  <link rel="manifest" href="manifest.json?v=9" />
+  <link rel="manifest" href="manifest.json?v=10" />
   <link rel="icon" type="image/png" href="icon-192.png" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=9" />
+  <link rel="stylesheet" href="style.css?v=10" />
 </head>
 <body>
 
@@ -599,9 +599,12 @@
 
           <!-- NAVEGACIÓN WIZARD -->
           <div class="wizard-nav" style="margin-top:24px">
+            <button type="button" class="btn btn-secondary" id="btnCancelForm" onclick="navegarA('inventario')">Cancelar</button>
             <button type="button" class="btn btn-secondary" id="wizardPrev" onclick="wizardPrevStep()" style="display:none">← Atrás</button>
             <button type="button" class="btn btn-primary" id="wizardNext" onclick="wizardNextStep()">Siguiente →</button>
-            <button type="submit" class="btn btn-success" id="wizardSubmit" style="display:none">✅ Guardar Producto y Stock</button>
+            <button type="submit" class="btn btn-success" id="wizardSubmit" style="display:none">
+              <span id="btnSpinner" class="spinner" style="display:none;margin-right:6px"></span>✅ Guardar Producto y Stock
+            </button>
           </div>
         </form>
       </div>
@@ -830,7 +833,7 @@
   <!-- ══ MODAL OFERTA (Manual + Config Lote) ══ -->
   <div class="modal-overlay" id="ofertaOverlay" style="display:none">
     <div class="modal" style="max-width:480px">
-      <div class="modal-header"><h3 id="ofertaModalTitle">Oferta</h3><button class="modal-close" onclick="document.getElementById('ofertaOverlay').style.display='none'">&times;</button></div>
+      <div class="modal-header"><h3 id="ofertaModalTitle">Oferta</h3><button class="modal-close" id="ofertaClose" onclick="document.getElementById('ofertaOverlay').style.display='none'">&times;</button></div>
       <div class="modal-body">
         <input type="hidden" id="ofertaProductoId" />
         <div id="ofertaInfo" class="oferta-info"></div>
@@ -847,8 +850,8 @@
           <div class="form-group"><label>Precio oferta por paquete (Bs.)</label><input type="number" id="ofertaPrecioPaquete" class="form-input" step="0.01" min="0" placeholder="0.00" /></div>
           <div class="form-group"><label>Fecha fin (opcional)</label><input type="date" id="ofertaFechaFin" class="form-input" /></div>
           <div class="form-actions" style="margin-top:1rem">
-            <button class="btn btn-secondary" id="ofertaCancelBtn">Cancelar</button>
-            <button class="btn btn-warning" id="ofertaConfirmBtn">Aplicar Oferta Manual</button>
+            <button class="btn btn-secondary" id="ofertaManualCancelBtn">Cancelar</button>
+            <button class="btn btn-warning" id="ofertaManualConfirmBtn">Aplicar Oferta Manual</button>
           </div>
         </div>
         
@@ -1012,7 +1015,7 @@
               <select id="loteExistenteSelect" class="form-input" onchange="toggleLoteExistente()"></select>
             </div>
             <div class="form-group">
-              <label>¿Cuántos ingresaron? <span class="required">*</span></label>
+              <label id="entradaCantidadLabel">¿Cuántos ingresaron? <span class="required">*</span></label>
               <input type="number" id="entradaCantidad" class="form-input" min="1" step="1" placeholder="Ej: 10" oninput="actualizarEntradaResumen()" />
             </div>
             <div class="form-group">
@@ -1246,17 +1249,17 @@
   </div>
 
 <!-- ══ SCRIPTS ══ -->
-  <script src="lucide.min.js?v=9" defer></script>
+  <script src="lucide.min.js?v=10" defer></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="firebase-config.js?v=9" defer></script>
-  <script src="sync.js?v=9" defer></script>
-  <script src="app.js?v=9" defer></script>
-  <script src="charts.js?v=9" defer></script>
-  <script src="ventas.js?v=9" defer></script>
-  <script src="extras.js?v=9" defer></script>
-  <script src="gestion.js?v=9" defer></script>
+  <script src="firebase-config.js?v=10" defer></script>
+  <script src="sync.js?v=10" defer></script>
+  <script src="app.js?v=10" defer></script>
+  <script src="charts.js?v=10" defer></script>
+  <script src="ventas.js?v=10" defer></script>
+  <script src="extras.js?v=10" defer></script>
+  <script src="gestion.js?v=10" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       if (window.lucide && window.lucide.createIcons) {
@@ -1270,22 +1273,15 @@
     // Estrategia network-first: siempre descarga lo nuevo si hay internet.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('sw.js?v=9', { updateViaCache: 'none' }).then(function(reg) {
+        navigator.serviceWorker.register('sw.js?v=10', { updateViaCache: 'none' }).then(function(reg) {
           reg.addEventListener('updatefound', function() {
             var newWorker = reg.installing;
             if (!newWorker) return;
             newWorker.addEventListener('statechange', function() {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                try { toast('Nueva versión disponible. Actualizando...', 'info'); } catch (e) {}
-                setTimeout(function() { window.location.reload(); }, 1500);
+                try { toast('Sistema actualizado a la última versión', 'success'); } catch (e) {}
               }
             });
-          });
-          var refreshing = false;
-          navigator.serviceWorker.addEventListener('controllerchange', function() {
-            if (refreshing) return;
-            refreshing = true;
-            window.location.reload();
           });
         }).catch(function() {});
       });

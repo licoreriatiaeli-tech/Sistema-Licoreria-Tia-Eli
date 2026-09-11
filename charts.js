@@ -22,16 +22,18 @@ function getChartColors() {
 }
 
 function buildChartDefaults() {
+  if (typeof Chart === 'undefined') return false;
   const c = getChartColors();
   Chart.defaults.font.family = "'Inter', sans-serif";
   Chart.defaults.font.size = 11;
   Chart.defaults.color = c.text;
   Chart.defaults.plugins.legend.labels.color = c.text;
+  return true;
 }
 
 // ── Ventas 7 días ──
 function renderChart7d() {
-  buildChartDefaults();
+  if (!buildChartDefaults()) return;
   const c = getChartColors();
   destroyChart('c7d');
   const ctx = document.getElementById('chartVentas7d');
@@ -80,7 +82,7 @@ function renderChart7d() {
 
 // ── Ventas por categoría (donut) ──
 function renderChartCategorias() {
-  buildChartDefaults();
+  if (!buildChartDefaults()) return;
   const c = getChartColors();
   destroyChart('ccat');
   const ctx = document.getElementById('chartCategorias');
@@ -102,7 +104,7 @@ function renderChartCategorias() {
 
 // ── Ventas 30 días ──
 function renderChart30d() {
-  buildChartDefaults();
+  if (!buildChartDefaults()) return;
   const c = getChartColors();
   destroyChart('c30d');
   const ctx = document.getElementById('chartVentas30d');
@@ -136,7 +138,7 @@ function renderChart30d() {
 
 // ── Horas pico ──
 function renderChartHoras() {
-  buildChartDefaults();
+  if (!buildChartDefaults()) return;
   const c = getChartColors();
   destroyChart('choras');
   const ctx = document.getElementById('chartHoras');
@@ -158,7 +160,7 @@ function renderChartHoras() {
 
 // ── Forma de pago (pie) ──
 function renderChartPagos() {
-  buildChartDefaults();
+  if (!buildChartDefaults()) return;
   const c = getChartColors();
   destroyChart('cpagos');
   const ctx = document.getElementById('chartPagos');
@@ -177,7 +179,7 @@ function renderChartPagos() {
 
 // ── Ganancia por categoría ──
 function renderChartGanCat() {
-  buildChartDefaults();
+  if (!buildChartDefaults()) return;
   const c = getChartColors();
   destroyChart('cgancat');
   const ctx = document.getElementById('chartGanCat');
