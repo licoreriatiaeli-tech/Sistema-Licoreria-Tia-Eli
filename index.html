@@ -10,13 +10,13 @@
   <meta name="version" content="v10" />
   <title>TIA ELI LICORERIA &ndash; Sistema de Inventario</title>
   <meta name="description" content="Sistema de control de inventario y ventas para TIA ELI LICORERIA." />
-  <link rel="manifest" href="manifest.json?v=10" />
+  <link rel="manifest" href="manifest.json?v=11" />
   <link rel="icon" type="image/png" href="icon-192.png" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=10" />
+  <link rel="stylesheet" href="style.css?v=11" />
 </head>
 <body>
 
@@ -1221,6 +1221,101 @@
     </div>
   </div>
 
+  <!-- ══ MODAL EDITAR PRODUCTO ══ -->
+  <div class="modal-overlay" id="editarProductoOverlay" style="display:none">
+    <div class="modal" style="max-width:540px">
+      <div class="modal-header">
+        <h3 id="editModalTitle">Editar Producto</h3>
+        <button class="modal-close" onclick="document.getElementById('editarProductoOverlay').style.display='none'">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editModalId" />
+
+        <!-- Info del producto con foto -->
+        <div class="edit-modal-hero" id="editModalHero"></div>
+
+        <!-- Campos editables -->
+        <div class="entrada-section">
+          <div class="entrada-section-title">📝 Datos del producto</div>
+          <div class="entrada-fields-grid">
+            <div class="form-group">
+              <label>Nombre <span class="required">*</span></label>
+              <input type="text" id="editModalNombre" class="form-input" placeholder="Nombre del producto" required />
+            </div>
+            <div class="form-group">
+              <label>Categoría <span class="required">*</span></label>
+              <select id="editModalCategoria" class="form-input" required>
+                <option value="Licores">Licores</option>
+                <option value="Cervezas">Cervezas</option>
+                <option value="Sodas">Sodas</option>
+                <option value="Jugos">Jugos</option>
+                <option value="Galletas">Galletas</option>
+                <option value="Chicles">Chicles</option>
+                <option value="Snacks">Snacks / Golosinas</option>
+                <option value="Cigarrillos">Cigarrillos</option>
+                <option value="Farmacia">Farmacia / Salud</option>
+                <option value="Otros">Otros</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Marca / Presentación</label>
+              <input type="text" id="editModalMarca" class="form-input" placeholder="Ej: normal, light..." />
+            </div>
+            <div class="form-group">
+              <label>Unidad base</label>
+              <select id="editModalUnidadBase" class="form-input">
+                <option value="unidad">Unidad / Pieza</option>
+                <option value="botella">Botella</option>
+                <option value="lata">Lata</option>
+                <option value="sobre">Sobre / Pastilla</option>
+                <option value="cajetilla">Cajetilla</option>
+                <option value="paquete">Paquete</option>
+                <option value="litro">Litro</option>
+                <option value="ml">Mililitros (ml)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Precios -->
+        <div class="entrada-section">
+          <div class="entrada-section-title">💰 Precios de venta</div>
+          <div class="entrada-fields-grid">
+            <div class="form-group">
+              <label>Precio por unidad (Bs.) <span class="required">*</span></label>
+              <input type="number" id="editModalPrecioUnidad" class="form-input" step="0.01" min="0" placeholder="Ej: 10.00" />
+            </div>
+            <div class="form-group">
+              <label>Stock mínimo (alerta)</label>
+              <input type="number" id="editModalStockMin" class="form-input" min="0" value="24" />
+            </div>
+          </div>
+          <div id="editModalFormatosVenta" style="margin-top:10px"></div>
+        </div>
+
+        <!-- Lotes actuales -->
+        <div class="entrada-section">
+          <div class="entrada-section-title">📦 Lotes actuales</div>
+          <div id="editModalLotes"></div>
+          <p style="font-size:0.78rem;color:var(--text3);margin-top:8px">Para agregar más stock usa el botón <b>➕ Entrada</b> desde el inventario.</p>
+        </div>
+
+        <!-- Notas -->
+        <div class="entrada-section entrada-section-optional">
+          <div class="entrada-section-title">📋 Notas <span class="opcional-tag">Opcional</span></div>
+          <div class="form-group">
+            <textarea id="editModalNota" class="form-input form-textarea" placeholder="Observaciones..." rows="2"></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-secondary" onclick="document.getElementById('editarProductoOverlay').style.display='none'">Cancelar</button>
+          <button class="btn btn-primary" onclick="guardarEdicionModal()">💾 Guardar Cambios</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ MODAL HISTORIAL DE PRECIOS ══ -->
   <div class="modal-overlay" id="historialPreciosOverlay" style="display:none">
     <div class="modal" style="max-width:640px;max-height:85vh">
@@ -1249,17 +1344,17 @@
   </div>
 
 <!-- ══ SCRIPTS ══ -->
-  <script src="lucide.min.js?v=10" defer></script>
+  <script src="lucide.min.js?v=11" defer></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="firebase-config.js?v=10" defer></script>
-  <script src="sync.js?v=10" defer></script>
-  <script src="app.js?v=10" defer></script>
-  <script src="charts.js?v=10" defer></script>
-  <script src="ventas.js?v=10" defer></script>
-  <script src="extras.js?v=10" defer></script>
-  <script src="gestion.js?v=10" defer></script>
+  <script src="firebase-config.js?v=11" defer></script>
+  <script src="sync.js?v=11" defer></script>
+  <script src="app.js?v=11" defer></script>
+  <script src="charts.js?v=11" defer></script>
+  <script src="ventas.js?v=11" defer></script>
+  <script src="extras.js?v=11" defer></script>
+  <script src="gestion.js?v=11" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       if (window.lucide && window.lucide.createIcons) {
@@ -1273,7 +1368,7 @@
     // Estrategia network-first: siempre descarga lo nuevo si hay internet.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('sw.js?v=10', { updateViaCache: 'none' }).then(function(reg) {
+        navigator.serviceWorker.register('sw.js?v=11', { updateViaCache: 'none' }).then(function(reg) {
           reg.addEventListener('updatefound', function() {
             var newWorker = reg.installing;
             if (!newWorker) return;

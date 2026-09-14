@@ -2798,3 +2798,72 @@ select.form-input{cursor:pointer}
 [data-theme="light"] #userChipMobile, [data-theme="light"] #userChipMobile .user-name {
     color: #09090b !important;
 }
+
+/* ══ EDIT PRODUCT MODAL ══ */
+#editarProductoOverlay .modal {
+  max-width: 540px;
+}
+.edit-modal-hero img {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+/* Lote status tints in edit modal */
+.edit-modal-lote-vencido {
+  background: color-mix(in srgb, var(--red) 6%, var(--bg3)) !important;
+}
+.edit-modal-lote-pronto {
+  background: color-mix(in srgb, var(--orange) 6%, var(--bg3)) !important;
+}
+/* Improved lote badges */
+.lote-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.lote-vigente { background: color-mix(in srgb, var(--green, #22c55e) 15%, transparent); color: var(--green, #22c55e); }
+.lote-amarillo { background: color-mix(in srgb, var(--orange, #f59e0b) 15%, transparent); color: var(--orange, #f59e0b); }
+.lote-naranja { background: color-mix(in srgb, var(--orange, #f59e0b) 25%, transparent); color: var(--orange, #f59e0b); font-weight: 800; }
+.lote-rojo { background: color-mix(in srgb, var(--red, #ef4444) 15%, transparent); color: var(--red, #ef4444); }
+.lote-agotado { background: var(--bg3); color: var(--text3); }
+.lote-oferta { background: color-mix(in srgb, var(--warning, #f59e0b) 20%, transparent); color: var(--warning, #f59e0b); }
+
+/* Lote row tints in inventory table */
+.lote-table tbody tr.lote-vencido { background: color-mix(in srgb, var(--red, #ef4444) 5%, transparent); }
+.lote-table tbody tr.lote-pronto { background: color-mix(in srgb, var(--orange, #f59e0b) 5%, transparent); }
+
+/* Mobile lote improvements */
+.mobile-lote-card {
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  font-size: 0.78rem;
+  border: 1px solid var(--border);
+}
+.mobile-lote-card .lote-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.mobile-lote-card .lote-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+
+/* Edit modal responsive */
+@media (max-width: 600px) {
+  #editarProductoOverlay .modal {
+    max-width: 100%;
+    max-height: 95vh;
+    margin: 8px;
+    border-radius: 12px;
+  }
+}
