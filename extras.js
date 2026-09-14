@@ -115,81 +115,92 @@ function lanzarConfetti() {
 }
 
 // ── PHOTO UPLOAD ──
+window.currentPhotoBase64 = null;
 let currentPhotoBase64 = null;
 
-// Límite seguro para Firestore (1MB doc - overhead base64 ≈ 750KB binario)
-const PHOTO_MAX_BYTES = 800 * 1024;
-const PHOTO_MAX_RAW = 3 * 1024 * 1024;
+// Límite óptimo para POS minorista: 60KB por imagen Base64 (resolución 400x400px nítida para thumbnails)
+// Garantiza carga ultrarrápida en móviles y previene saturar la cuota de localStorage y Firestore
+const PHOTO_MAX_BYTES = 60 * 1024;
+const PHOTO_MAX_RAW = 5 * 1024 * 1024;
 
 // Comprime una imagen usando canvas. Devuelve dataURL o null si no se pudo.
-function compressImage(file, maxBytes, maxWidth = 1200) {
+function compressImage(file, maxBytes = PHOTO_MAX_BYTES, maxWidth = 400) {
   return new Promise((resolve, reject) => {
     if (!file.type || !file.type.startsWith('image/')) {
       reject(new Error('El archivo no es una imagen'));
       return;
     }
-    const img = new Image();
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
     reader.onload = e => {
-      img.onerror = () => reject(new Error('Imagen corrupta'));
+      const img = new Image();
+      img.onerror = () => reject(new Error('No se pudo decodificar la imagen'));
       img.onload = () => {
-        let { width, height } = img;
-        if (width > maxWidth) {
-          height = Math.round(height * (maxWidth / width));
-          width = maxWidth;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxWidth) {
+          h = Math.round(h * (maxWidth / w));
+          w = maxWidth;
         }
         const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = w;
+        canvas.height = h;
         const ctx = canvas.getContext('2d');
-        if (!ctx) { reject(new Error('Canvas no disponible')); return; }
-        ctx.drawImage(img, 0, 0, width, height);
-        // Probar calidades descendentes hasta caber en maxBytes
-        const qualities = [0.82, 0.7, 0.6, 0.45, 0.3];
-        const tryEnc = (i) => {
-          if (i >= qualities.length) { resolve(canvas.toDataURL('image/jpeg', 0.2)); return; }
-          try {
-            const dataUrl = canvas.toDataURL('image/jpeg', qualities[i]);
-            const size = Math.ceil((dataUrl.length - 'data:image/jpeg;base64,'.length) * 3 / 4);
-            if (size <= maxBytes || qualities[i] <= 0.2) resolve(dataUrl);
-            else tryEnc(i + 1);
-          } catch (err) {
-            reject(new Error('Error comprimiendo: ' + err.message));
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const qualities = [0.82, 0.72, 0.60, 0.45, 0.30];
+        let chosen = null;
+        for (const q of qualities) {
+          const dataUrl = canvas.toDataURL('image/jpeg', q);
+          const bytes = Math.ceil((dataUrl.length - 'data:image/jpeg;base64,'.length) * 3 / 4);
+          if (bytes <= maxBytes) {
+            chosen = dataUrl;
+            break;
           }
-        };
-        tryEnc(0);
+        }
+        if (!chosen) {
+          chosen = canvas.toDataURL('image/jpeg', 0.25);
+        }
+        resolve(chosen);
       };
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   });
 }
+window.compressImage = compressImage;
 
 async function handlePhotoUpload(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
-  if (file.size > PHOTO_MAX_RAW) { toast('La foto no debe superar 3MB antes de comprimir', 'error'); return; }
+  if (file.size > PHOTO_MAX_RAW) { toast('La foto no debe superar 5MB antes de comprimir', 'error'); return; }
   try {
-    currentPhotoBase64 = await compressImage(file, PHOTO_MAX_BYTES);
+    currentPhotoBase64 = await compressImage(file, PHOTO_MAX_BYTES, 400);
+    window.currentPhotoBase64 = currentPhotoBase64;
     const preview = document.getElementById('photoPreview');
     if (preview) {
       preview.innerHTML = `<img src="${currentPhotoBase64}" style="width:100%;height:100%;object-fit:cover;border-radius:7px" /><input type="file" id="fFoto" accept="image/*" onchange="handlePhotoUpload(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer" />`;
     }
-    toast('Foto cargada', 'success');
+    toast('Foto cargada y optimizada', 'success');
   } catch (err) {
     toast('Error al procesar foto: ' + err.message, 'error');
     currentPhotoBase64 = null;
+    window.currentPhotoBase64 = null;
   }
 }
+window.handlePhotoUpload = handlePhotoUpload;
 
 function resetPhoto() {
   currentPhotoBase64 = null;
+  window.currentPhotoBase64 = null;
   const preview = document.getElementById('photoPreview');
   if (preview) {
     preview.innerHTML = `<span>Toca para subir foto</span><input type="file" id="fFoto" accept="image/*" onchange="handlePhotoUpload(this)" />`;
   }
 }
+window.resetPhoto = resetPhoto;
 
 // ── CIERRE DE CAJA ──
 function abrirCierreCaja() {

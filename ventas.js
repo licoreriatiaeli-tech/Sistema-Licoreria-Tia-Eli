@@ -107,8 +107,10 @@ function descontarStockFEFO(productoId, cantidadVendida, formatoVentaId) {
     restante -= tomar;
 
     lotesAfectados.push({
+      loteId: lote.id,
       loteIndex: producto.lotes.findIndex(l => l.id === lote.id),
       vencimiento: lote.vencimiento,
+      fechaIngreso: lote.fechaIngreso || null,
       cantidadDescontada: tomar,
       costoUnitario: costoUnidad,
       formatoVendido: formatoNombre
@@ -204,19 +206,158 @@ function renderVentasHoy() {
 }
 window.renderVentasHoy = renderVentasHoy;
 
-function eliminarVenta(id) {
-  if(!confirm('\u00bfEliminar esta venta? El stock NO se restaura automáticamente.'))return;
-  const ventaEliminada = ventas.find(v => v.id === id);
-  ventas=ventas.filter(v=>v.id!==id);
-  window.ventas=ventas;
-  saveVentas();
-  if (window.syncDeleteVenta) window.syncDeleteVenta(id);
-  renderVentasHoy();renderVentasStats();renderHistorial();renderDashboard();
-  if(window.renderAllCharts)renderAllCharts();
-  if (window.registrarActividad && ventaEliminada) {
-    registrarActividad('venta', `Venta ELIMINADA: ${ventaEliminada.productoNombre} — Bs.${ventaEliminada.total.toFixed(2)} (stock NO restaurado)`);
+// ── REVERSIÓN PERFECTA DE STOCK (DEVOLUCIÓN DE LOTES) ──
+function revertirStockVenta(venta) {
+  if (!venta) return { ok: false, unidadesDevueltas: 0 };
+
+  const productosMap = new Map(); // pid -> { producto, lotesARestaurar: [] }
+
+  if (venta.tipo === 'combo') {
+    const lotes = safeArr(venta.lotesAfectados);
+    lotes.forEach(l => {
+      const pid = l.productoId;
+      if (!pid) return;
+      if (!productosMap.has(pid)) {
+        const prod = window.productos.find(p => p.id === pid);
+        if (prod) productosMap.set(pid, { producto: prod, lotes: [] });
+      }
+      const item = productosMap.get(pid);
+      if (item) item.lotes.push(l);
+    });
+  } else {
+    const pid = venta.productoId;
+    const prod = window.productos.find(p => p.id === pid);
+    if (prod) {
+      const lotes = safeArr(venta.lotesAfectados);
+      if (lotes.length > 0) {
+        productosMap.set(pid, { producto: prod, lotes });
+      } else {
+        // Fallback para ventas registradas sin desglose detallado de lotes
+        productosMap.set(pid, {
+          producto: prod,
+          lotes: [{
+            loteId: null,
+            cantidadDescontada: safeNum(venta.cantidad) || 1,
+            costoUnitario: safeNum(prod.costoPromedioUnidad) || safeNum(prod.costo) || 0,
+            vencimiento: prod.vencimiento || null
+          }]
+        });
+      }
+    }
   }
-  toast('Venta eliminada','warning');
+
+  if (productosMap.size === 0) {
+    console.warn('revertirStockVenta: No se encontraron productos vigentes para devolver stock de la venta', venta.id);
+    return { ok: false, unidadesDevueltas: 0 };
+  }
+
+  let totalDevueltas = 0;
+
+  productosMap.forEach(({ producto, lotes }) => {
+    if (!producto.lotes) producto.lotes = [];
+
+    lotes.forEach(l => {
+      const cant = safeNum(l.cantidadDescontada);
+      if (cant <= 0) return;
+      totalDevueltas += cant;
+
+      // 1. Buscar si el lote original con su ID aún existe en el producto
+      let targetLote = l.loteId ? producto.lotes.find(x => x && x.id === l.loteId) : null;
+
+      // 2. Si no está por ID, buscar si hay un lote activo con el mismo vencimiento exacto
+      if (!targetLote && l.vencimiento) {
+        targetLote = producto.lotes.find(x => x && (x.vencimiento || '') === (l.vencimiento || ''));
+      }
+
+      if (targetLote) {
+        // Incrementar unidades al lote existente
+        const act = safeNum(targetLote.cantidadBaseUnidades !== undefined ? targetLote.cantidadBaseUnidades : targetLote.cantidad);
+        targetLote.cantidadBaseUnidades = act + cant;
+        targetLote.cantidad = targetLote.cantidadBaseUnidades;
+        const costoU = safeNum(targetLote.costoPorUnidad) || safeNum(l.costoUnitario) || safeNum(producto.costoPromedioUnidad) || 0;
+        targetLote.costoPorUnidad = costoU;
+        targetLote.costoTotalLote = targetLote.cantidadBaseUnidades * costoU;
+      } else {
+        // Recrear el lote original con su costo y fecha de vencimiento histórica
+        const costoU = safeNum(l.costoUnitario) || safeNum(producto.costoPromedioUnidad) || safeNum(producto.costo) || 0;
+        const nuevoLote = {
+          id: l.loteId || ('lote_' + (typeof genId === 'function' ? genId() : Date.now())),
+          cantidadBaseUnidades: cant,
+          cantidad: cant,
+          costoPorUnidad: costoU,
+          costoTotalLote: cant * costoU,
+          vencimiento: l.vencimiento || null,
+          fechaIngreso: l.fechaIngreso || new Date().toISOString(),
+          nota: `Restaurado por anulación de venta (${cant} u.)`
+        };
+        producto.lotes.push(nuevoLote);
+      }
+    });
+
+    // Recalcular métricas maestras del producto
+    producto.stock = getTotalUnidadesBase(producto);
+    producto.vencimiento = getVencimientoMasCercano(producto);
+    producto.costoPromedioUnidad = getCostoPromedio(producto);
+    producto.costo = producto.costoPromedioUnidad;
+    producto.updatedAt = Date.now();
+
+    if (window.syncSaveProducto) window.syncSaveProducto(producto);
+  });
+
+  if (window.saveProductos) window.saveProductos();
+  else if (typeof save === 'function') save();
+
+  return { ok: true, unidadesDevueltas: totalDevueltas };
+}
+window.revertirStockVenta = revertirStockVenta;
+
+// ── ANULACIÓN Y ELIMINACIÓN DE VENTA ──
+function eliminarVenta(id) {
+  const ventaEliminada = ventas.find(v => v.id === id);
+  if (!ventaEliminada) {
+    toast('Venta no encontrada', 'error');
+    return;
+  }
+
+  const cantTexto = ventaEliminada.cantidadPacks && ventaEliminada.cantidadPacks > 0
+    ? `${ventaEliminada.cantidadPacks} ${ventaEliminada.packLabel || 'pack(s)'} (${ventaEliminada.cantidad} unidades)`
+    : `${ventaEliminada.cantidad} unidades`;
+
+  const confMsg = `¿Anular y eliminar esta venta de Bs. ${safeNum(ventaEliminada.total).toFixed(2)}?\n\n` +
+    `📦 Producto: ${ventaEliminada.productoNombre}\n` +
+    `🔄 Stock a reintegrar al inventario: ${cantTexto}\n\n` +
+    `Los lotes y costos se restaurarán de forma automática.`;
+
+  if (!confirm(confMsg)) return;
+
+  // 1. Revertir el stock en los lotes exactos
+  const resReversion = revertirStockVenta(ventaEliminada);
+
+  // 2. Eliminar la venta de la colección
+  ventas = ventas.filter(v => v.id !== id);
+  window.ventas = ventas;
+  saveVentas();
+
+  // 3. Sincronizar eliminación en Firestore
+  if (window.syncDeleteVenta) window.syncDeleteVenta(id);
+
+  // 4. Registrar en historial de auditoría
+  if (window.registrarActividad) {
+    const detalleDevolucion = resReversion.ok ? `Stock reintegrado (${cantTexto})` : `Sin devolución de stock`;
+    registrarActividad('venta', `Venta ANULADA: ${ventaEliminada.productoNombre} — Bs. ${safeNum(ventaEliminada.total).toFixed(2)}. ${detalleDevolucion}.`);
+  }
+
+  // 5. Refrescar todas las pantallas (Ventas, Dashboard, POS e Inventario)
+  renderVentasHoy();
+  renderVentasStats();
+  renderHistorial();
+  renderDashboard();
+  renderPOSProducts();
+  renderCombosVenta();
+  if (window.filterAndRender) filterAndRender();
+  if (window.renderAllCharts) renderAllCharts();
+
+  toast(`Venta anulada. Se devolvió el stock (${cantTexto}) al inventario.`, 'success');
 }
 window.eliminarVenta = eliminarVenta;
 
@@ -858,9 +999,10 @@ window.checkoutPOS = function() {
           costoTotal += lotesAfectados.reduce((s, l) => s + (l.cantidadDescontada * l.costoUnitario), 0);
           const productoNombre = productos.find(x => x.id === cItem.productoId)?.nombre || '';
           lotesAfectados.forEach(l => {
+            l.productoId = cItem.productoId;
             l.comboItemNombre = productoNombre;
             lotesAfectadosTotales.push(l);
-});
+          });
       });
 
       const venta = {

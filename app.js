@@ -280,9 +280,13 @@ function navegarA(sectionId) {
   if (nav) nav.classList.add('active');
   
   // Update mobile bottom nav
-  document.querySelectorAll('.mobile-nav-item').forEach(m => m.classList.remove('active'));
-  const mobileNav = document.getElementById('nav-' + sectionId);
-  if (mobileNav) mobileNav.classList.add('active');
+  document.querySelectorAll('.mobile-nav-item').forEach(m => {
+    if (m.dataset.section === sectionId) {
+      m.classList.add('active');
+    } else {
+      m.classList.remove('active');
+    }
+  });
   
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('overlay').classList.remove('active');

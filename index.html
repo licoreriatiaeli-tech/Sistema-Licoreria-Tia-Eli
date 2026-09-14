@@ -10,13 +10,13 @@
   <meta name="version" content="v10" />
   <title>TIA ELI LICORERIA &ndash; Sistema de Inventario</title>
   <meta name="description" content="Sistema de control de inventario y ventas para TIA ELI LICORERIA." />
-  <link rel="manifest" href="manifest.json?v=12" />
+  <link rel="manifest" href="manifest.json?v=13" />
   <link rel="icon" type="image/png" href="icon-192.png" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=12" />
+  <link rel="stylesheet" href="style.css?v=13" />
 </head>
 <body>
 
@@ -1344,17 +1344,17 @@
   </div>
 
 <!-- ══ SCRIPTS ══ -->
-  <script src="lucide.min.js?v=12" defer></script>
+  <script src="lucide.min.js?v=13" defer></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="firebase-config.js?v=12" defer></script>
-  <script src="sync.js?v=12" defer></script>
-  <script src="app.js?v=12" defer></script>
-  <script src="charts.js?v=12" defer></script>
-  <script src="ventas.js?v=12" defer></script>
-  <script src="extras.js?v=12" defer></script>
-  <script src="gestion.js?v=12" defer></script>
+  <script src="firebase-config.js?v=13" defer></script>
+  <script src="sync.js?v=13" defer></script>
+  <script src="app.js?v=13" defer></script>
+  <script src="charts.js?v=13" defer></script>
+  <script src="ventas.js?v=13" defer></script>
+  <script src="extras.js?v=13" defer></script>
+  <script src="gestion.js?v=13" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       if (window.lucide && window.lucide.createIcons) {
@@ -1368,7 +1368,7 @@
     // Estrategia network-first: siempre descarga lo nuevo si hay internet.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('sw.js?v=12', { updateViaCache: 'none' }).then(function(reg) {
+        navigator.serviceWorker.register('sw.js?v=13', { updateViaCache: 'none' }).then(function(reg) {
           reg.addEventListener('updatefound', function() {
             var newWorker = reg.installing;
             if (!newWorker) return;
