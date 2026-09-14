@@ -2,10 +2,13 @@
 // ventas.js — Sales module v4 (FEFO Lotes)
 // ═══════════════════════════════════════════
 
-let ventas = JSON.parse(localStorage.getItem('tiaeli_ventas') || '[]');
-let combos = JSON.parse(localStorage.getItem('tiaeli_combos') || '[]');
+let ventas = [];
+try { ventas = JSON.parse(localStorage.getItem('tiaeli_ventas') || '[]'); } catch(e) { console.warn('tiaeli_ventas corrupto, reseteando:', e); localStorage.removeItem('tiaeli_ventas'); ventas = []; }
+let combos = [];
+try { combos = JSON.parse(localStorage.getItem('tiaeli_combos') || '[]'); } catch(e) { console.warn('tiaeli_combos corrupto, reseteando:', e); localStorage.removeItem('tiaeli_combos'); combos = []; }
 window.ventas = ventas;
 window.combos = combos;
+
 window.setVentasGlobal = function(nuevas) {
   ventas = nuevas;
   window.ventas = nuevas;
@@ -86,6 +89,7 @@ function descontarStockFEFO(productoId, cantidadVendida, formatoVentaId) {
   const lotesOrdenados = producto.lotes
     .filter(lote => lote && safeNum(lote.cantidadBaseUnidades !== undefined ? lote.cantidadBaseUnidades : lote.cantidad) > 0)
     .sort((a, b) => {
+      if (!a.vencimiento && !b.vencimiento) return 0;
       if (!a.vencimiento) return 1; if (!b.vencimiento) return -1;
       return new Date(a.vencimiento) - new Date(b.vencimiento);
     });
@@ -202,12 +206,16 @@ window.renderVentasHoy = renderVentasHoy;
 
 function eliminarVenta(id) {
   if(!confirm('\u00bfEliminar esta venta? El stock NO se restaura automáticamente.'))return;
+  const ventaEliminada = ventas.find(v => v.id === id);
   ventas=ventas.filter(v=>v.id!==id);
   window.ventas=ventas;
   saveVentas();
   if (window.syncDeleteVenta) window.syncDeleteVenta(id);
   renderVentasHoy();renderVentasStats();renderHistorial();renderDashboard();
   if(window.renderAllCharts)renderAllCharts();
+  if (window.registrarActividad && ventaEliminada) {
+    registrarActividad('venta', `Venta ELIMINADA: ${ventaEliminada.productoNombre} — Bs.${ventaEliminada.total.toFixed(2)} (stock NO restaurado)`);
+  }
   toast('Venta eliminada','warning');
 }
 window.eliminarVenta = eliminarVenta;
@@ -793,30 +801,29 @@ window.checkoutPOS = function() {
   const fechaVenta = new Date().toISOString();
 
   try {
-    // ── Pre-validación de stock para cada item del carrito ──
+    // ── Pre-validación AGREGADA de stock por producto ──
+    const stockRequerido = {}; // { productoId: totalUnidadesBase }
     for (const item of posCart) {
       if (item.p.isCombo && item.p.comboRef) {
         for (const comp of item.p.comboRef.componentes) {
           const pr = productos.find(x => x.id === comp.productoId);
-          if (!pr) {
-            toast('Producto del combo ya no existe', 'error');
-            return;
-          }
-          const disp = getStockTotal(pr);
+          if (!pr) { toast('Producto del combo ya no existe', 'error'); return; }
           const req = comp.cantidad * item.cant;
-          if (disp < req) {
-            const nombre = pr.nombre || 'producto';
-            toast(`Stock insuficiente de ${nombre} para el combo`, 'error');
-            return;
-          }
+          stockRequerido[comp.productoId] = (stockRequerido[comp.productoId] || 0) + req;
         }
       } else {
-        const stockUnid = getStockTotal(item.p);
-        const reqUnid = item.cant * (item.unidadesPorEmpaque || 1);
-        if (stockUnid < reqUnid) {
-          toast(`Stock insuficiente de ${item.p.nombre}`, 'error');
-          return;
-        }
+        const unidsPorEmp = (item.formatoVenta && item.formatoVenta.unidades) || item.unidadesPorEmpaque || 1;
+        const reqUnid = item.cant * unidsPorEmp;
+        stockRequerido[item.p.id] = (stockRequerido[item.p.id] || 0) + reqUnid;
+      }
+    }
+    for (const [pid, reqTotal] of Object.entries(stockRequerido)) {
+      const pr = productos.find(x => x.id === pid);
+      if (!pr) { toast('Producto no encontrado', 'error'); return; }
+      const disp = getStockTotal(pr);
+      if (disp < reqTotal) {
+        toast(`Stock insuficiente de ${pr.nombre}: necesitas ${reqTotal} u. pero hay ${disp}`, 'error');
+        return;
       }
     }
 
@@ -844,7 +851,7 @@ window.checkoutPOS = function() {
 
         combo.componentes.forEach(cItem => {
           const reqCant = cItem.cantidad * cant;
-          const { lotesAfectados, noCumplido } = descontarStockFEFO(cItem.productoId, reqCant, 'unidad_base');
+          const { lotesAfectados, noCumplido } = descontarStockFEFO(cItem.productoId, reqCant, 'unidad');
           if (noCumplido > 0) {
             console.warn('FEFO: no se pudo descontar', noCumplido, 'uds de', cItem.productoId);
           }
@@ -910,6 +917,13 @@ window.checkoutPOS = function() {
 
     if (window.lanzarConfetti) lanzarConfetti();
     toast('¡Venta Registrada Exitosamente!', 'success');
+
+    // Registrar en log de actividad
+    if (window.registrarActividad) {
+      const totalVenta = ventasRegistradas.reduce((s, v) => s + v.total, 0);
+      const items = ventasRegistradas.map(v => v.productoNombre).join(', ');
+      registrarActividad('venta', `Venta POS: ${items} — Bs.${totalVenta.toFixed(2)} (${posPaymentMethod})`);
+    }
 
     // Limpiar carrito
     posCart = [];
