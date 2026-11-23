@@ -11,13 +11,15 @@ function destroyChart(id) {
 function getChartColors() {
   const dark = document.documentElement.dataset.theme === 'dark';
   return {
-    text: dark ? '#a1a1aa' : '#52525b',
+    text: dark ? '#94a3b8' : '#52525b',
     grid: dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-    bar: dark ? '#fafafa' : '#09090b',
-    barAlpha: dark ? 'rgba(250,250,250,0.08)' : 'rgba(9,9,11,0.07)',
-    green: dark ? '#22c55e' : '#16a34a',
+    bar: dark ? '#f97316' : '#ea580c',
+    barAlpha: dark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(5, 150, 105, 0.12)',
+    green: dark ? '#fdba74' : '#ea580c',
     red: dark ? '#f87171' : '#dc2626',
-    palette: ['#09090b','#52525b','#a1a1aa','#16a34a','#dc2626','#ea580c','#ca8a04','#2563eb']
+    palette: dark
+      ? ['#f97316','#38bdf8','#a78bfa','#fbbf24','#f87171','#fdba74','#60a5fa','#f472b6']
+      : ['#ea580c','#0284c7','#7c3aed','#d97706','#dc2626','#f97316','#2563eb','#db2777']
   };
 }
 
@@ -75,7 +77,7 @@ function renderChart7d() {
         x: { grid: { display: false }, border: { display: false }, ticks: { color: c.text } },
         y: { grid: { color: c.grid, drawBorder: false }, border: { display: false }, ticks: { color: c.text, callback: v => 'Bs.' + v } }
       },
-      animation: { duration: 800, easing: 'easeInOutQuart' }
+      animation: { duration: 420, easing: 'easeOutQuart' }
     }
   });
 }
@@ -97,7 +99,7 @@ function renderChartCategorias() {
     options: {
       responsive: true, maintainAspectRatio: false, cutout: '68%',
       plugins: { legend: { position: 'bottom', labels: { color: c.text, padding: 10, font: { size: 11 } } }, tooltip: { callbacks: { label: ctx => ctx.label + ': Bs. ' + ctx.raw.toFixed(2) } } },
-      animation: { duration: 900, easing: 'easeInOutBack' }
+      animation: { duration: 420, easing: 'easeOutQuart' }
     }
   });
 }
@@ -131,7 +133,7 @@ function renderChart30d() {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => 'Bs. ' + ctx.raw.toFixed(2) } } },
       scales: { x: { grid: { display: false }, border: { display: false }, ticks: { maxTicksLimit: 10, color: c.text } }, y: { grid: { color: c.grid }, border: { display: false }, ticks: { color: c.text, callback: v => 'Bs.' + v } } },
-      animation: { duration: 1000 }
+      animation: { duration: 420, easing: 'easeOutQuart' }
     }
   });
 }
@@ -153,7 +155,7 @@ function renderChartHoras() {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: { x: { grid: { display: false }, border: { display: false }, ticks: { maxTicksLimit: 12, color: c.text } }, y: { grid: { color: c.grid }, border: { display: false }, ticks: { color: c.text } } },
-      animation: { duration: 700 }
+      animation: { duration: 420, easing: 'easeOutQuart' }
     }
   });
 }
@@ -169,11 +171,17 @@ function renderChartPagos() {
   (window.ventas || []).forEach(v => { map[v.pago] = (map[v.pago] || 0) + v.total; });
   const labels = Object.keys(map), data = Object.values(map);
   if (!labels.length) return;
-  const colors = labels.map(l => l === 'efectivo' ? c.green : l === 'qr' ? c.text : '#2563eb');
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  const colors = labels.map(l => {
+    const s = l.toLowerCase();
+    if (s.includes('efectivo')) return isDark ? '#fdba74' : '#ea580c';
+    if (s.includes('qr') || s.includes('transf')) return isDark ? '#38bdf8' : '#0284c7';
+    return isDark ? '#a78bfa' : '#7c3aed';
+  });
   chartInstances['cpagos'] = new Chart(ctx, {
     type: 'pie',
     data: { labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)), datasets: [{ data, backgroundColor: colors, borderColor: 'transparent' }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: c.text, padding: 8 } } }, animation: { duration: 800 } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: c.text, padding: 8 } } }, animation: { duration: 420, easing: 'easeOutQuart' } }
   });
 }
 
@@ -195,7 +203,7 @@ function renderChartGanCat() {
     options: {
       responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
       scales: { x: { grid: { color: c.grid }, border: { display: false }, ticks: { color: c.text, callback: v => 'Bs.' + v } }, y: { grid: { display: false }, border: { display: false }, ticks: { color: c.text } } },
-      animation: { duration: 800 }
+      animation: { duration: 420, easing: 'easeOutQuart' }
     }
   });
 }
@@ -260,20 +268,38 @@ function renderTopProductosDash() {
 function renderAnalyticsStats() {
   const all = window.ventas || [];
   const total = all.reduce((s,v)=>s+v.total,0);
-  const ganancia = all.reduce((s,v)=>s+v.ganancia,0);
+  const gananciaBruta = all.reduce((s,v)=>s+v.ganancia,0);
+
+  let totalGastos = 0;
+  try {
+    const gl = window.gastos || JSON.parse(localStorage.getItem('tiaeli_gastos') || '[]');
+    totalGastos = gl.reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
+  } catch(e) {}
+
+  let totalRetiros = 0;
+  try {
+    const sl = JSON.parse(localStorage.getItem('tiaeli_salidas') || '[]');
+    totalRetiros = sl.filter(s => s.motivo === 'personal' || s.tipo === 'consumo_dueno')
+      .reduce((s, x) => s + (parseFloat(x.costoTotal) || ((parseFloat(x.cantidad) || 0) * (parseFloat(x.costoUnitario) || 0))), 0);
+  } catch(e) {}
+
+  const gananciaNeta = gananciaBruta - totalGastos - totalRetiros;
   const avg = all.length > 0 ? total/all.length : 0;
   const set=(id, val, p, d)=>{
     const el=document.getElementById(id);
     if(el) {
-      const valStr = d ? val.toFixed(d) : val;
-      el.innerHTML = window.odoHtml ? window.odoHtml(valStr, d?'money':'int', p||'') : (p||'') + valStr;
+      if (typeof window.animateCounter === 'function') {
+        window.animateCounter(el, val, p ? p + ' ' : '', '', d || 0);
+      } else {
+        const valStr = d ? val.toFixed(d) : Math.round(val);
+        el.textContent = (p ? p + ' ' : '') + valStr;
+      }
     }
   };
   set('an-total', total, 'Bs.', 0);
-  set('an-ganancia', ganancia, 'Bs.', 0);
+  set('an-ganancia', gananciaNeta, 'Bs.', 0);
   set('an-txns', all.length, '', 0);
   set('an-avg', avg, 'Bs.', 0);
-  if(window.initOdometers) window.initOdometers();
 }
 
 // ── Render all charts ──
@@ -296,9 +322,22 @@ function renderAnalyticsCharts() {
   }, 100);
 }
 
-// Re-render charts when theme changes
+// Re-render charts when theme changes (optimizado y fluido)
 document.addEventListener('themeChanged', () => {
-  renderAllCharts();
   const activeSection = document.querySelector('.section.active');
-  if (activeSection && activeSection.id === 'section-analytics') renderAnalyticsCharts();
+  const isDashboardActive = activeSection && (activeSection.id === 'section-dashboard' || !activeSection.id);
+  const isAnalyticsActive = activeSection && activeSection.id === 'section-analytics';
+
+  // Solo re-renderizar si la seccion con graficos esta actualmente visible en pantalla,
+  // y postergar 210ms para no entorpecer los 60 FPS de la transicion visual del tema
+  if (isDashboardActive) {
+    setTimeout(() => {
+      renderAllCharts();
+    }, 210);
+  }
+  if (isAnalyticsActive) {
+    setTimeout(() => {
+      renderAnalyticsCharts();
+    }, 210);
+  }
 });

@@ -1,9 +1,18 @@
-const CACHE = 'tiaeli-v13';
-const CACHE_IMAGES = 'tiaeli-img-v13';
+const CACHE = 'tiaeli-v21';
+const CACHE_IMAGES = 'tiaeli-img-v21';
+
 const ASSETS = [
   './',
   './index.html',
   './style.css',
+  './styles/tokens.css',
+  './styles/inventario-modern.css',
+  './styles/pos-modern.css',
+  './styles/actividad-modern.css',
+  './styles/dashboard-modern.css',
+  './styles/sidebar-modern.css',
+  './styles/buttons.css',
+  './utils-bundle.js',
   './app.js',
   './ventas.js',
   './sync.js',

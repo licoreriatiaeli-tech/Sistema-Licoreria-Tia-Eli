@@ -1,0 +1,667 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   EMERALD RETAIL SYSTEM — MASTER BUTTON DESIGN SYSTEM
+   Basado en la especificación oficial de 'DISEÑO DE BOTONES' (DESIGN.md / code.html)
+   Estandarización definitiva para POS, Inventario, Modales, Steppers y Acciones
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Paleta Emerald Retail */
+  --btn-primary: #c2410c;
+  --btn-primary-hover: #ea580c;
+  --btn-primary-active: #9a3412;
+  --btn-on-primary: #ffffff;
+  --btn-primary-fixed: #85f8c4;
+  --btn-on-primary-fixed: #002114;
+
+  /* Botones Secundarios / Superficie Neutra */
+  --btn-sec-bg: #eaedff;
+  --btn-sec-hover: #dae2fd;
+  --btn-sec-active: #d2d9f4;
+  --btn-sec-text: #131b2e;
+  --btn-sec-border: #bccac0;
+  --btn-sec-subtle: #f2f3ff;
+
+  /* Acciones Terciarias / Ghost */
+  --btn-tertiary: #006860;
+  --btn-tertiary-hover: #00504a;
+  --btn-tertiary-container: #9cf2e8;
+  --btn-on-tertiary-fixed: #00201d;
+
+  /* Estados de Peligro y Alerta */
+  --btn-danger: #ba1a1a;
+  --btn-danger-hover: #93000a;
+  --btn-on-danger: #ffffff;
+  --btn-danger-container: #ffdad6;
+  --btn-on-danger-container: #93000a;
+
+  /* Alertas Warning / Reposición */
+  --btn-warning: #d97706;
+  --btn-warning-hover: #b45309;
+  --btn-on-warning: #ffffff;
+  --btn-warning-container: #fef3c7;
+  --btn-on-warning-container: #92400e;
+
+  /* Éxito / Mint */
+  --btn-success: #006c49;
+  --btn-success-container: #6cf8bb;
+  --btn-on-success-container: #00714d;
+
+  /* Tokens Geométricos & Sombras */
+  --btn-radius: 12px;
+  --btn-radius-sm: 8px;
+  --btn-radius-pill: 9999px;
+  --btn-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --btn-shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  --btn-shadow-cta: 0 4px 16px rgba(0, 105, 72, 0.28);
+
+  /* Tipografías */
+  --btn-font-family: 'Hanken Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
+  --btn-font-mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+[data-theme="dark"] {
+  --btn-primary: #ea580c;
+  --btn-primary-hover: #00a373;
+  --btn-primary-active: #c2410c;
+  --btn-on-primary: #ffffff;
+  --btn-primary-fixed: #68dba9;
+  --btn-on-primary-fixed: #002114;
+
+  --btn-sec-bg: #22222a;
+  --btn-sec-hover: #2a2a34;
+  --btn-sec-active: #32323e;
+  --btn-sec-text: #f4f4f6;
+  --btn-sec-border: rgba(255, 255, 255, 0.12);
+  --btn-sec-subtle: #18181d;
+
+  --btn-tertiary: #4edea3;
+  --btn-tertiary-hover: #6ffbbe;
+  --btn-tertiary-container: #003825;
+  --btn-on-tertiary-fixed: #002113;
+
+  --btn-danger: #e11d48;
+  --btn-danger-hover: #f43f5e;
+  --btn-on-danger: #ffffff;
+  --btn-danger-container: rgba(225, 29, 72, 0.2);
+  --btn-on-danger-container: #ffdad6;
+
+  --btn-warning: #f59e0b;
+  --btn-warning-hover: #fbbf24;
+  --btn-on-warning: #000000;
+  --btn-warning-container: rgba(245, 158, 11, 0.2);
+  --btn-on-warning-container: #fef3c7;
+
+  --btn-shadow-cta: 0 4px 16px rgba(0, 133, 93, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   1. BOTÓN BASE (.btn)
+   ═══════════════════════════════════════════════════════════════════════ */
+.btn {
+  font-family: var(--btn-font-family);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  min-height: 42px;
+  border-radius: var(--btn-radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--btn-shadow-sm);
+  outline: none;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:focus-visible {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--btn-primary);
+}
+
+/* Tamaños */
+.btn-sm {
+  padding: 6px 12px;
+  min-height: 34px;
+  font-size: 0.8rem;
+  border-radius: var(--btn-radius-sm);
+  gap: 6px;
+}
+
+.btn-lg {
+  padding: 14px 24px;
+  min-height: 48px;
+  font-size: 0.95rem;
+  border-radius: var(--btn-radius);
+  gap: 10px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   2. BOTÓN PRIMARIO (CTA - EMERALD RETAIL)
+   Regla: Máximo 1 CTA por viewport
+   ═══════════════════════════════════════════════════════════════════════ */
+.btn-primary {
+  background: var(--btn-primary);
+  color: var(--btn-on-primary) !important;
+  border-color: transparent;
+  box-shadow: var(--btn-shadow-cta);
+  font-weight: 700;
+}
+
+.btn-primary:hover {
+  background: var(--btn-primary-hover);
+  box-shadow: 0 6px 20px rgba(0, 105, 72, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  background: var(--btn-primary-active);
+  transform: scale(0.98);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Shortcut badge interno para atajos como F12, F10, F3 */
+.btn-shortcut-badge {
+  font-family: var(--btn-font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  letter-spacing: 0.05em;
+  margin-left: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   3. BOTÓN SECUNDARIO (SURFACE CONTAINER / SOFT)
+   ═══════════════════════════════════════════════════════════════════════ */
+.btn-secondary {
+  background: var(--btn-sec-bg);
+  color: var(--btn-sec-text) !important;
+  border: 1px solid var(--btn-sec-border);
+  box-shadow: var(--btn-shadow-sm);
+}
+
+.btn-secondary:hover {
+  background: var(--btn-sec-hover);
+  border-color: var(--btn-primary);
+  color: var(--btn-sec-text);
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+  background: var(--btn-sec-active);
+  transform: scale(0.97);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   4. BOTONES DE ACCIONES DE FILA (TABLA DE INVENTARIO)
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Entrada rápida (+ Entrada verde fija) */
+.btn-row-entrada {
+  background: var(--btn-primary-fixed);
+  color: var(--btn-on-primary-fixed) !important;
+  border: none;
+  font-family: var(--btn-font-family);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: var(--btn-radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-row-entrada:hover {
+  filter: brightness(0.95);
+  transform: scale(1.03);
+}
+
+.btn-row-entrada:active {
+  transform: scale(0.96);
+}
+
+/* Edición estándar */
+.btn-row-edit {
+  background: var(--btn-sec-bg);
+  color: var(--btn-sec-text) !important;
+  border: 1px solid var(--btn-sec-border);
+  font-family: var(--btn-font-family);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--btn-radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-row-edit:hover {
+  background: var(--btn-sec-hover);
+  border-color: var(--btn-primary);
+}
+
+/* Kardex / Historial (Ghost Teal) */
+.btn-row-kardex, .btn-ghost {
+  background: transparent;
+  color: var(--btn-tertiary) !important;
+  border: 1px solid transparent;
+  font-family: var(--btn-font-family);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--btn-radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-row-kardex:hover, .btn-ghost:hover {
+  background: var(--btn-sec-bg);
+  color: var(--btn-sec-text) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   5. ALERTAS & ACCIONES DESTRUCTIVAS
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Peligro Crítico / Borrado Permanente (High Danger) */
+.btn-danger {
+  background: var(--btn-danger);
+  color: var(--btn-on-danger) !important;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(186, 26, 26, 0.25);
+  font-weight: 700;
+}
+
+.btn-danger:hover {
+  background: var(--btn-danger-hover);
+  box-shadow: 0 4px 14px rgba(186, 26, 26, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-danger:active {
+  transform: scale(0.98);
+}
+
+/* Peligro Suave / Desactivar / Merma (Soft Danger) */
+.btn-danger-soft, .btn-soft-danger {
+  background: var(--btn-danger-container);
+  color: var(--btn-on-danger-container) !important;
+  border: 1px solid rgba(186, 26, 26, 0.2);
+  font-weight: 600;
+}
+
+.btn-danger-soft:hover, .btn-soft-danger:hover {
+  background: rgba(186, 26, 26, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn-danger-soft:active, .btn-soft-danger:active {
+  transform: scale(0.98);
+}
+
+/* Advertencia / Ámbar */
+.btn-warning {
+  background: var(--btn-warning);
+  color: var(--btn-on-warning) !important;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);
+}
+
+.btn-warning:hover {
+  background: var(--btn-warning-hover);
+}
+
+/* Éxito */
+.btn-success {
+  background: var(--btn-primary);
+  color: #ffffff !important;
+}
+
+.btn-success:hover {
+  background: var(--btn-primary-hover);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   6. MICRO-ACCIONES ICON-ONLY (TABLAS Y BARRAS)
+   ═══════════════════════════════════════════════════════════════════════ */
+.btn-icon, .btn-icon-micro {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  border-radius: var(--btn-radius-sm);
+  background: var(--btn-sec-bg);
+  border: 1px solid var(--btn-sec-border);
+  color: var(--btn-sec-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-icon svg, .btn-icon i,
+.btn-icon-micro svg, .btn-icon-micro i {
+  width: 17px;
+  height: 17px;
+  pointer-events: none;
+}
+
+.btn-icon:hover, .btn-icon-micro:hover {
+  background: var(--btn-sec-hover);
+  border-color: var(--btn-primary);
+  color: var(--btn-primary);
+  transform: scale(1.08);
+}
+
+.btn-icon:active, .btn-icon-micro:active {
+  transform: scale(0.94);
+}
+
+/* Variantes semánticas de botón icono */
+.btn-icon.entrada {
+  color: var(--btn-primary);
+  background: rgba(0, 105, 72, 0.1);
+  border-color: rgba(0, 105, 72, 0.25);
+}
+
+.btn-icon.entrada:hover {
+  background: var(--btn-primary);
+  color: #ffffff;
+  border-color: var(--btn-primary);
+}
+
+.btn-icon.salida {
+  color: var(--btn-warning);
+  background: var(--btn-warning-container);
+  border-color: rgba(217, 119, 6, 0.3);
+}
+
+.btn-icon.salida:hover {
+  background: var(--btn-warning);
+  color: #ffffff;
+  border-color: var(--btn-warning);
+}
+
+.btn-icon.danger {
+  color: var(--btn-danger);
+  background: var(--btn-danger-container);
+  border-color: rgba(186, 26, 26, 0.25);
+}
+
+.btn-icon.danger:hover {
+  background: var(--btn-danger);
+  color: #ffffff;
+  border-color: var(--btn-danger);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   7. PÍLDORAS DE FILTRO RÁPIDO & SELECTORES SEGMENTADOS (.pill-btn)
+   ═══════════════════════════════════════════════════════════════════════ */
+.pill-btn, .pos-filter-btn {
+  font-family: var(--btn-font-family);
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: var(--btn-radius);
+  background: var(--btn-sec-bg);
+  color: var(--btn-sec-text);
+  border: 1px solid var(--btn-sec-border);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.pill-btn:hover, .pos-filter-btn:hover {
+  background: var(--btn-sec-hover);
+  border-color: var(--btn-primary);
+}
+
+.pill-btn.active, .pos-filter-btn.active, .pill-btn.active-pill {
+  background: var(--btn-primary) !important;
+  color: #ffffff !important;
+  border-color: var(--btn-primary) !important;
+  box-shadow: 0 2px 8px rgba(0, 105, 72, 0.3);
+}
+
+/* Conmutador de vista segmentado */
+.view-switcher-group {
+  display: inline-flex;
+  background: var(--btn-sec-subtle);
+  padding: 3px;
+  border-radius: var(--btn-radius);
+  gap: 2px;
+  border: 1px solid var(--btn-sec-border);
+}
+
+.view-switcher-btn {
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--btn-sec-text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.view-switcher-btn.active {
+  background: #ffffff;
+  color: var(--btn-primary);
+  box-shadow: var(--btn-shadow-sm);
+}
+
+[data-theme="dark"] .view-switcher-btn.active {
+  background: var(--btn-sec-hover);
+  color: var(--btn-primary-fixed);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   8. STEPPERS NUMÉRICOS DE ALTA VELOCIDAD & MULTIPLICADORES
+   ═══════════════════════════════════════════════════════════════════════ */
+.stepper-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  padding: 6px 8px;
+  border-radius: var(--btn-radius);
+  border: 1px solid var(--btn-sec-border);
+  box-shadow: var(--btn-shadow-sm);
+}
+
+[data-theme="dark"] .stepper-container {
+  background: #202028;
+}
+
+.btn-stepper {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--btn-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  user-select: none;
+}
+
+.btn-stepper.minus {
+  background: var(--btn-sec-bg);
+  color: var(--btn-sec-text);
+}
+
+.btn-stepper.minus:hover {
+  background: var(--btn-sec-hover);
+}
+
+.btn-stepper.plus {
+  background: var(--btn-primary);
+  color: #ffffff;
+}
+
+.btn-stepper.plus:hover {
+  background: var(--btn-primary-hover);
+}
+
+.btn-stepper:active {
+  transform: scale(0.92);
+}
+
+.stepper-input {
+  font-family: var(--btn-font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: center;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--btn-sec-text);
+  width: 80px;
+}
+
+/* Botones de múltiplos de caja (+6, +12 Doc, +24 Caja, +100 Pack) */
+.btn-multiplier {
+  font-family: var(--btn-font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: var(--btn-radius-sm);
+  background: var(--btn-sec-bg);
+  border: 1px solid var(--btn-sec-border);
+  color: var(--btn-sec-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.btn-multiplier:hover {
+  background: var(--btn-primary-fixed);
+  color: var(--btn-on-primary-fixed);
+  border-color: var(--btn-primary);
+  transform: scale(1.02);
+}
+
+.btn-multiplier:active {
+  transform: scale(0.95);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   9. BILLETES DE COBRO RÁPIDO POS (.pos-bill-btn)
+   ═══════════════════════════════════════════════════════════════════════ */
+.pos-bill-btn {
+  background: #ffffff;
+  border: 1px solid var(--btn-sec-border);
+  border-radius: var(--btn-radius);
+  padding: 10px 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  transition: all 0.15s ease;
+  box-shadow: var(--btn-shadow-sm);
+}
+
+[data-theme="dark"] .pos-bill-btn {
+  background: #202028;
+}
+
+.pos-bill-btn-lbl {
+  font-family: var(--btn-font-family);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: color 0.15s ease;
+}
+
+.pos-bill-btn-val {
+  font-family: var(--btn-font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--btn-sec-text);
+  transition: color 0.15s ease;
+}
+
+.pos-bill-btn:hover {
+  background: var(--btn-primary);
+  border-color: var(--btn-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 105, 72, 0.25);
+}
+
+.pos-bill-btn:hover .pos-bill-btn-lbl,
+.pos-bill-btn:hover .pos-bill-btn-val {
+  color: #ffffff;
+}
+
+.pos-bill-btn:active {
+  transform: scale(0.96);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   10. ESTADOS DE CARGA Y DESHABILITADO
+   ═══════════════════════════════════════════════════════════════════════ */
+.btn:disabled, .btn[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed !important;
+  pointer-events: none;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.btn-loading {
+  cursor: wait !important;
+  pointer-events: none;
+  position: relative;
+}
+
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: btnSpin 0.6s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes btnSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

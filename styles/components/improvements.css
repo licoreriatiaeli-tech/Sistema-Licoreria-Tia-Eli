@@ -1,0 +1,176 @@
+/* ═══════════════════════════════════════════
+   MEJORAS UI - INVENTARIO & POS
+   ═══════════════════════════════════════════ */
+
+/* ─── INVENTARIO TABLE ENHANCEMENTS ─── */
+.inv-table th {
+  background: var(--color-bg-subtle);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.inv-table tbody tr:hover .producto-name {
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+}
+
+.inv-table .producto-name {
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-normal);
+  transition: var(--transition-colors);
+}
+
+/* ─── POS GRID RESPONSIVE ─── */
+@media (max-width: 1024px) {
+  .pos-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--space-3);
+  }
+}
+
+@media (max-width: 640px) {
+  .pos-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── PRODUCT FORM IMPROVEMENTS ─── */
+.form-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.form-grid-2col {
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+.form-grid-3col {
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+@media (max-width: 768px) {
+  .form-grid-2col,
+  .form-grid-3col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── WIZARD PROGRESS INDICATOR ─── */
+.wizard-progress {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.wizard-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+  transition: var(--transition-colors);
+}
+
+.wizard-step.active {
+  color: var(--color-brand);
+}
+
+.wizard-step.active .wizard-step-num {
+  background: var(--color-brand);
+  color: var(--color-white);
+  border: 2px solid var(--color-brand);
+}
+
+.wizard-step.completed {
+  color: var(--color-success);
+}
+
+.wizard-step.completed .wizard-step-num {
+  background: var(--color-success);
+  color: var(--color-white);
+  border: 2px solid var(--color-success);
+}
+
+.wizard-step-num {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--color-bg-subtle);
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-bold);
+  border: 2px solid var(--color-border);
+  transition: var(--transition-fast);
+}
+
+.wizard-step-labels {
+  display: flex;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* ─── FLOATING ACTION BUTTON ─── */
+.fab {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  color: var(--color-text-inverse);
+  border: none;
+  cursor: pointer;
+  z-index: var(--z-fab);
+  transition: var(--transition-transform);
+  box-shadow: var(--shadow-lg);
+}
+
+.fab:hover {
+  transform: translateY(-4px) scale(1.1);
+}
+
+.fab:active {
+  transform: translateY(2px) scale(0.98);
+}
+
+/* ─── SECTION TRANSITIONS ─── */
+.section {
+  transition: opacity var(--duration-normal) var(--ease-spring);
+}
+
+.section.active {
+  opacity: 1;
+}
+
+.section.inactive {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* ─── NOTIFICATION TOAST CONTAINER ─── */
+.toast-container {
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: var(--z-toast);
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 380px;
+}
+
+@media (max-width: 480px) {
+  .toast-container {
+    left: var(--space-4);
+    right: var(--space-4);
+    top: var(--space-4);
+    max-width: none;
+  }
+}

@@ -1,0 +1,3386 @@
+/* ═══════════════════════════════════════════════════════════════
+   POS MODERNO — CAJA RÁPIDA & TPV (TIA ELI LICORERIA)
+   Estilos dedicados para el nuevo diseño de Registro de Venta
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+/* Variables base del POS */
+#section-pos {
+  --pos-font: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --pos-bg: #f8fafc;
+  --pos-card-bg: #ffffff;
+  --pos-border: #e2e8f0;
+  --pos-border-subtle: #f1f5f9;
+  --pos-text-main: #0f172a;
+  --pos-text-muted: #64748b;
+  --pos-text-light: #94a3b8;
+  --pos-emerald: #ea580c;
+  --pos-emerald-hover: #047857;
+  --pos-emerald-active: #065f46;
+  --pos-emerald-light: #f97316;
+  --pos-emerald-bg: #ecfdf5;
+  --pos-emerald-border: #a7f3d0;
+  --pos-amber-bg: #fef3c7;
+  --pos-amber-text: #92400e;
+  --pos-danger: #ef4444;
+  --pos-danger-hover: #b91c1c;
+  --pos-danger-bg: #fee2e2;
+
+  font-family: var(--pos-font);
+  color: var(--pos-text-main);
+  background-color: var(--pos-bg);
+  margin: 0;
+  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  box-sizing: border-box;
+}
+
+#section-pos.active {
+  display: flex !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+}
+
+/* En Desktop: el POS ocupa el 100% exacto de la pantalla sin espacios vacíos */
+@media (min-width: 901px) {
+  body:has(#section-pos.active) .main-content,
+  .main-content:has(#section-pos.active),
+  .main-content.pos-active {
+    padding: 0 !important;
+    overflow: hidden !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+
+  body:has(#section-pos.active) #section-pos,
+  .main-content:has(#section-pos.active) #section-pos,
+  .main-content.pos-active #section-pos {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    min-height: 100vh !important;
+  }
+}
+
+/* Scrollbars limpios para pantallas táctiles y ratón */
+#section-pos ::-webkit-scrollbar,
+.pos-modal-overlay ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+#section-pos ::-webkit-scrollbar-track,
+.pos-modal-overlay ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+#section-pos ::-webkit-scrollbar-thumb,
+.pos-modal-overlay ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+#section-pos ::-webkit-scrollbar-thumb:hover,
+.pos-modal-overlay ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Micro-animación al pulsar tarjetas */
+.product-card-active:active,
+.pos-product-card:active,
+.pos-combo-card:active {
+  transform: scale(0.97);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   1. TOP NAVIGATION / HEADER DEL POS
+   ═══════════════════════════════════════════════════════════════ */
+.pos-top-header {
+  background: #ffffff;
+  border-bottom: 1px solid var(--pos-border);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+  z-index: 20;
+  height: 56px;
+  box-sizing: border-box;
+}
+.pos-brand-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.pos-logo-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--pos-emerald);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 1px 3px 0 rgba(5, 150, 105, 0.3);
+}
+.pos-logo-badge svg {
+  width: 20px;
+  height: 20px;
+}
+.pos-title-text h1 {
+  font-family: var(--pos-font);
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+  margin: 0;
+}
+.pos-title-text p {
+  font-size: 0.75rem;
+  color: var(--pos-text-muted);
+  font-weight: 500;
+  margin: 0;
+}
+.pos-turn-metrics {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 16px;
+  border-left: 1px solid var(--pos-border);
+  font-size: 0.75rem;
+}
+.pos-turn-metric-label {
+  color: var(--pos-text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pos-turn-metric-divider {
+  color: var(--pos-text-light);
+  opacity: 0.6;
+}
+.pos-turn-metric-value {
+  font-weight: 800;
+  font-family: 'JetBrains Mono', var(--pos-font);
+}
+.pos-turn-metric-sales {
+  color: #ea580c;
+}
+.pos-turn-metric-count {
+  color: #0284c7;
+}
+.pos-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  color: #065f46;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+.pos-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f97316;
+  animation: posPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes posPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+.pos-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pos-btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #334155;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.pos-btn-action:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+.pos-btn-action.btn-shortcuts {
+  background: #f1f5f9;
+  border-color: transparent;
+  color: #64748b;
+}
+.pos-btn-action.btn-shortcuts:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+.pos-kbd {
+  padding: 1px 5px;
+  font-size: 0.65rem;
+  font-family: monospace;
+  font-weight: 700;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   2. MAIN SPLIT: IZQUIERDA (CATÁLOGO) + DERECHA (TICKET)
+   ═══════════════════════════════════════════════════════════════ */
+.pos-main-split {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+  height: calc(100vh - 56px);
+}
+
+/* ── COLUMNA IZQUIERDA: CATÁLOGO DE PRODUCTOS ── */
+.pos-catalog-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
+  background: rgba(248, 250, 252, 0.75);
+}
+
+/* Barra de Búsqueda y Filtros */
+.pos-search-filters-bar {
+  padding: 14px 18px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--pos-border);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.pos-search-input-wrap {
+  position: relative;
+  width: 100%;
+}
+.pos-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+.pos-search-input-field {
+  width: 100%;
+  padding: 10px 92px 10px 40px;
+  font-size: 0.875rem;
+  font-family: var(--pos-font);
+  background: #f8fafc;
+  border: 1px solid var(--pos-border);
+  border-radius: 12px;
+  color: var(--pos-text-main);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+  outline: none;
+}
+.pos-search-input-field:focus {
+  background: #ffffff;
+  border-color: #f97316;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+.pos-search-shortcuts {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 4px;
+  pointer-events: none;
+}
+.pos-search-shortcut-badge {
+  font-size: 0.68rem;
+  font-family: monospace;
+  color: #94a3b8;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+}
+
+/* Pastillas de Categorías (Pills) */
+.pos-category-chips-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.pos-category-chips-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* Botón de Categoría / Chip */
+.category-btn,
+.pos-category-chip {
+  padding: 6px 14px;
+  font-size: 0.75rem;
+  font-family: var(--pos-font);
+  font-weight: 600;
+  border-radius: 9999px;
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid var(--pos-border);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+.category-btn:hover,
+.pos-category-chip:hover {
+  background: #f1f5f9;
+}
+.category-btn.active,
+.pos-category-chip.active {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #0f172a !important;
+  font-weight: 700;
+}
+.category-btn .count,
+.pos-category-chip .count {
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-weight: 700;
+}
+.category-btn.active .count,
+.pos-category-chip.active .count {
+  background: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Área Scrolleable del Catálogo */
+.pos-catalog-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+}
+.pos-section-subheading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.pos-section-subheading h2 {
+  font-family: var(--pos-font);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+.pos-section-subheading span {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   3. SECCIÓN COMBOS DISPONIBLES
+   ═══════════════════════════════════════════════════════════════ */
+.pos-combos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.pos-combo-card {
+  background: #ffffff;
+  border: 1px solid #d1fae5;
+  border-radius: 12px;
+  padding: 11px 13px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+}
+.pos-combo-card:hover {
+  border-color: #f97316;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+}
+.pos-combo-card.out-of-stock {
+  opacity: 0.55;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+  background: #f8fafc;
+}
+.pos-combo-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.pos-combo-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #ea580c;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.pos-combo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.pos-combo-title,
+.pos-combo-card h3 {
+  font-family: var(--pos-font);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.25;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pos-combo-desc {
+  font-size: 0.70rem;
+  color: #64748b;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pos-combo-stock-badge {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #047857;
+  background: #ecfdf5;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.pos-combo-stock-badge.out {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+.pos-combo-price-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  margin-top: 2px;
+}
+.pos-combo-price-action .price {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #ea580c;
+}
+.pos-combo-price-action .btn-add {
+  font-size: 0.72rem;
+  font-family: var(--pos-font);
+  font-weight: 700;
+  color: #ffffff;
+  background: #ea580c;
+  border: none;
+  padding: 4px 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(5, 150, 105, 0.2);
+  transition: background 0.15s;
+}
+.pos-combo-price-action .btn-add:hover {
+  background: #047857;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   4. SECCIÓN CATÁLOGO DE PRODUCTOS (GRILLA Y TARJETAS)
+   ═══════════════════════════════════════════════════════════════ */
+.pos-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  gap: 12px;
+}
+@media (min-width: 1400px) {
+  .pos-products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(146px, 1fr));
+  }
+}
+.pos-product-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  min-height: 142px;
+}
+.pos-product-card:hover {
+  border-color: #f97316;
+  box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.1);
+}
+.pos-product-card.out-of-stock {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f8fafc;
+}
+
+/* Badge de Stock y Fila Superior */
+.pos-card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.pos-card-icon-box {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: rgba(236, 253, 245, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pos-emerald);
+}
+.pos-card-icon-box .material-symbols-outlined {
+  font-size: 16px;
+}
+.pos-product-card .cart-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  background: #ea580c;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+}
+.pos-product-card .cart-badge.hidden {
+  display: none !important;
+}
+.pos-card-add-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--pos-emerald);
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.pos-card-add-btn:active {
+  transform: scale(0.92);
+}
+.pos-card-add-btn .material-symbols-outlined {
+  font-size: 16px;
+}
+.pos-card-stock-wrap {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.pos-card-stock-pill {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+.pos-card-stock-pill.warning {
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 700;
+}
+.pos-card-stock-pill.out {
+  background: #fee2e2;
+  color: #dc2626;
+  font-weight: 700;
+}
+
+/* Cuerpo de la Tarjeta */
+.pos-card-body {
+  margin: auto 0;
+  padding: 4px 0;
+}
+.pos-card-body h3 {
+  font-family: var(--pos-font);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pos-card-body p {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin: 2px 0 0 0;
+}
+.pos-card-format-pill {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #ea580c;
+  background: #ecfdf5;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-top: 3px;
+}
+
+/* Pie de Tarjeta con Precio Destacado Verde */
+.pos-card-footer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+.pos-card-price-text {
+  font-family: var(--pos-font);
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #ea580c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.pos-card-price-text .unit {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   5. PANEL DERECHO (TICKET ACTUAL / TPV CHECKOUT)
+   ═══════════════════════════════════════════════════════════════ */
+.pos-ticket-column {
+  width: 380px;
+  height: 100%;
+  min-height: 0;
+  background: #ffffff;
+  border-left: 1px solid var(--pos-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.04);
+  z-index: 10;
+  overflow: hidden;
+}
+@media (min-width: 1400px) {
+  .pos-ticket-column {
+    width: 420px;
+  }
+}
+
+/* Encabezado del Ticket */
+.pos-ticket-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--pos-border);
+  background: rgba(248, 250, 252, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.pos-ticket-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pos-ticket-header-title strong {
+  font-family: var(--pos-font);
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+.pos-ticket-id-tag {
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 0.72rem;
+  font-family: monospace;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #334155;
+}
+.pos-cashier-sub {
+  display: none !important;
+}
+.pos-btn-trash {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.pos-btn-trash:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+/* Selector de Cliente */
+.pos-customer-bar {
+  padding: 9px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  font-size: 0.75rem;
+}
+.pos-customer-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #475569;
+}
+.pos-customer-name {
+  font-weight: 700;
+  color: #0f172a;
+}
+.pos-btn-change-customer {
+  background: none;
+  border: none;
+  color: #047857;
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+.pos-btn-change-customer:hover {
+  color: #065f46;
+}
+
+/* Lista de Ítems en el Ticket */
+.pos-ticket-items-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+.pos-ticket-empty-state {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  margin: auto !important;
+  padding: 36px 20px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.pos-ticket-empty-state[style*="display: none"],
+.pos-ticket-empty-state[style*="display:none"] {
+  display: none !important;
+}
+.pos-ticket-empty-icon {
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 50% !important;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto 16px auto !important;
+  color: #94a3b8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.pos-ticket-empty-state p.title {
+  font-size: 0.92rem !important;
+  font-weight: 700 !important;
+  color: #334155 !important;
+  margin: 0 0 6px 0 !important;
+  text-align: center !important;
+  width: 100% !important;
+}
+.pos-ticket-empty-state p.sub {
+  font-size: 0.76rem !important;
+  color: #94a3b8 !important;
+  margin: 0 auto !important;
+  max-width: 240px !important;
+  line-height: 1.45 !important;
+  text-align: center !important;
+}
+
+/* Tarjeta de Ítem en el Ticket */
+.pos-ticket-item-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 0.75rem;
+  transition: border-color 0.15s ease;
+}
+.pos-ticket-item-card:hover {
+  border-color: #cbd5e1;
+}
+.pos-item-info {
+  flex: 1;
+  min-width: 0;
+  padding-right: 8px;
+}
+.pos-item-title {
+  font-family: var(--pos-font);
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
+}
+.pos-item-price-unit {
+  font-size: 0.74rem;
+  color: #ea580c;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+/* Controles de Cantidad [-] [qty] [+] */
+.pos-item-qty-wrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.pos-btn-qty {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: #334155;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+.pos-btn-qty:hover {
+  background: #f1f5f9;
+}
+.pos-btn-qty:active {
+  transform: scale(0.92);
+}
+.pos-item-qty-val {
+  width: 24px;
+  text-align: center;
+  font-weight: 800;
+  color: #0f172a;
+  font-size: 0.8rem;
+}
+
+/* Subtotal & Quitar */
+.pos-item-total-col {
+  text-align: right;
+  padding-left: 10px;
+  flex-shrink: 0;
+}
+.pos-item-total-val {
+  font-family: var(--pos-font);
+  font-weight: 800;
+  color: #0f172a;
+  font-size: 0.82rem;
+}
+.pos-item-remove-btn {
+  background: none;
+  border: none;
+  font-size: 0.68rem;
+  color: #ef4444;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 1px;
+}
+.pos-item-remove-btn:hover {
+  color: #b91c1c;
+  text-decoration: underline;
+}
+
+/* Resumen de Cobro y Métodos */
+.pos-ticket-checkout-footer {
+  padding: 14px 16px;
+  background: #f8fafc;
+  border-top: 1px solid var(--pos-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-top: auto;
+}
+.pos-summary-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: #475569;
+}
+.pos-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pos-summary-discount {
+  color: #047857;
+}
+.pos-btn-edit-discount {
+  font-size: 0.65rem;
+  background: #d1fae5;
+  color: #065f46;
+  border: none;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pos-btn-edit-discount:hover {
+  background: #a7f3d0;
+}
+.pos-total-row {
+  padding-top: 6px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.pos-total-row .label {
+  font-family: var(--pos-font);
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: 0.04em;
+}
+.pos-total-row .value {
+  font-family: var(--pos-font);
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+/* Selector de Formas de Pago */
+.pos-payment-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+.pos-payment-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.pos-pay-opt-btn,
+.payment-method-btn {
+  padding: 10px 8px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-family: var(--pos-font);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+}
+.pos-pay-opt-btn .f-key,
+.payment-method-btn .f-key {
+  display: block;
+  font-size: 0.65rem;
+  font-family: monospace;
+  opacity: 0.75;
+  font-weight: 600;
+}
+.pos-pay-opt-btn:hover,
+.payment-method-btn:hover {
+  background: #f1f5f9;
+}
+.pos-pay-opt-btn.active,
+.payment-method-btn.active {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #0f172a !important;
+}
+
+/* Calculadora de Vuelto / Efectivo */
+.pos-cash-calc-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+.pos-cash-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #475569;
+}
+.pos-cash-input-field-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 4px 10px;
+  transition: all 0.2s ease;
+}
+.pos-cash-input-field-wrap:focus-within {
+  border-color: #f97316;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.18);
+}
+.pos-cash-currency {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #64748b;
+  user-select: none;
+}
+.pos-cash-input-field {
+  width: 90px;
+  text-align: right;
+  padding: 2px 0;
+  font-size: 0.92rem;
+  font-weight: 800;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+  font-family: 'JetBrains Mono', var(--pos-font);
+  color: inherit;
+}
+.pos-cash-input-field::-webkit-outer-spin-button,
+.pos-cash-input-field::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+  display: none !important;
+}
+.pos-cash-input-field,
+input[type="number"] {
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}
+
+/* Billetes rápidos bolivianos */
+.pos-bills-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.pos-bill-btn {
+  padding: 8px 4px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-family: 'JetBrains Mono', var(--pos-font);
+  font-weight: 700;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.pos-bill-btn:hover {
+  background: #c2410c;
+  color: #ffffff;
+  border-color: #c2410c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 105, 72, 0.25);
+}
+.pos-bill-btn:active {
+  transform: scale(0.96);
+}
+
+/* Visualizador de Vuelto / Cambio */
+.pos-change-display-card {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  transition: all 0.2s ease;
+}
+.pos-change-display-card .label {
+  font-weight: 700;
+  color: #166534;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+.pos-change-display-card .change-val {
+  font-family: 'JetBrains Mono', var(--pos-font);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ea580c;
+}
+.pos-change-display-card .change-val.missing {
+  color: #e11d48;
+  font-size: 0.82rem;
+}
+
+/* Botón Gigante de Cobrar (CTA Emerald Oficial) */
+.pos-btn-cobrar-gigante {
+  width: 100%;
+  padding: 14px 16px;
+  background: #c2410c;
+  color: #ffffff;
+  font-family: 'Hanken Grotesk', var(--pos-font);
+  font-size: 0.92rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 12px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 105, 72, 0.35);
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pos-btn-cobrar-gigante:hover:not(:disabled) {
+  background: #ea580c;
+  box-shadow: 0 6px 20px rgba(0, 105, 72, 0.45);
+  transform: translateY(-1px);
+}
+.pos-btn-cobrar-gigante:active:not(:disabled) {
+  background: #9a3412;
+  transform: scale(0.98);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.pos-btn-cobrar-gigante:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   6. MODALES DEL POS (RECIBO, ARQUEO DE CAJA, ATAJOS)
+   ═══════════════════════════════════════════════════════════════ */
+.pos-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 16px;
+  animation: posFadeIn 0.15s ease-out;
+}
+.pos-modal-overlay.active,
+.pos-modal-overlay.flex {
+  display: flex !important;
+}
+@keyframes posFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.pos-modal-box {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  max-width: 380px;
+  width: 100%;
+  padding: 24px;
+  animation: posZoomIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes posZoomIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.pos-receipt-success-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #d1fae5;
+  color: #ea580c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+}
+.pos-modal-box h3 {
+  font-family: var(--pos-font);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  text-align: center;
+  margin: 0;
+}
+.pos-modal-box p.modal-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-align: center;
+  margin: 4px 0 0 0;
+}
+.pos-receipt-summary-card {
+  margin-top: 16px;
+  padding: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-family: monospace;
+  font-size: 0.78rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pos-receipt-row {
+  display: flex;
+  justify-content: space-between;
+  color: #475569;
+}
+.pos-receipt-row.total {
+  font-weight: 700;
+  color: #0f172a;
+}
+.pos-receipt-row.change {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 6px;
+  color: #047857;
+  font-weight: 700;
+}
+.pos-modal-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 20px;
+}
+.pos-btn-modal-sec {
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  border-radius: 12px;
+  font-family: var(--pos-font);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+.pos-btn-modal-sec:hover {
+  background: #f8fafc;
+}
+.pos-btn-modal-prim {
+  padding: 10px;
+  border: none;
+  background: #ea580c;
+  color: #ffffff;
+  border-radius: 12px;
+  font-family: var(--pos-font);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+.pos-btn-modal-prim:hover {
+  background: #047857;
+}
+
+/* Modal Cierre de Caja */
+.pos-close-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.78rem;
+}
+.pos-close-row.highlight {
+  background: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-weight: 800;
+  border-bottom: none;
+  margin-top: 6px;
+  font-size: 0.85rem;
+}
+
+/* Modal Atajos */
+.pos-shortcut-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 0.78rem;
+  color: #334155;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   7. MODAL SELECTOR DE EMPAQUE / FORMATO DE VENTA
+   ═══════════════════════════════════════════════════════════════ */
+#posEmpaqueOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 16px;
+}
+.pos-empaque-box {
+  background: #ffffff;
+  border-radius: 16px;
+  max-width: 360px;
+  width: 100%;
+  padding: 20px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+}
+.pos-empaque-box h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0;
+  color: #0f172a;
+}
+.pos-empaque-opt {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.15s ease;
+}
+.pos-empaque-opt:hover {
+  background: #ffffff;
+  border-color: #f97316;
+}
+.pos-empaque-opt .po-name {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #0f172a;
+}
+.pos-empaque-opt .po-sub {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+.pos-empaque-opt .po-price {
+  font-weight: 900;
+  color: #ea580c;
+  font-size: 0.85rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   8. RESPONSIVE MOBILE & TOUCH DEVICES (EMERALD RETAIL SYSTEM)
+   Diseño fiel a 'DISEÑO DE POS VENTA PARA CELULAR'
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Variables semánticas del diseño móvil */
+:root {
+  --mobile-pos-surface: #faf8ff;
+  --mobile-pos-surface-dim: #d2d9f4;
+  --mobile-pos-surface-bright: #faf8ff;
+  --mobile-pos-surface-lowest: #ffffff;
+  --mobile-pos-surface-low: #f2f3ff;
+  --mobile-pos-surface-container: #eaedff;
+  --mobile-pos-surface-high: #e2e7ff;
+  --mobile-pos-surface-highest: #dae2fd;
+  --mobile-pos-on-surface: #131b2e;
+  --mobile-pos-on-surface-variant: #3d4a42;
+  --mobile-pos-inverse-surface: #283044;
+  --mobile-pos-inverse-on-surface: #eef0ff;
+  --mobile-pos-outline: #6d7a72;
+  --mobile-pos-outline-variant: #bccac0;
+  --mobile-pos-primary: #c2410c;
+  --mobile-pos-primary-container: #ea580c;
+  --mobile-pos-on-primary: #ffffff;
+  --mobile-pos-on-primary-container: #f5fff7;
+  --mobile-pos-primary-fixed: #85f8c4;
+  --mobile-pos-secondary: #006c49;
+  --mobile-pos-secondary-container: #6cf8bb;
+  --mobile-pos-on-secondary-container: #00714d;
+  --mobile-pos-tertiary: #006860;
+  --mobile-pos-tertiary-fixed: #9cf2e8;
+  --mobile-pos-error: #ba1a1a;
+  --mobile-pos-error-container: #ffdad6;
+  --mobile-pos-on-error-container: #93000a;
+  --mobile-pos-font-sans: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --mobile-pos-font-mono: 'JetBrains Mono', monospace;
+}
+
+[data-theme="dark"] {
+  --mobile-pos-surface: #121214;
+  --mobile-pos-surface-lowest: #16161a;
+  --mobile-pos-surface-low: #18181d;
+  --mobile-pos-surface-container: #22222a;
+  --mobile-pos-surface-high: #334155;
+  --mobile-pos-surface-highest: #475569;
+  --mobile-pos-on-surface: #f8fafc;
+  --mobile-pos-on-surface-variant: #94a3b8;
+  --mobile-pos-inverse-surface: #090e1a;
+  --mobile-pos-inverse-on-surface: #e2e8f0;
+  --mobile-pos-outline: #64748b;
+  --mobile-pos-outline-variant: #475569;
+  --mobile-pos-primary-fixed: #68dba9;
+  --mobile-pos-tertiary-fixed: #80d5cb;
+}
+
+/* Control de Visibilidad Desktop vs Móvil */
+@media (min-width: 901px) {
+  .pos-mobile-only {
+    display: none !important;
+  }
+  .pos-desktop-only {
+    display: flex !important;
+  }
+  .pos-mobile-ticket-toggle {
+    display: none !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .pos-desktop-only {
+    display: none !important;
+  }
+  .pos-mobile-only {
+    display: block;
+  }
+
+  /* Ocultar barra superior genérica cuando POS está activo en móvil */
+  body:has(#section-pos.active) .topbar,
+  .main-content.pos-active ~ .topbar,
+  body.pos-view-active .topbar {
+    display: none !important;
+  }
+
+  /* El contenido principal ocupa 100vh sin scroll externo ni paddings */
+  body:has(#section-pos.active) .main-content,
+  .main-content.pos-active {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+
+  #section-pos.active {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: var(--mobile-pos-surface) !important;
+    color: var(--mobile-pos-on-surface) !important;
+    overflow: hidden !important;
+    font-family: var(--mobile-pos-font-sans) !important;
+  }
+
+  #section-pos .pos-main-split {
+    display: flex !important;
+    flex: 1 1 0% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    flex-direction: column !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #section-pos .pos-catalog-column {
+    display: flex !important;
+    flex: 1 1 0% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  #section-pos .pos-catalog-scroll-area {
+    flex: 1 1 0% !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 8px 12px 145px 12px !important;
+    scrollbar-width: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  #section-pos .pos-catalog-scroll-area::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* ══ 1. HEADER MÓVIL COMPACTO ══ */
+  .pos-mobile-top-header {
+    display: block !important;
+    width: 100%;
+    background: rgba(250, 248, 255, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(226, 231, 255, 0.8);
+    z-index: 30;
+    padding-top: env(safe-area-inset-top, 0px);
+    flex-shrink: 0;
+  }
+  [data-theme="dark"] .pos-mobile-top-header {
+    background: rgba(11, 17, 32, 0.95);
+    border-color: rgba(51, 65, 85, 0.8);
+  }
+  .pos-mobile-top-row {
+    height: 48px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .pos-mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pos-mobile-live-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    background: rgba(0, 105, 72, 0.1);
+    border: 1px solid rgba(0, 105, 72, 0.2);
+    color: var(--mobile-pos-primary);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  [data-theme="dark"] .pos-mobile-live-pill {
+    background: rgba(104, 219, 169, 0.15);
+    border-color: rgba(104, 219, 169, 0.3);
+    color: var(--mobile-pos-primary-fixed);
+  }
+  .pos-mobile-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background: var(--mobile-pos-primary);
+  }
+  [data-theme="dark"] .pos-mobile-live-dot {
+    background: var(--mobile-pos-primary-fixed);
+  }
+  .pos-mobile-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--mobile-pos-on-surface);
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .pos-mobile-top-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pos-mobile-icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--mobile-pos-surface-container);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--mobile-pos-primary);
+    cursor: pointer;
+    transition: transform 0.1s ease;
+  }
+  [data-theme="dark"] .pos-mobile-icon-btn {
+    color: var(--mobile-pos-primary-fixed);
+  }
+  .pos-mobile-icon-btn:active {
+    transform: scale(0.90);
+  }
+  .pos-mobile-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    background: var(--mobile-pos-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Barra de búsqueda y categorías móvil */
+  .pos-mobile-search-row {
+    padding: 4px 12px 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .pos-mobile-search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+  .pos-mobile-search-wrap .material-symbols-outlined.pos-mobile-search-icon {
+    position: absolute;
+    left: 10px;
+    font-size: 18px;
+    color: var(--mobile-pos-outline);
+    pointer-events: none;
+  }
+  .pos-mobile-search-input {
+    width: 100%;
+    height: 32px;
+    padding-left: 32px;
+    padding-right: 32px;
+    border-radius: 8px;
+    background: var(--mobile-pos-surface-low);
+    border: 1px solid transparent;
+    font-size: 12px;
+    color: var(--mobile-pos-on-surface);
+    outline: none;
+    transition: all 0.2s ease;
+    font-family: var(--mobile-pos-font-sans);
+  }
+  .pos-mobile-search-input:focus {
+    background: var(--mobile-pos-surface-lowest);
+    border-color: var(--mobile-pos-primary);
+    box-shadow: 0 0 0 1px var(--mobile-pos-primary);
+  }
+  .pos-mobile-search-input::placeholder {
+    color: var(--mobile-pos-outline);
+  }
+  .pos-mobile-clear-search {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    color: var(--mobile-pos-outline);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .pos-mobile-clear-search.hidden {
+    display: none !important;
+  }
+  .pos-mobile-category-strip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 2px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .pos-mobile-category-strip::-webkit-scrollbar {
+    display: none;
+  }
+  .pos-mobile-cat-pill {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    background: var(--mobile-pos-surface-low);
+    color: var(--mobile-pos-on-surface-variant);
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--mobile-pos-font-sans);
+  }
+  .pos-mobile-cat-pill.active {
+    background: var(--mobile-pos-primary);
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  /* ══ 2. ENCABEZADOS DE SECCIÓN MÓVIL ══ */
+  .pos-mobile-section-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    margin-top: 2px;
+  }
+  .pos-mobile-section-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pos-mobile-section-bar {
+    width: 4px;
+    height: 12px;
+    border-radius: 9999px;
+    background: var(--mobile-pos-primary);
+  }
+  .pos-mobile-section-bar.secondary {
+    background: var(--mobile-pos-secondary);
+  }
+  .pos-mobile-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--mobile-pos-on-surface);
+    margin: 0;
+    font-family: var(--mobile-pos-font-sans);
+  }
+  .pos-mobile-section-sub {
+    font-size: 10px;
+    color: var(--mobile-pos-primary);
+    font-weight: 600;
+  }
+  [data-theme="dark"] .pos-mobile-section-sub {
+    color: var(--mobile-pos-primary-fixed);
+  }
+  .pos-mobile-section-hint {
+    font-size: 10px;
+    color: var(--mobile-pos-outline);
+  }
+
+  /* ══ 3. CARRUSEL COMBOS FRECUENTES MÓVIL ══ */
+  #combos-grid {
+    display: flex !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    padding-bottom: 4px !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  #combos-grid::-webkit-scrollbar {
+    display: none !important;
+  }
+  .pos-combo-card {
+    flex-shrink: 0 !important;
+    width: 192px !important;
+    max-width: 192px !important;
+    background: var(--mobile-pos-surface-lowest) !important;
+    border: 1px solid rgba(226, 231, 255, 0.7) !important;
+    border-radius: 12px !important;
+    padding: 10px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+  [data-theme="dark"] .pos-combo-card { border-color: #26262e !important; }
+  .pos-combo-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  .pos-combo-icon-box {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: rgba(167, 243, 208, 0.7);
+    color: var(--mobile-pos-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  [data-theme="dark"] .pos-combo-icon-box {
+    background: rgba(0, 105, 72, 0.3);
+    color: var(--mobile-pos-primary-fixed);
+  }
+  .pos-combo-icon-box .material-symbols-outlined {
+    font-size: 17px;
+  }
+  .pos-combo-stock-pill {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--mobile-pos-surface-container);
+    font-size: 9px;
+    font-weight: 500;
+    color: var(--mobile-pos-on-surface-variant);
+  }
+  .pos-combo-stock-pill.out {
+    background: var(--mobile-pos-error-container);
+    color: var(--mobile-pos-on-error-container);
+    font-weight: 700;
+  }
+  .pos-combo-body {
+    margin: 6px 0;
+  }
+  .pos-combo-title {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--mobile-pos-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0 0 2px 0;
+  }
+  .pos-combo-desc {
+    font-size: 10px;
+    color: var(--mobile-pos-on-surface-variant);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+  }
+  .pos-combo-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 4px;
+    border-top: 1px solid var(--mobile-pos-surface-low);
+  }
+  .pos-combo-price {
+    font-family: var(--mobile-pos-font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--mobile-pos-primary);
+  }
+  [data-theme="dark"] .pos-combo-price {
+    color: var(--mobile-pos-primary-fixed);
+  }
+  .pos-combo-add-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--mobile-pos-primary-container);
+    color: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+  }
+  .pos-combo-add-btn:active {
+    transform: scale(0.90);
+  }
+  .pos-combo-add-btn .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  /* ══ 4. CATÁLOGO RÁPIDO: GRILLA 2 COLUMNAS TÁCTIL ══ */
+  #products-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  .pos-product-card {
+    background: var(--mobile-pos-surface-lowest) !important;
+    border-radius: 12px !important;
+    padding: 10px !important;
+    border: 1px solid rgba(226, 231, 255, 0.6) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    position: relative !important;
+    transition: all 0.15s ease !important;
+    min-height: 120px !important;
+    text-align: left !important;
+    cursor: pointer !important;
+  }
+  [data-theme="dark"] .pos-product-card {
+    border-color: rgba(51, 65, 85, 0.6) !important;
+  }
+  .pos-product-card .cart-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    padding: 2px 6px;
+    border-radius: 9999px;
+    background: #ea580c;
+    color: #ffffff;
+    font-family: var(--mobile-pos-font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    z-index: 2;
+  }
+  .pos-product-card .cart-badge.hidden {
+    display: none !important;
+  }
+  .pos-card-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .pos-card-icon-box {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background: rgba(236, 253, 245, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  [data-theme="dark"] .pos-card-icon-box {
+    background: rgba(0, 105, 72, 0.25);
+  }
+  .pos-card-icon-box .material-symbols-outlined {
+    font-size: 16px;
+  }
+  .pos-card-stock-pill {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--mobile-pos-surface-container);
+    color: var(--mobile-pos-on-surface-variant);
+    font-size: 8px;
+    font-weight: 500;
+  }
+  .pos-card-stock-pill.warning {
+    background: var(--mobile-pos-error-container);
+    color: var(--mobile-pos-on-error-container);
+    font-weight: 700;
+  }
+  .pos-card-stock-pill.out {
+    background: #fee2e2;
+    color: #dc2626;
+    font-weight: 700;
+  }
+  .pos-card-title {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--mobile-pos-on-surface);
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0;
+  }
+  .pos-card-sub {
+    font-size: 10px;
+    color: var(--mobile-pos-on-surface-variant);
+    margin: 2px 0 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pos-card-footer {
+    margin-top: 8px;
+    padding-top: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--mobile-pos-surface-low);
+  }
+  .pos-card-price-text {
+    font-family: var(--mobile-pos-font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--mobile-pos-primary);
+  }
+  [data-theme="dark"] .pos-card-price-text {
+    color: var(--mobile-pos-primary-fixed);
+  }
+  .pos-card-price-text .unit {
+    font-size: 10px;
+    color: var(--mobile-pos-outline);
+    font-weight: 400;
+  }
+  .pos-card-add-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--mobile-pos-primary);
+    color: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: transform 0.1s ease;
+  }
+  .pos-card-add-btn:active {
+    transform: scale(0.90);
+  }
+  .pos-card-add-btn .material-symbols-outlined {
+    font-size: 19px;
+  }
+
+  /* ══ 5. BARRA DE ACCIÓN FLOTANTE MÓVIL (STICKY POS ACTION BAR) ══ */
+  .pos-mobile-action-bar {
+    display: block !important;
+    position: fixed;
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    left: 0;
+    right: 0;
+    z-index: 30;
+    padding: 0 12px 4px 12px;
+    pointer-events: none;
+  }
+  .pos-mobile-action-bar-inner {
+    pointer-events: auto;
+    background: var(--mobile-pos-inverse-surface);
+    color: var(--mobile-pos-inverse-on-surface);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .pos-mobile-cart-btn {
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 4px;
+    text-align: left;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+    color: inherit;
+  }
+  .pos-mobile-cart-btn:active {
+    opacity: 0.8;
+  }
+  .pos-mobile-cart-icon-box {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--mobile-pos-primary-fixed);
+    flex-shrink: 0;
+  }
+  .pos-mobile-cart-icon-box .material-symbols-outlined {
+    font-size: 20px;
+  }
+  .pos-mobile-cart-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9999px;
+    background: var(--mobile-pos-error);
+    color: #ffffff;
+    font-family: var(--mobile-pos-font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  .pos-mobile-cart-text {
+    min-width: 0;
+  }
+  .pos-mobile-cart-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--mobile-pos-tertiary-fixed);
+    letter-spacing: 0.05em;
+    display: block;
+    line-height: 1;
+  }
+  .pos-mobile-cart-price {
+    font-family: var(--mobile-pos-font-mono);
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    margin-top: 2px;
+  }
+  .pos-mobile-checkout-btn {
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 8px;
+    background: var(--mobile-pos-primary);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 12px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+  }
+  .pos-mobile-checkout-btn:hover {
+    background: var(--mobile-pos-primary-container);
+  }
+  .pos-mobile-checkout-btn:active {
+    transform: scale(0.95);
+  }
+  .pos-mobile-checkout-btn .material-symbols-outlined {
+    font-size: 17px;
+  }
+
+  /* ══ 6. BOTTOM SHEET MODAL INTERACTIVO PARA COBRO ══ */
+  .pos-mobile-modal-backdrop {
+    display: flex !important;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    flex-direction: column;
+    justify-content: flex-end;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .pos-mobile-modal-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .pos-mobile-modal-drawer {
+    width: 100%;
+    background: var(--mobile-pos-surface-lowest);
+    border-radius: 20px 20px 0 0;
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)) 16px;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.25);
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+  }
+  .pos-mobile-modal-backdrop.open .pos-mobile-modal-drawer {
+    transform: translateY(0);
+  }
+  .pos-mobile-drawer-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 9999px;
+    background: var(--mobile-pos-surface-high);
+    margin: 0 auto 12px auto;
+  }
+  .pos-mobile-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--mobile-pos-surface-low);
+  }
+  .pos-mobile-modal-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pos-mobile-modal-icon-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(0, 105, 72, 0.1);
+    color: var(--mobile-pos-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  [data-theme="dark"] .pos-mobile-modal-icon-badge {
+    background: rgba(104, 219, 169, 0.15);
+    color: var(--mobile-pos-primary-fixed);
+  }
+  .pos-mobile-modal-icon-badge .material-symbols-outlined {
+    font-size: 20px;
+  }
+  .pos-mobile-modal-header h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--mobile-pos-on-surface);
+    margin: 0;
+  }
+  .pos-mobile-modal-header p {
+    font-size: 10px;
+    color: var(--mobile-pos-on-surface-variant);
+    margin: 0;
+  }
+  .pos-mobile-modal-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    background: var(--mobile-pos-surface-low);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--mobile-pos-on-surface-variant);
+    cursor: pointer;
+  }
+  .pos-mobile-amount-card {
+    background: var(--mobile-pos-surface-low);
+    border-radius: 12px;
+    padding: 12px;
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid var(--mobile-pos-surface-container);
+  }
+  .pos-mobile-amount-card .label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--mobile-pos-outline);
+    display: block;
+  }
+  .pos-mobile-amount-card .items-count {
+    font-size: 11px;
+    color: var(--mobile-pos-on-surface-variant);
+  }
+  .pos-mobile-amount-card .price {
+    font-family: var(--mobile-pos-font-mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--mobile-pos-primary);
+  }
+  [data-theme="dark"] .pos-mobile-amount-card .price {
+    color: var(--mobile-pos-primary-fixed);
+  }
+
+  /* Lista de ítems en el drawer móvil */
+  .pos-mobile-cart-items-wrap {
+    max-height: 160px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-bottom: 1px solid var(--mobile-pos-surface-low);
+    padding-bottom: 8px;
+  }
+  .pos-mobile-drawer-cart-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: var(--mobile-pos-surface-low);
+    font-size: 11px;
+    gap: 6px;
+  }
+  .pos-mobile-drawer-cart-item .item-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .pos-mobile-drawer-cart-item .item-name {
+    font-weight: 700;
+    color: var(--mobile-pos-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pos-mobile-drawer-cart-item .item-unit-price {
+    font-size: 9px;
+    color: var(--mobile-pos-on-surface-variant);
+    font-family: var(--mobile-pos-font-mono);
+  }
+  .pos-mobile-drawer-cart-item .item-stepper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .pos-mobile-drawer-cart-item .item-stepper button {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    background: var(--mobile-pos-surface-container);
+    border: none;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--mobile-pos-on-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .pos-mobile-drawer-cart-item .item-stepper .qty {
+    font-family: var(--mobile-pos-font-mono);
+    font-weight: 700;
+    font-size: 11px;
+    min-width: 16px;
+    text-align: center;
+    color: var(--mobile-pos-on-surface);
+  }
+  .pos-mobile-drawer-cart-item .item-total {
+    font-family: var(--mobile-pos-font-mono);
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--mobile-pos-primary);
+    min-width: 50px;
+    text-align: right;
+  }
+  [data-theme="dark"] .pos-mobile-drawer-cart-item .item-total {
+    color: var(--mobile-pos-primary-fixed);
+  }
+  .pos-mobile-drawer-cart-item .item-del {
+    background: none;
+    border: none;
+    color: var(--mobile-pos-error);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 4px;
+  }
+
+  /* Selector métodos de pago */
+  .pos-mobile-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--mobile-pos-outline);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .pos-mobile-methods-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .pos-mobile-method-btn {
+    height: 48px;
+    border-radius: 12px;
+    background: var(--mobile-pos-surface-low);
+    color: var(--mobile-pos-on-surface);
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: var(--mobile-pos-font-sans);
+  }
+  .pos-mobile-method-btn.active {
+    background: var(--mobile-pos-primary);
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  .pos-mobile-method-btn .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  /* Cuentas QR */
+  .pos-mobile-qr-section {
+    margin-bottom: 12px;
+  }
+  .pos-mobile-qr-btns {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+  }
+  .pos-mobile-qr-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: var(--mobile-pos-surface-container);
+    color: var(--mobile-pos-primary);
+    font-size: 11px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+  }
+  [data-theme="dark"] .pos-mobile-qr-btn {
+    color: var(--mobile-pos-primary-fixed);
+  }
+
+  /* Calculadora de efectivo */
+  .pos-mobile-cash-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .pos-mobile-cash-header .tendered-val {
+    font-size: 11px;
+    font-family: var(--mobile-pos-font-mono);
+    color: var(--mobile-pos-primary);
+    font-weight: 700;
+  }
+  [data-theme="dark"] .pos-mobile-cash-header .tendered-val {
+    color: var(--mobile-pos-primary-fixed);
+  }
+  .pos-mobile-quick-cash-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .pos-mobile-cash-btn {
+    height: 36px;
+    border-radius: 8px;
+    background: var(--mobile-pos-surface-container);
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--mobile-pos-font-mono);
+    color: var(--mobile-pos-on-surface);
+    border: none;
+    cursor: pointer;
+  }
+  .pos-mobile-cash-btn:active {
+    transform: scale(0.95);
+  }
+  .pos-mobile-change-card {
+    padding: 10px;
+    border-radius: 12px;
+    background: rgba(236, 253, 245, 0.8);
+    border: 1px solid #a7f3d0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  [data-theme="dark"] .pos-mobile-change-card {
+    background: rgba(0, 105, 72, 0.2);
+    border-color: rgba(104, 219, 169, 0.3);
+  }
+  .pos-mobile-change-card .change-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pos-mobile-change-card .change-left .material-symbols-outlined {
+    color: var(--mobile-pos-primary);
+    font-size: 20px;
+  }
+  [data-theme="dark"] .pos-mobile-change-card .change-left .material-symbols-outlined {
+    color: var(--mobile-pos-primary-fixed);
+  }
+  .pos-mobile-change-card .change-title {
+    font-size: 9px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--mobile-pos-outline);
+    display: block;
+    line-height: 1;
+  }
+  .pos-mobile-change-card .change-note {
+    font-size: 11px;
+    color: var(--mobile-pos-on-surface-variant);
+    font-weight: 500;
+  }
+  .pos-mobile-change-card .change-note.text-error {
+    color: var(--mobile-pos-error);
+    font-weight: 700;
+  }
+  .pos-mobile-change-card .change-amount {
+    font-family: var(--mobile-pos-font-mono);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--mobile-pos-primary);
+  }
+  [data-theme="dark"] .pos-mobile-change-card .change-amount {
+    color: var(--mobile-pos-primary-fixed);
+  }
+
+  /* Botón Confirmar Venta Final */
+  .pos-mobile-finalize-btn {
+    width: 100%;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--mobile-pos-primary);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.15s ease;
+    font-family: var(--mobile-pos-font-sans);
+  }
+  .pos-mobile-finalize-btn:hover {
+    background: var(--mobile-pos-primary-container);
+  }
+  .pos-mobile-finalize-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* ══ 7. TOAST DE NOTIFICACIÓN MÓVIL ══ */
+  .pos-toast {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translate(-50%, -10px);
+    z-index: 99999;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    background: var(--mobile-pos-inverse-surface);
+    color: var(--mobile-pos-inverse-on-surface);
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .pos-toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+  }
+  .pos-toast .material-symbols-outlined {
+    color: var(--mobile-pos-primary-fixed);
+    font-size: 16px;
+  }
+}
+
+
+/* ── PRODUCT PHOTOS IN POS & TICKET ── */
+.pos-card-icon-box.has-photo {
+  width: 36px !important;
+  height: 36px !important;
+  background: transparent !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--pos-border) !important;
+}
+.pos-card-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 5px;
+  display: block;
+}
+.pos-item-thumb-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+.pos-item-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.pos-item-thumb-placeholder {
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pos-item-thumb-placeholder .material-symbols-outlined {
+  font-size: 16px;
+}
+[data-theme="dark"] .pos-item-thumb-wrap {
+  background: #334155;
+}
+[data-theme="dark"] .pos-item-thumb-placeholder {
+  color: #94a3b8;
+}
+
+.pos-mobile-thumb-wrap {
+  width: 30px;
+  height: 30px;
+  border-radius: 5px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--mobile-pos-surface-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+.pos-mobile-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.pos-mobile-thumb-placeholder {
+  color: var(--mobile-pos-on-surface-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pos-mobile-thumb-placeholder .material-symbols-outlined {
+  font-size: 14px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   MODO NOCHE REAL — DESKTOP POS (TPV Y CATÁLOGO DE VENTAS)
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="dark"] #section-pos,
+.dark #section-pos {
+  background-color: #0b1120 !important;
+  color: #f8fafc !important;
+  --pos-text-main: #f8fafc;
+  --pos-text-muted: #94a3b8;
+  --pos-text-light: #64748b;
+  --pos-card-bg: #141418;
+  --pos-border: #26262e;
+  --pos-emerald: #fdba74;
+  color-scheme: dark;
+}
+
+[data-theme="dark"] .pos-top-header,
+.dark .pos-top-header {
+  background: #141418 !important;
+  border-bottom: 1px solid #26262e !important;
+}
+
+[data-theme="dark"] .pos-live-pill,
+.dark .pos-live-pill {
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #fdba74 !important;
+  border: 1px solid rgba(52, 211, 153, 0.25) !important;
+}
+
+[data-theme="dark"] .pos-btn-action,
+.dark .pos-btn-action {
+  background: #202028 !important;
+  border: 1px solid #2e2e38 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .pos-btn-action:hover,
+.dark .pos-btn-action:hover {
+  background: #282834 !important;
+  border-color: #383844 !important;
+  color: #ffffff !important;
+}
+[data-theme="dark"] .pos-kbd,
+.dark .pos-kbd {
+  background: #282834 !important;
+  border: 1px solid #383844 !important;
+  color: #a1a1aa !important;
+}
+[data-theme="dark"] .pos-btn-edit-discount,
+.dark .pos-btn-edit-discount {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #fdba74 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+[data-theme="dark"] .pos-brand-left,
+.dark .pos-brand-left,
+[data-theme="dark"] .pos-top-header h2,
+.dark .pos-top-header h2,
+[data-theme="dark"] .pos-title-text h1,
+.dark .pos-title-text h1 {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .pos-turn-metrics,
+.dark .pos-turn-metrics,
+[data-theme="dark"] .pos-turn-metric-label,
+.dark .pos-turn-metric-label {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .pos-turn-metric-divider,
+.dark .pos-turn-metric-divider {
+  color: #475569 !important;
+}
+
+[data-theme="dark"] .pos-turn-metric-sales,
+.dark .pos-turn-metric-sales,
+[data-theme="dark"] #header-turn-total,
+.dark #header-turn-total {
+  color: #fdba74 !important;
+  font-weight: 800 !important;
+  text-shadow: 0 0 12px rgba(52, 211, 153, 0.28) !important;
+}
+
+[data-theme="dark"] .pos-turn-metric-count,
+.dark .pos-turn-metric-count,
+[data-theme="dark"] #header-turn-tickets,
+.dark #header-turn-tickets {
+  color: #38bdf8 !important;
+  font-weight: 800 !important;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.28) !important;
+}
+
+[data-theme="dark"] .pos-catalog-column,
+.dark .pos-catalog-column {
+  background: #121214 !important;
+}
+
+[data-theme="dark"] .pos-search-filters-bar,
+.dark .pos-search-filters-bar {
+  background: #141418 !important;
+  border-bottom: 1px solid #26262e !important;
+}
+
+[data-theme="dark"] .pos-search-input-field,
+.dark .pos-search-input-field {
+  background: #1c1c22 !important;
+  border: 1px solid #2e2e38 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .pos-search-shortcut-badge,
+.dark .pos-search-shortcut-badge {
+  background: #26262e !important;
+  border: 1px solid #2e2e38 !important;
+  color: #a1a1aa !important;
+}
+
+[data-theme="dark"] .category-btn,
+.dark .category-btn,
+[data-theme="dark"] .pos-category-chip,
+.dark .pos-category-chip,
+[data-theme="dark"] .pos-category-btn,
+.dark .pos-category-btn,
+[data-theme="dark"] .pos-cat-pill,
+.dark .pos-cat-pill,
+[data-theme="dark"] .pos-filter-btn,
+.dark .pos-filter-btn {
+  background: #202028 !important;
+  border: 1px solid #2e2e38 !important;
+  color: #cbd5e1 !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .category-btn:hover,
+.dark .category-btn:hover,
+[data-theme="dark"] .pos-category-chip:hover,
+.dark .pos-category-chip:hover,
+[data-theme="dark"] .pos-category-btn:hover,
+.dark .pos-category-btn:hover,
+[data-theme="dark"] .pos-cat-pill:hover,
+.dark .pos-cat-pill:hover,
+[data-theme="dark"] .pos-filter-btn:hover,
+.dark .pos-filter-btn:hover {
+  background: #282834 !important;
+  border-color: #383844 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .category-btn .count,
+.dark .category-btn .count,
+[data-theme="dark"] .pos-category-chip .count,
+.dark .pos-category-chip .count {
+  background: #282834 !important;
+  color: #a1a1aa !important;
+}
+
+[data-theme="dark"] .category-btn.active,
+.dark .category-btn.active,
+[data-theme="dark"] .pos-category-chip.active,
+.dark .pos-category-chip.active,
+[data-theme="dark"] .pos-category-btn.active,
+.dark .pos-category-btn.active,
+[data-theme="dark"] .pos-cat-pill.active,
+.dark .pos-cat-pill.active,
+[data-theme="dark"] .pos-filter-btn.active,
+.dark .pos-filter-btn.active {
+  background: #ea580c !important;
+  color: #ffffff !important;
+  border-color: #f97316 !important;
+}
+
+[data-theme="dark"] .category-btn.active .count,
+.dark .category-btn.active .count,
+[data-theme="dark"] .pos-category-chip.active .count,
+.dark .pos-category-chip.active .count {
+  background: rgba(0, 0, 0, 0.3) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .pos-product-card,
+.dark .pos-product-card {
+  background: #18181d !important;
+  border: 1px solid #26262e !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-theme="dark"] .pos-product-card:hover,
+.dark .pos-product-card:hover {
+  background: #202026 !important;
+  border-color: #f97316 !important;
+  transform: translateY(-2px);
+}
+
+[data-theme="dark"] .pos-card-body h3,
+.dark .pos-card-body h3,
+[data-theme="dark"] .pos-product-card h4,
+.dark .pos-product-card h4,
+[data-theme="dark"] .pos-card-name,
+.dark .pos-card-name,
+[data-theme="dark"] .pos-card-title,
+.dark .pos-card-title {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .pos-card-price-text,
+.dark .pos-card-price-text,
+[data-theme="dark"] .pos-card-price,
+.dark .pos-card-price {
+  color: #fdba74 !important;
+}
+
+[data-theme="dark"] .pos-card-footer,
+.dark .pos-card-footer {
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .pos-card-format-pill,
+.dark .pos-card-format-pill {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #fdba74 !important;
+}
+
+[data-theme="dark"] .pos-card-icon-box,
+.dark .pos-card-icon-box {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #fdba74 !important;
+}
+
+[data-theme="dark"] .pos-combo-card,
+.dark .pos-combo-card {
+  background: #18181d !important;
+  border: 1px solid #26262e !important;
+  color: #f8fafc !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-theme="dark"] .pos-combo-card:hover,
+.dark .pos-combo-card:hover {
+  background: #202026 !important;
+  border-color: #ea580c !important;
+}
+
+[data-theme="dark"] .pos-combo-tag,
+.dark .pos-combo-tag {
+  color: #fdba74 !important;
+}
+
+[data-theme="dark"] .pos-combo-title,
+.dark .pos-combo-title,
+[data-theme="dark"] .pos-combo-card h3,
+.dark .pos-combo-card h3,
+[data-theme="dark"] .pos-combo-title-row h3,
+.dark .pos-combo-title-row h3 {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="dark"] .pos-combo-desc,
+.dark .pos-combo-desc {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .pos-combo-stock-badge,
+.dark .pos-combo-stock-badge {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #fdba74 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+[data-theme="dark"] .pos-combo-stock-badge.out,
+.dark .pos-combo-stock-badge.out {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+[data-theme="dark"] .pos-combo-price-action,
+.dark .pos-combo-price-action {
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .pos-combo-price-action .price,
+.dark .pos-combo-price-action .price {
+  color: #fdba74 !important;
+}
+
+[data-theme="dark"] .pos-ticket-column,
+.dark .pos-ticket-column,
+[data-theme="dark"] .pos-cart-panel,
+.dark .pos-cart-panel,
+[data-theme="dark"] #pos-ticket-panel,
+.dark #pos-ticket-panel {
+  background: #16161a !important;
+  border-left: 1px solid #26262e !important;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4) !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .pos-ticket-header,
+.dark .pos-ticket-header,
+[data-theme="dark"] .pos-cart-header,
+.dark .pos-cart-header {
+  background: #18181d !important;
+  border-bottom: 1px solid #26262e !important;
+}
+
+[data-theme="dark"] .pos-ticket-header-title strong,
+.dark .pos-ticket-header-title strong,
+[data-theme="dark"] .pos-cart-title,
+.dark .pos-cart-title {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .pos-ticket-id-tag,
+.dark .pos-ticket-id-tag {
+  background: #202028 !important;
+  color: #cbd5e1 !important;
+  border: 1px solid #2e2e38 !important;
+}
+
+[data-theme="dark"] .pos-ticket-items-list,
+.dark .pos-ticket-items-list,
+[data-theme="dark"] .pos-cart-items,
+.dark .pos-cart-items {
+  background: #16161a !important;
+}
+
+[data-theme="dark"] .pos-cart-item,
+.dark .pos-cart-item,
+[data-theme="dark"] .pos-cart-item-row,
+.dark .pos-cart-item-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme="dark"] .pos-cart-item-name,
+.dark .pos-cart-item-name {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .pos-checkout-section,
+.dark .pos-checkout-section,
+[data-theme="dark"] .pos-cart-footer,
+.dark .pos-cart-footer,
+[data-theme="dark"] .pos-ticket-checkout-footer,
+.dark .pos-ticket-checkout-footer {
+  background: #141417 !important;
+  border-top: 1px solid #26262e !important;
+}
+
+[data-theme="dark"] .pos-total-amount,
+.dark .pos-total-amount,
+[data-theme="dark"] .cart-total-val,
+.dark .cart-total-val {
+  color: #fdba74 !important;
+}
+
+[data-theme="dark"] .pos-tendered-input,
+.dark .pos-tendered-input,
+[data-theme="dark"] .pos-cash-input,
+.dark .pos-cash-input,
+[data-theme="dark"] .pos-cash-input-field,
+.dark .pos-cash-input-field {
+  background: #202028 !important;
+  border: 1px solid #2e2e38 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .pos-payment-methods,
+.dark .pos-payment-methods {
+  background: transparent !important;
+}
+
+[data-theme="dark"] .pos-pay-opt-btn:not(.active),
+.dark .pos-pay-opt-btn:not(.active),
+[data-theme="dark"] .pos-pay-btn:not(.active),
+.dark .pos-pay-btn:not(.active) {
+  background: #202028 !important;
+  border: 1px solid #2e2e38 !important;
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .pos-pay-opt-btn:not(.active):hover,
+.dark .pos-pay-opt-btn:not(.active):hover,
+[data-theme="dark"] .pos-pay-btn:not(.active):hover,
+.dark .pos-pay-btn:not(.active):hover {
+  background: #282834 !important;
+  border-color: #383844 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .pos-pay-opt-btn.active,
+.dark .pos-pay-opt-btn.active,
+[data-theme="dark"] .pos-pay-btn.active,
+.dark .pos-pay-btn.active {
+  background: #ea580c !important;
+  border-color: #f97316 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .pos-customer-bar,
+.dark .pos-customer-bar {
+  background: #1a1a20 !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .pos-customer-name,
+.dark .pos-customer-name {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .pos-btn-change-customer,
+.dark .pos-btn-change-customer {
+  color: #fdba74 !important;
+}
+
+[data-theme="dark"] .pos-ticket-empty-state,
+.dark .pos-ticket-empty-state {
+  background: transparent !important;
+}
+
+[data-theme="dark"] .pos-ticket-empty-state .title,
+.dark .pos-ticket-empty-state .title {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .pos-ticket-empty-state .sub,
+.dark .pos-ticket-empty-state .sub {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .pos-ticket-empty-icon,
+.dark .pos-ticket-empty-icon {
+  background: #1c1c24 !important;
+  border: 1px solid #2e2e38 !important;
+  color: #94a3b8 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .pos-ticket-empty-icon svg,
+.dark .pos-ticket-empty-icon svg {
+  color: #a1a1aa !important;
+}
+
+[data-theme="dark"] .pos-summary-lines,
+.dark .pos-summary-lines {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .pos-summary-row,
+.dark .pos-summary-row {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .pos-summary-row span[style*="font-weight:600"],
+.dark .pos-summary-row span[style*="font-weight:600"] {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .pos-total-row,
+.dark .pos-total-row {
+  border-top-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .pos-total-row .label,
+.dark .pos-total-row .label {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .pos-total-row .value,
+.dark .pos-total-row .value {
+  color: #fdba74 !important;
+  text-shadow: 0 0 12px rgba(52, 211, 153, 0.28);
+}
+
+[data-theme="dark"] .pos-cash-calc-panel,
+.dark .pos-cash-calc-panel {
+  background: #16161c !important;
+  border-color: #26262e !important;
+}
+
+[data-theme="dark"] .pos-cash-input-row,
+.dark .pos-cash-input-row {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .pos-cash-input-field-wrap,
+.dark .pos-cash-input-field-wrap {
+  background: #1c1c24 !important;
+  border: 1px solid #2e2e38 !important;
+}
+
+[data-theme="dark"] .pos-cash-input-field-wrap:focus-within,
+.dark .pos-cash-input-field-wrap:focus-within {
+  border-color: #f97316 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.22) !important;
+}
+
+[data-theme="dark"] .pos-cash-currency,
+.dark .pos-cash-currency {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .pos-cash-input-field,
+.dark .pos-cash-input-field {
+  background: transparent !important;
+  border: none !important;
+  color: #f8fafc !important;
+  color-scheme: dark !important;
+}
+
+[data-theme="dark"] .pos-bill-btn,
+.dark .pos-bill-btn {
+  background: #202028 !important;
+  border: 1px solid #2e2e38 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .pos-bill-btn:hover,
+.dark .pos-bill-btn:hover {
+  background: #282834 !important;
+  color: #fdba74 !important;
+  border-color: #fdba74 !important;
+}
+
+/* Tarjeta elegante de Cambio / Vuelto en Modo Noche */
+[data-theme="dark"] .pos-change-display-card,
+.dark .pos-change-display-card {
+  background: #181820 !important;
+  border: 1px solid rgba(16, 185, 129, 0.25) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="dark"] .pos-change-display-card .label,
+.dark .pos-change-display-card .label {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .pos-change-display-card .change-val,
+.dark .pos-change-display-card .change-val {
+  color: #fdba74 !important;
+  text-shadow: 0 0 12px rgba(52, 211, 153, 0.3) !important;
+}
+
+[data-theme="dark"] .pos-change-display-card .change-val.missing,
+.dark .pos-change-display-card .change-val.missing {
+  color: #f87171 !important;
+  text-shadow: none !important;
+}
+
+/* Tarjeta de Ítem de Ticket en Modo Noche (fondo oscuro integrado y precio verde) */
+[data-theme="dark"] .pos-ticket-item-card,
+.dark .pos-ticket-item-card {
+  background: #181820 !important;
+  border: 1px solid #282834 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="dark"] .pos-ticket-item-card:hover,
+.dark .pos-ticket-item-card:hover {
+  border-color: #383848 !important;
+  background: #1c1c26 !important;
+}
+
+[data-theme="dark"] .pos-item-thumb-wrap,
+.dark .pos-item-thumb-wrap {
+  background: #22222c !important;
+  border: 1px solid #333342 !important;
+}
+
+[data-theme="dark"] .pos-item-thumb-placeholder,
+.dark .pos-item-thumb-placeholder {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .pos-item-title,
+.dark .pos-item-title {
+  color: #f8fafc !important;
+  font-weight: 700 !important;
+}
+
+/* Subtítulo precio unitario c/u en verde vibrante */
+[data-theme="dark"] .pos-item-price-unit,
+.dark .pos-item-price-unit {
+  color: #fdba74 !important;
+  font-weight: 700 !important;
+}
+
+/* Botones de cantidad [-] [+] en Modo Noche */
+[data-theme="dark"] .pos-btn-qty,
+.dark .pos-btn-qty {
+  background: #22222c !important;
+  border: 1px solid #333342 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .pos-btn-qty:hover,
+.dark .pos-btn-qty:hover {
+  background: #2a2a36 !important;
+  border-color: #f97316 !important;
+  color: #fdba74 !important;
+}
+
+[data-theme="dark"] .pos-item-qty-val,
+.dark .pos-item-qty-val {
+  color: #f8fafc !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="dark"] .pos-item-total-val,
+.dark .pos-item-total-val {
+  color: #fdba74 !important;
+  font-family: 'JetBrains Mono', var(--pos-font) !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="dark"] .pos-item-remove-btn,
+.dark .pos-item-remove-btn {
+  color: #f87171 !important;
+}
+
+/* Modal de Atajos en Modo Noche */
+[data-theme="dark"] .pos-modal-box,
+.dark .pos-modal-box {
+  background: #181820 !important;
+  border: 1px solid #2e2e38 !important;
+  color: #f8fafc !important;
+  box-shadow: 0 20px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .pos-modal-box h4,
+.dark .pos-modal-box h4 {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .pos-shortcut-item,
+.dark .pos-shortcut-item {
+  color: #cbd5e1 !important;
+  border-bottom: 1px solid #26262e !important;
+}

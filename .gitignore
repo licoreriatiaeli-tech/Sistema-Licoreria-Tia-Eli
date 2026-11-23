@@ -1,3 +1,70 @@
-*.py
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+dist-electron/
+release/
+build/
+*.local
+
+# Logs
+logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Test coverage
+coverage/
+
+# Vite
+.vite/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Playwright
+test-results/
+playwright-report/
+.playwright-cli/
+
+# Cache
+.cache/
+.eslintcache
+.stylelintcache
+
+# Temporary files
+*.tmp
+test_electron.cjs
+test_electron_offline.cjs
+test_electron_pos.cjs
+test_electron_theme.cjs
+Iniciar-Sistema.bat
+electron-test-screenshot.png
+electron-offline-screenshot.png
+electron-pos-screenshot.png
+electron-dark-screenshot.png

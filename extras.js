@@ -1,47 +1,87 @@
 
-// ── ODOMETER (TRAGAMONEDAS) ──
-window.odoHtml = function(value, format='int', prefix='', suffix='') {
-  let strVal = format === 'money' ? Number(value).toFixed(2) : String(Math.floor(Number(value)));
+// ── ODOMETER (ANIMACIÓN ROLLING MODERNA Y ULTRA-FLUIDA) ──
+window.odoHtml = function(value, format = 'int', prefix = '', suffix = '') {
+  const num = Number(value) || 0;
+  let strVal;
+  if (format === 'money' || String(value).includes('.')) {
+    strVal = num.toFixed(2);
+  } else {
+    strVal = String(Math.floor(num));
+  }
+  
   let html = `<span class="odo-counter">`;
-  if (prefix) html += `<span class="odo-char" style="width:auto; margin-right:4px; font-weight: inherit;">${prefix}</span>`;
-  for(let i=0; i<strVal.length; i++) {
-    let char = strVal[i];
-    if(char === '.' || char === ',') {
-       html += `<span class="odo-char">${char}</span>`;
+  if (prefix) {
+    html += `<span class="odo-char odo-prefix">${prefix}</span>`;
+  }
+  
+  for (let i = 0; i < strVal.length; i++) {
+    const char = strVal[i];
+    if (char === '.' || char === ',') {
+      html += `<span class="odo-char odo-sep">${char}</span>`;
     } else {
-       html += `<span class="odo-digit" data-val="${char}" style="transform:translateY(0)">` + 
-               [0,1,2,3,4,5,6,7,8,9].map(n=>`<span>${n}</span>`).join('') + 
-               `</span>`;
+      const d = parseInt(char, 10);
+      const digitVal = isNaN(d) ? 0 : d;
+      html += `<span class="odo-digit" data-val="${digitVal}">` +
+              `<span>0</span><span>1</span><span>2</span><span>3</span><span>4</span>` +
+              `<span>5</span><span>6</span><span>7</span><span>8</span><span>9</span>` +
+              `</span>`;
     }
   }
-  if (suffix) html += `<span class="odo-char" style="width:auto; margin-left:4px; font-weight: inherit;">${suffix}</span>`;
+  
+  if (suffix) {
+    html += `<span class="odo-char odo-suffix">${suffix}</span>`;
+  }
   html += `</span>`;
   return html;
-}
+};
+
+let _odoRafId = null;
+window.initOdometers = function(delay = 40) {
+  if (_odoRafId) cancelAnimationFrame(_odoRafId);
+  
+  _odoRafId = requestAnimationFrame(() => {
+    _odoRafId = requestAnimationFrame(() => {
+      const counters = document.querySelectorAll('.odo-counter');
+      counters.forEach(counter => {
+        const section = counter.closest('.section');
+        const isHidden = section && !section.classList.contains('active');
+
+        const digits = Array.from(counter.querySelectorAll('.odo-digit'));
+        const len = digits.length;
+        
+        digits.forEach((el, index) => {
+          const val = el.getAttribute('data-val');
+          if (val === null || val === undefined) return;
+          
+          if (isHidden) {
+            // Si la pestaña está oculta, posicionar inmediatamente para que nunca quede en cero o trabado
+            el.style.transition = 'none';
+            el.style.transform = `translateY(-${val * 10}%)`;
+          } else {
+            // Animación fluida de 0.45s con curva suave estilo fintech
+            const stagger = Math.min((len - 1 - index) * 0.035, 0.18);
+            el.style.transition = `transform 0.68s cubic-bezier(0.16, 1, 0.3, 1) ${stagger}s`;
+            el.style.transform = `translateY(-${val * 10}%)`;
+          }
+        });
+        
+        if (!isHidden) {
+          counter.classList.add('updated');
+          setTimeout(() => counter.classList.remove('updated'), 720);
+        }
+      });
+    });
+  });
+};
 
 window.playTitleAnimation = function() {
   const el = document.getElementById('shop-title');
   if (!el) return;
-  if (!el.textContent || el.textContent.trim() === '') {
-    el.textContent = 'TIA ELI LICORERIA';
-  }
+  el.textContent = 'TIA ELI LICORERIA';
+  el.classList.remove('title-glow-anim');
+  void el.offsetWidth;
+  el.classList.add('title-glow-anim');
 };
-
-window.initOdometers = function(delay = 250) {
-  setTimeout(() => {
-    document.querySelectorAll('.odo-counter').forEach(counter => {
-      const digits = Array.from(counter.querySelectorAll('.odo-digit'));
-      digits.forEach((el, index) => {
-        let val = el.getAttribute('data-val');
-        void el.offsetWidth; // Trigger reflow
-        // Stagger from right to left (index backwards)
-        let delayOffset = (digits.length - 1 - index) * 0.08;
-        el.style.transitionDelay = delayOffset + 's';
-        el.style.transform = `translateY(calc(${val} * -1em))`;
-      });
-    });
-  }, delay);
-}
 
 // ═══════════════════════════════════════════
 // extras.js — Dark mode, PWA, Combos Manager,
@@ -49,26 +89,61 @@ window.initOdometers = function(delay = 250) {
 // ═══════════════════════════════════════════
 
 // ── THEME ──
+let _themeTransitionTimer = null;
+
 function applyTheme(newTheme) {
-  document.documentElement.dataset.theme = newTheme;
-  localStorage.setItem('tiaeli_theme', newTheme);
-  // Update both theme toggles (top sidebar and footer)
+  const isDark = newTheme === 'dark';
+  const html = document.documentElement;
+
+  // Activa clase de transición ligera y controlada (hardware acceleration)
+  html.classList.add('theme-transitioning');
+  clearTimeout(_themeTransitionTimer);
+
+  html.dataset.theme = newTheme;
+  html.classList.toggle('dark', isDark);
+  try {
+    localStorage.setItem('tiaeli_theme', newTheme);
+  } catch (e) {}
+
+  // Actualiza ambos toggles de tema
   const chk1 = document.getElementById('themeToggle');
   const chk2 = document.getElementById('themeToggleFooter');
-  if (chk1) chk1.checked = newTheme === 'dark';
-  if (chk2) chk2.checked = newTheme === 'dark';
+  if (chk1) chk1.checked = isDark;
+  if (chk2) chk2.checked = isDark;
+  
+  // Iconos barra superior móvil
+  const topbarSun = document.querySelector('.topbar-theme-btn .theme-icon-sun');
+  const topbarMoon = document.querySelector('.topbar-theme-btn .theme-icon-moon');
+  if (topbarSun) topbarSun.style.display = isDark ? 'none' : 'block';
+  if (topbarMoon) topbarMoon.style.display = isDark ? 'block' : 'none';
+  
+  // Iconos footer barra lateral
+  const thumbSun = document.querySelector('.theme-icon-sun');
+  const thumbMoon = document.querySelector('.theme-icon-moon');
+  if (thumbSun) thumbSun.style.display = isDark ? 'none' : 'block';
+  if (thumbMoon) thumbMoon.style.display = isDark ? 'block' : 'none';
+  
   const label = document.getElementById('themeLabel');
   const thumb = document.getElementById('themeThumb');
-  if (label) label.textContent = newTheme === 'dark' ? 'Modo oscuro' : 'Modo claro';
-  if (thumb) thumb.textContent = newTheme === 'dark' ? '☾' : '☼';
-  document.dispatchEvent(new CustomEvent('themeChanged'));
+  if (label) label.textContent = isDark ? 'Modo oscuro' : 'Modo claro';
+  if (thumb) thumb.textContent = isDark ? '☾' : '☼';
+
+  // Notificar al sistema
+  document.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
+
+  // Retirar clase tras completar los 190ms para no penalizar la GPU
+  _themeTransitionTimer = setTimeout(() => {
+    html.classList.remove('theme-transitioning');
+  }, 190);
 }
+
 window.applyTheme = applyTheme;
 
 function toggleTheme() {
-  const isDark = document.documentElement.dataset.theme === 'dark';
+  const isDark = document.documentElement.dataset.theme === 'dark' || document.documentElement.classList.contains('dark');
   applyTheme(isDark ? 'light' : 'dark');
 }
+window.toggleTheme = toggleTheme;
 
 function initTheme() {
   const saved = localStorage.getItem('tiaeli_theme') || 'light';
@@ -78,17 +153,32 @@ initTheme();
 
 // ── ANIMATED COUNTER ──
 function animateCounter(el, target, prefix, suffix, decimals) {
+  if (!el) return;
   prefix = prefix || ''; suffix = suffix || ''; decimals = decimals || 0;
-  const duration = 800, start = performance.now();
+  const num = Number(target) || 0;
   const startVal = parseFloat(el.dataset.prev || '0') || 0;
-  el.dataset.prev = target;
+  el.dataset.prev = num;
+  
+  if (Math.abs(num - startVal) < 0.001) {
+    el.textContent = prefix + num.toFixed(decimals) + suffix;
+    return;
+  }
+  
+  const duration = 520;
+  const start = performance.now();
+  
   function step(now) {
-    const progress = Math.min((now - start) / duration, 1);
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
     const eased = 1 - Math.pow(1 - progress, 3);
-    const current = startVal + (target - startVal) * eased;
+    const current = startVal + (num - startVal) * eased;
     el.textContent = prefix + current.toFixed(decimals) + suffix;
-    if (progress < 1) requestAnimationFrame(step);
-    else el.textContent = prefix + target.toFixed(decimals) + suffix;
+    
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    } else {
+      el.textContent = prefix + num.toFixed(decimals) + suffix;
+    }
   }
   requestAnimationFrame(step);
   el.classList.add('bump');
@@ -97,7 +187,7 @@ function animateCounter(el, target, prefix, suffix, decimals) {
 
 // ── CONFETTI ──
 function lanzarConfetti() {
-  const colors = ['#09090b','#52525b','#a1a1aa','#d4d4d8','#fafafa','#16a34a'];
+  const colors = ['#09090b','#52525b','#a1a1aa','#d4d4d8','#fafafa','#ea580c'];
   for (let i = 0; i < 28; i++) {
     const el = document.createElement('div');
     el.className = 'confetti-piece';
@@ -245,10 +335,11 @@ function abrirCierreCaja() {
   overlay.style.display = 'flex';
 }
 
-document.getElementById('cajaClose').addEventListener('click', () => { document.getElementById('cajaOverlay').style.display = 'none'; });
-document.getElementById('cajaOverlay').addEventListener('click', function(e) { if(e.target===this) this.style.display='none'; });
+document.getElementById('cajaClose')?.addEventListener('click', () => { document.getElementById('cajaOverlay').style.display = 'none'; });
+document.getElementById('cajaOverlay')?.addEventListener('click', function(e) { if(e.target===this) this.style.display='none'; });
 const btnCierreCaja = document.getElementById('btnCierreCaja');
 if (btnCierreCaja) btnCierreCaja.addEventListener('click', abrirCierreCaja);
+
 
 // ── DESCUENTO en ventas ──
 function toggleDescuento() {
@@ -271,8 +362,8 @@ function exportarInventarioCSV() {
   if (!window.productos || !window.productos.length) { toast('No hay productos', 'warning'); return; }
   const header = 'Nombre,Categoria,Marca,Unidad,Stock,StockMin,Costo,Venta,Ganancia,Vencimiento,Proveedor\n';
   const rows = window.productos.map(p => {
-    const gan = p.venta - p.costo;
-    return [p.nombre,p.categoria,p.marca||'',p.unidad,p.stock,p.stockMin,p.costo,p.venta,gan,p.vencimiento||'',p.proveedor||'']
+    const gan = safeNum(p.venta) - safeNum(p.costo);
+    return [p.nombre||'',p.categoria||'',p.marca||'',p.unidadBase||p.unidad||'',safeNum(p.stock),safeNum(p.stockMin)||24,safeNum(p.costo),safeNum(p.venta),gan,p.vencimiento||'',p.proveedor||'']
       .map(x => '"'+String(x).replace(/"/g,'""')+'"').join(',');
   }).join('\n');
   const blob = new Blob(['\uFEFF'+header+rows],{type:'text/csv;charset=utf-8;'});
@@ -283,45 +374,272 @@ function exportarInventarioCSV() {
   toast('Inventario exportado', 'success');
 }
 
-// ── COMBOS MANAGER ──
+// ── COMBOS MANAGER (EMERALD RETAIL) ──
 let editingComboId = null;
 let comboComponents = [];
+
+// ── CÁLCULO MATEMÁTICO CENTRALIZADO DE STOCK DINÁMICO ──
+window.calcularStockCombo = function(c, productosLista) {
+  if (!c || !c.componentes || !Array.isArray(c.componentes) || c.componentes.length === 0) {
+    return {
+      stockDisponible: 0,
+      cuelloDeBotella: null,
+      costoTotal: 0,
+      precioRegularSeparado: 0,
+      componentesDetalle: []
+    };
+  }
+
+  const prods = productosLista || window.productos || [];
+  let minStock = Infinity;
+  let cuelloDeBotella = null;
+  let costoTotal = 0;
+  let precioRegularSeparado = 0;
+
+  const componentesDetalle = c.componentes.map(comp => {
+    const p = prods.find(x => x.id === comp.productoId);
+    const cantReq = Math.max(1, parseInt(comp.cantidad) || 1);
+    const stockActual = p ? (typeof getTotalUnidadesBase === 'function' ? getTotalUnidadesBase(p) : (p.stock || 0)) : 0;
+    const costoUnit = p ? (typeof getCostoPromedio === 'function' ? getCostoPromedio(p) : (p.costo || 0)) : 0;
+    const precioUnit = p ? (typeof getPrecioVentaEfectivo === 'function' ? getPrecioVentaEfectivo(p) : (p.venta || p.precioVenta || 0)) : 0;
+    
+    costoTotal += costoUnit * cantReq;
+    precioRegularSeparado += precioUnit * cantReq;
+
+    const combosPosibles = Math.floor(stockActual / cantReq);
+    if (combosPosibles < minStock) {
+      minStock = combosPosibles;
+      cuelloDeBotella = {
+        productoId: comp.productoId,
+        nombre: p ? p.nombre : (comp.nombreRef || 'Producto no encontrado'),
+        stockActual,
+        cantRequerida: cantReq,
+        combosPosibles
+      };
+    }
+
+    return {
+      productoId: comp.productoId,
+      nombre: p ? p.nombre : (comp.nombreRef || 'Producto no encontrado'),
+      presentacion: p ? p.presentacion : '',
+      marca: p ? p.marca : '',
+      cantRequerida: cantReq,
+      stockActual,
+      combosPosibles,
+      costoUnit,
+      precioUnit,
+      esCuelloDeBotella: false,
+      sinStock: stockActual < cantReq
+    };
+  });
+
+  if (minStock === Infinity) minStock = 0;
+
+  componentesDetalle.forEach(d => {
+    if (cuelloDeBotella && d.productoId === cuelloDeBotella.productoId) {
+      d.esCuelloDeBotella = true;
+    }
+  });
+
+  return {
+    stockDisponible: minStock,
+    cuelloDeBotella,
+    costoTotal,
+    precioRegularSeparado,
+    componentesDetalle
+  };
+};
 
 function renderCombosManager() {
   const grid = document.getElementById('combosManagerList');
   if (!grid) return;
   const combos = window.combos || [];
+
+  // 1. Métricas KPIs de Combos
+  const totalCombos = combos.length;
+  let listosVenta = 0;
+  let agotados = 0;
+  let sumaMargen = 0;
+  let countMargen = 0;
+
+  const combosCalculados = combos.map(c => {
+    const calc = window.calcularStockCombo(c);
+    if (calc.stockDisponible > 0) listosVenta++;
+    else agotados++;
+
+    const ganancia = c.precioVenta > 0 ? (c.precioVenta - calc.costoTotal) : 0;
+    const margen = calc.costoTotal > 0 ? ((ganancia / calc.costoTotal) * 100) : 0;
+    if (c.precioVenta > 0 && calc.costoTotal > 0) {
+      sumaMargen += margen;
+      countMargen++;
+    }
+
+    return { combo: c, calc, ganancia, margen };
+  });
+
+  const kpiTotal = document.getElementById('combosKpiTotal');
+  const kpiActivos = document.getElementById('combosKpiActivos');
+  const kpiListos = document.getElementById('combosKpiListos');
+  const kpiStockMax = document.getElementById('combosKpiStockMax');
+  const kpiAgotados = document.getElementById('combosKpiAgotados');
+  const kpiMargen = document.getElementById('combosKpiMargen');
+
+  if (kpiTotal) kpiTotal.textContent = totalCombos;
+  if (kpiActivos) kpiActivos.textContent = `${totalCombos} activos en catálogo`;
+  if (kpiListos) kpiListos.textContent = listosVenta;
+  if (kpiStockMax) kpiStockMax.textContent = listosVenta > 0 ? 'Listos para POS' : 'Sin combos listos';
+  if (kpiAgotados) kpiAgotados.textContent = agotados;
+  if (kpiMargen) {
+    const margenProm = countMargen > 0 ? (sumaMargen / countMargen).toFixed(1) : '0';
+    kpiMargen.textContent = margenProm + '%';
+  }
+
+  // 2. Filtros y Búsqueda
+  const q = (document.getElementById('combosSearchInput')?.value || '').toLowerCase().trim();
+  const filterEstado = document.getElementById('combosFilterEstado')?.value || '';
+  const filterOrden = document.getElementById('combosFilterOrden')?.value || 'nombre-asc';
+
+  let filtrados = combosCalculados.filter(item => {
+    const c = item.combo;
+    if (q) {
+      const matchNombre = (c.nombre || '').toLowerCase().includes(q);
+      const matchDesc = (c.descripcion || '').toLowerCase().includes(q);
+      const matchComp = item.calc.componentesDetalle.some(cd => cd.nombre.toLowerCase().includes(q));
+      if (!matchNombre && !matchDesc && !matchComp) return false;
+    }
+    if (filterEstado === 'disponible' && item.calc.stockDisponible <= 0) return false;
+    if (filterEstado === 'agotado' && item.calc.stockDisponible > 0) return false;
+    return true;
+  });
+
+  // Ordenación
+  filtrados.sort((a, b) => {
+    if (filterOrden === 'nombre-asc') return (a.combo.nombre || '').localeCompare(b.combo.nombre || '');
+    if (filterOrden === 'stock-desc') return b.calc.stockDisponible - a.calc.stockDisponible;
+    if (filterOrden === 'precio-desc') return (b.combo.precioVenta || 0) - (a.combo.precioVenta || 0);
+    if (filterOrden === 'precio-asc') return (a.combo.precioVenta || 0) - (b.combo.precioVenta || 0);
+    if (filterOrden === 'ganancia-desc') return b.ganancia - a.ganancia;
+    return 0;
+  });
+
+  // Estado vacío
   if (!combos.length) {
-    grid.innerHTML = '<div class="empty-state"><span class="es-icon">&#9670;</span><p>No hay combos creados todavía.</p><button class="btn btn-primary" onclick="abrirModalCombo()">+ Crear primer combo</button></div>';
+    grid.innerHTML = `
+      <div class="inv-empty-state" style="grid-column: 1/-1; background: var(--inv-surface-lowest); border: 1px dashed var(--inv-border); border-radius: 1.25rem; padding: 3rem 1.5rem;">
+        <span class="material-symbols-outlined inv-empty-icon" style="font-size: 54px; color: var(--inv-primary);">liquor</span>
+        <div class="inv-empty-title" style="font-size: 18px; margin-bottom: 6px;">No tienes combos creados todavía</div>
+        <p class="inv-empty-sub" style="max-width: 460px; margin-bottom: 1.5rem;">Crea tu primer combo (ej: 1 Ron + 1 Coca-Cola). El sistema calculará el stock disponible automáticamente según tus existencias de bodega.</p>
+        <button class="inv-btn-primary" type="button" onclick="abrirModalCombo()">
+          <span class="material-symbols-outlined">add_circle</span>
+          <span>+ Crear Primer Combo</span>
+        </button>
+      </div>`;
     return;
   }
-  grid.innerHTML = combos.map(c => {
-    const comps = c.componentes.map(comp => {
-      const p = (window.productos||[]).find(x=>x.id===comp.productoId);
-      return `<span class="combo-comp${p&&p.stock>=comp.cantidad?'':' comp-sin-stock'}">${p?p.nombre:comp.nombreRef} ×${comp.cantidad}</span>`;
+
+  if (!filtrados.length) {
+    grid.innerHTML = `
+      <div class="inv-empty-state" style="grid-column: 1/-1; background: var(--inv-surface-lowest); border: 1px dashed var(--inv-border); border-radius: 1.25rem; padding: 2.5rem 1.5rem;">
+        <span class="material-symbols-outlined inv-empty-icon" style="font-size: 42px;">filter_list_off</span>
+        <div class="inv-empty-title">Sin resultados con los filtros actuales</div>
+        <p class="inv-empty-sub">Prueba cambiando el término de búsqueda o seleccionando "Todos los combos".</p>
+      </div>`;
+    return;
+  }
+
+  // 3. Renderizado de Tarjetas Limpias para el Administrador / Vendedor
+  grid.innerHTML = filtrados.map(({ combo: c, calc, ganancia, margen }) => {
+    const isOut = calc.stockDisponible <= 0;
+
+    // Badge principal de stock disponible
+    const heroPill = isOut
+      ? `<span class="combo-stock-hero-pill agotado"><span class="material-symbols-outlined" style="font-size:16px">block</span> Sin stock (0 disponibles)</span>`
+      : `<span class="combo-stock-hero-pill disponible"><span class="material-symbols-outlined" style="font-size:16px">check_circle</span> ${calc.stockDisponible} paquetes disponibles</span>`;
+
+    // Lista limpia de insumos con existencias exactas en unidades
+    const compsListHtml = calc.componentesDetalle.map(d => {
+      const badgeCls = d.sinStock ? 'sin-stock' : 'ok';
+      const badgeTxt = d.sinStock
+        ? `Sin stock (0 u.)`
+        : `Existente: ${d.stockActual} u.`;
+
+      return `
+        <div class="combo-comp-item-row">
+          <div class="combo-comp-name-qty">
+            <span class="material-symbols-outlined" style="font-size:15px; color:var(--inv-on-surface-variant)">subdirectory_arrow_right</span>
+            <span>${escHTML(d.nombre)}</span>
+            <span style="color:var(--inv-primary); font-weight:700;">&times;${d.cantRequerida}</span>
+          </div>
+          <span class="combo-comp-stock-badge ${badgeCls}">${badgeTxt}</span>
+        </div>`;
     }).join('');
-    const costoTotal = c.componentes.reduce((sum,comp) => {
-      const p = (window.productos||[]).find(x=>x.id===comp.productoId);
-      return sum + (p ? p.costo*comp.cantidad : 0);
-    }, 0);
-    const ganancia = c.precioVenta > 0 ? c.precioVenta - costoTotal : null;
-    return `<div class="combo-manager-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-        <div><div class="combo-nombre">${c.nombre}</div><div class="combo-desc">${c.descripcion||''}</div></div>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-secondary btn-sm" onclick="abrirModalCombo('${c.id}')"><i data-lucide="pencil" style="width:13px;height:13px"></i> Editar</button>
-          <button class="btn-icon danger" onclick="eliminarCombo('${c.id}')" title="Eliminar combo"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>
+
+    return `
+      <div class="combo-manager-card-modern ${isOut ? 'is-out-of-stock' : ''}">
+        <div class="combo-card-head">
+          <div class="combo-card-title-group">
+            <div class="combo-card-title">${escHTML(c.nombre)}</div>
+            ${c.descripcion ? `<div class="combo-card-desc">${escHTML(c.descripcion)}</div>` : ''}
+          </div>
+          <div class="combo-card-actions-quick">
+            <button class="inv-btn-secondary" type="button" style="padding:0.35rem 0.65rem;" onclick="abrirModalCombo('${c.id}')" title="Editar Combo">
+              <span class="material-symbols-outlined" style="font-size:16px">edit</span>
+            </button>
+            <button class="inv-btn-danger-icon" type="button" onclick="eliminarCombo('${c.id}')" title="Eliminar Combo">
+              <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+            </button>
+          </div>
         </div>
-      </div>
-      <div class="combo-componentes" style="margin-bottom:10px">${comps}</div>
-      <div style="display:flex;justify-content:space-between;font-size:.82rem;color:var(--text2)">
-        ${c.precioVenta>0?`<span>Precio: <b style="color:var(--text)">Bs. ${c.precioVenta.toFixed(2)}</b></span>`:'<span style="color:var(--orange)">Sin precio fijado</span>'}
-        ${ganancia!==null?`<span>Ganancia est.: <b style="color:${ganancia>=0?'var(--green)':'var(--red)'}">Bs. ${ganancia.toFixed(2)}</b></span>`:''}
-      </div>
-    </div>`;
+
+        <div>${heroPill}</div>
+
+        <div class="combo-comps-wrapper">
+          <div class="combo-comps-header">
+            <span>Insumos</span>
+            <span>Existencia en Bodega</span>
+          </div>
+          ${compsListHtml}
+        </div>
+
+        <div class="combo-pricing-grid">
+          <div class="combo-price-stat">
+            <span class="combo-price-stat-lbl">Precio Combo</span>
+            <span class="combo-price-stat-val primary">Bs. ${(safeNum(c.precioVenta)).toFixed(2)}</span>
+          </div>
+          <div class="combo-price-stat">
+            <span class="combo-price-stat-lbl">Costo</span>
+            <span class="combo-price-stat-val">Bs. ${(calc.costoTotal).toFixed(2)}</span>
+          </div>
+          <div class="combo-price-stat">
+            <span class="combo-price-stat-lbl">Ganancia</span>
+            <span class="combo-price-stat-val success">Bs. ${(ganancia).toFixed(2)} (${margen.toFixed(1)}%)</span>
+          </div>
+          <div class="combo-price-stat">
+            <span class="combo-price-stat-lbl">Disponibles</span>
+            <span class="combo-price-stat-val" style="color:var(--inv-primary); font-weight:700;">
+              ${calc.stockDisponible} u.
+            </span>
+          </div>
+        </div>
+
+        <div class="combo-card-footer">
+          <button class="inv-btn-primary" type="button" style="flex:1; justify-content:center;" onclick="venderComboDesdeManager('${c.id}')" ${isOut ? 'disabled style="opacity:0.6; cursor:not-allowed;"' : ''}>
+            <span class="material-symbols-outlined">point_of_sale</span>
+            <span>${isOut ? 'Sin Stock en Bodega' : 'Vender en Caja (POS)'}</span>
+          </button>
+        </div>
+      </div>`;
   }).join('');
-  if (window.lucide) lucide.createIcons();
 }
+
+window.venderComboDesdeManager = function(cId) {
+  if (typeof window.addComboToPOS === 'function') {
+    window.addComboToPOS(cId);
+  }
+  if (typeof window.navegarA === 'function') {
+    window.navegarA('pos');
+  }
+};
 
 function abrirModalCombo(id) {
   editingComboId = id || null;
@@ -329,146 +647,250 @@ function abrirModalCombo(id) {
   const overlay = document.getElementById('comboModalOverlay');
   const title = document.getElementById('comboModalTitle');
   if (!overlay) return;
+
   if (id) {
-    const c = (window.combos||[]).find(x=>x.id===id);
+    const c = (window.combos || []).find(x => x.id === id);
     if (!c) return;
     document.getElementById('cmNombre').value = c.nombre;
-    document.getElementById('cmDesc').value = c.descripcion||'';
-    document.getElementById('cmPrecio').value = c.precioVenta||'';
-    comboComponents = c.componentes.map(x=>({...x}));
-    if (title) title.textContent = 'Editar Combo';
+    document.getElementById('cmDesc').value = c.descripcion || '';
+    document.getElementById('cmPrecio').value = c.precioVenta || '';
+    comboComponents = (c.componentes || []).map(x => ({ ...x }));
+    if (title) title.textContent = 'Editar Combo / Pack';
   } else {
-    document.getElementById('cmNombre').value='';
-    document.getElementById('cmDesc').value='';
-    document.getElementById('cmPrecio').value='';
-    comboComponents=[];
-    if (title) title.textContent = 'Nuevo Combo';
+    document.getElementById('cmNombre').value = '';
+    document.getElementById('cmDesc').value = '';
+    document.getElementById('cmPrecio').value = '';
+    comboComponents = [];
+    if (title) title.textContent = 'Nuevo Combo / Pack';
   }
+
   renderComboComponentes();
-  overlay.style.display='flex';
+  overlay.style.display = 'flex';
 }
 
 function renderComboComponentes() {
   const cont = document.getElementById('cmComponentes');
   if (!cont) return;
+
   if (comboComponents.length === 0) {
-    cont.innerHTML = '<div style="color:var(--text3); font-size:0.85rem; padding:10px 0; text-align:center;">No hay componentes. Busca y agrega uno arriba.</div>';
-    // Ocultar resumen si no hay componentes
+    cont.innerHTML = '<div class="cm-component-item" style="color:var(--inv-on-surface-variant); font-size:0.85rem; padding:16px; justify-content:center; text-align:center; border:1px dashed var(--inv-border);">No hay componentes seleccionados. Usa el buscador arriba para añadir productos.</div>';
     const resumen = document.getElementById('cmResumenCostos');
     if (resumen) resumen.style.display = 'none';
+    const liveStockBox = document.getElementById('cmLiveStockBox');
+    if (liveStockBox) liveStockBox.style.display = 'none';
     return;
   }
+
   cont.innerHTML = comboComponents.map((comp, i) => {
-    const p = (window.productos||[]).find(x=>x.id===comp.productoId);
-    if (!p) return '';
-    const stock = typeof getStockTotal === 'function' ? getStockTotal(p) : (typeof getTotalUnidadesBase === 'function' ? getTotalUnidadesBase(p) : (p.stock || 0));
-    const precioV = typeof getPrecioVentaEfectivo === 'function' ? getPrecioVentaEfectivo(p) : (p.venta || 0);
-    return `<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);padding:10px;border-radius:8px">
-      <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
-         <span style="font-weight:600; font-size:0.9rem; color:var(--text);">${escHTML(p.nombre)} ${p.marca?' - '+escHTML(p.marca):''}</span>
-         <span style="font-size:0.75rem; color:var(--text3)">Disp: <b>${stock} u.</b> | Costo: Bs.${(p.costo||0).toFixed(2)} | Venta: Bs.${precioV.toFixed(2)}</span>
-      </div>
-      <input type="number" class="form-input" style="width:70px; height:38px; padding:4px 8px;" value="${comp.cantidad}" min="1" onchange="updateCompCant(${i},this.value)" />
-      <button class="btn-icon danger" style="width:38px; height:38px; border-radius:8px;" onclick="removeComp(${i})">&#10005;</button>
-    </div>`;
+    const p = (window.productos || []).find(x => x.id === comp.productoId);
+    const stock = p ? (typeof getTotalUnidadesBase === 'function' ? getTotalUnidadesBase(p) : (p.stock || 0)) : 0;
+    const precioV = p ? (typeof getPrecioVentaEfectivo === 'function' ? getPrecioVentaEfectivo(p) : (p.venta || p.precioVenta || 0)) : 0;
+    const costo = p ? (typeof getCostoPromedio === 'function' ? getCostoPromedio(p) : (p.costo || 0)) : 0;
+    const nombre = p ? p.nombre : (comp.nombreRef || 'Producto');
+    const marca = p && p.marca ? ` - ${p.marca}` : '';
+    const pres = p && p.presentacion ? ` (${p.presentacion})` : '';
+
+    return `
+      <div class="cm-component-item" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--inv-surface-lowest);border:1px solid var(--inv-border);border-radius:0.75rem;">
+        <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+          <span style="font-weight:600; font-size:0.9rem; color:var(--inv-on-surface);">${escHTML(nombre)}${escHTML(marca)}${escHTML(pres)}</span>
+          <span style="font-size:0.78rem; color:var(--inv-on-surface-variant);">
+            Stock: <b style="color:${stock > 0 ? '#ea580c' : '#dc2626'};">${stock} u.</b> &middot; Costo: Bs.${costo.toFixed(2)}/u &middot; Venta reg.: Bs.${precioV.toFixed(2)}/u
+          </span>
+        </div>
+        <div style="display:flex; align-items:center; gap:4px;">
+          <button type="button" class="inv-btn-secondary" style="width:30px; height:28px; padding:0; justify-content:center; border-radius:0.4rem; font-size:11px; font-weight:700;" onclick="updateCompCant(${i}, 6)" title="Fijar 6 unidades">+6</button>
+          <button type="button" class="inv-btn-secondary" style="width:32px; height:28px; padding:0; justify-content:center; border-radius:0.4rem; font-size:11px; font-weight:700;" onclick="updateCompCant(${i}, 12)" title="Fijar 12 unidades">+12</button>
+          <button type="button" class="inv-btn-secondary" style="width:32px; height:28px; padding:0; justify-content:center; border-radius:0.4rem; font-size:11px; font-weight:700;" onclick="updateCompCant(${i}, 24)" title="Fijar 24 unidades">+24</button>
+          <button type="button" class="inv-btn-secondary" style="width:28px; height:28px; padding:0; justify-content:center; border-radius:0.4rem;" onclick="updateCompCant(${i}, ${Math.max(1, (comp.cantidad || 1) - 1)})">&minus;</button>
+          <input type="number" class="form-input" style="width:50px; height:28px; text-align:center; padding:2px; font-weight:700; border-radius:0.4rem;" value="${comp.cantidad}" min="1" onchange="updateCompCant(${i}, this.value)" />
+          <button type="button" class="inv-btn-secondary" style="width:28px; height:28px; padding:0; justify-content:center; border-radius:0.4rem;" onclick="updateCompCant(${i}, ${(comp.cantidad || 1) + 1})">&plus;</button>
+          <button type="button" class="inv-btn-danger-icon" style="width:28px; height:28px; border-radius:0.4rem;" onclick="removeComp(${i})" title="Quitar componente">✕</button>
+        </div>
+      </div>`;
   }).join('');
-  // Mostrar y actualizar resumen de costos
+
   actualizarResumenCombo();
 }
 
-function updateCompCant(i, val) { comboComponents[i].cantidad = parseInt(val)||1; renderComboComponentes(); }
-function removeComp(i) { comboComponents.splice(i,1); renderComboComponentes(); }
+function updateCompCant(i, val) {
+  if (!comboComponents[i]) return;
+  comboComponents[i].cantidad = Math.max(1, parseInt(val) || 1);
 
-// ── Resumen de costos y ganancia del combo en tiempo real ──
-function actualizarResumenCombo() {
-  const resumen = document.getElementById('cmResumenCostos');
-  if (!resumen) return;
-  if (comboComponents.length === 0) {
-    resumen.style.display = 'none';
-    return;
+  // Auto-sugerir nombre profesional
+  const nombreInput = document.getElementById('cmNombre');
+  if (nombreInput && (!nombreInput.value.trim() || nombreInput.dataset.autogenerated === 'true')) {
+    if (comboComponents.length === 1) {
+      const p = (window.productos || []).find(x => x.id === comboComponents[0].productoId);
+      const cNom = p ? p.nombre : 'Producto';
+      const cant = comboComponents[0].cantidad;
+      nombreInput.value = cant > 1 ? `Paquete ${cNom} (${cant} u.)` : `Combo ${cNom}`;
+      nombreInput.dataset.autogenerated = 'true';
+    } else if (comboComponents.length > 1) {
+      const names = comboComponents.map(c => {
+        const p = (window.productos || []).find(x => x.id === c.productoId);
+        return `${c.cantidad > 1 ? c.cantidad + 'x ' : ''}${p ? p.nombre : 'Item'}`;
+      });
+      nombreInput.value = 'Combo ' + names.join(' + ');
+      nombreInput.dataset.autogenerated = 'true';
+    }
   }
-  resumen.style.display = 'block';
-  
-  let costoTotal = 0;
-  comboComponents.forEach(comp => {
-    const p = (window.productos||[]).find(x=>x.id===comp.productoId);
-    if (!p) return;
-    const costoUnit = p.costo || 0;
-    costoTotal += costoUnit * comp.cantidad;
-  });
-  
-  const precioVenta = parseFloat(document.getElementById('cmPrecio').value) || 0;
-  const ganancia = precioVenta - costoTotal;
-  const margen = costoTotal > 0 ? ((ganancia / costoTotal) * 100) : 0;
-  const precioSugerido = costoTotal * 1.3; // +30%
-  
-  const elCosto = document.getElementById('cmCostoTotal');
-  const elGanancia = document.getElementById('cmGanancia');
-  const elMargen = document.getElementById('cmMargen');
-  const elPrecioSug = document.getElementById('cmPrecioSugerido');
-  
-  if (elCosto) elCosto.textContent = 'Bs. ' + costoTotal.toFixed(2);
-  if (elGanancia) elGanancia.textContent = 'Bs. ' + ganancia.toFixed(2) + (ganancia >= 0 ? ' ✓' : ' ✗');
-  if (elMargen) elMargen.textContent = margen.toFixed(1) + '%';
-  if (elPrecioSug) elPrecioSug.textContent = 'Bs. ' + precioSugerido.toFixed(2);
-  
-  // Auto-llenar precio sugerido si está vacío
-  const inputPrecio = document.getElementById('cmPrecio');
-  if (inputPrecio && (!inputPrecio.value || parseFloat(inputPrecio.value) === 0)) {
-    inputPrecio.value = precioSugerido.toFixed(2);
-  }
-  
-  // Colores dinámicos
-  if (elGanancia) elGanancia.style.color = ganancia >= 0 ? 'var(--green)' : 'var(--red)';
-  if (elMargen) elMargen.style.color = margen >= 30 ? 'var(--green)' : (margen >= 15 ? 'var(--orange)' : 'var(--red)');
+
+  renderComboComponentes();
 }
 
-// Actualizar también al cambiar el precio manual
-document.addEventListener('input', (e) => {
-  if (e.target.id === 'cmPrecio') actualizarResumenCombo();
-});
+function removeComp(i) {
+  comboComponents.splice(i, 1);
+  renderComboComponentes();
+}
 
+// ── Resumen de costos, ganancia y simulación de stock en vivo del modal ──
+function actualizarResumenCombo() {
+  const resumen = document.getElementById('cmResumenCostos');
+  const liveStockBox = document.getElementById('cmLiveStockBox');
+  if (!resumen && !liveStockBox) return;
+
+  if (comboComponents.length === 0) {
+    if (resumen) resumen.style.display = 'none';
+    if (liveStockBox) liveStockBox.style.display = 'none';
+    return;
+  }
+
+  // Simulación del stock dinámico disponible
+  const precioVenta = parseFloat(document.getElementById('cmPrecio')?.value) || 0;
+  const dummyCombo = { componentes: comboComponents, precioVenta };
+  const calc = window.calcularStockCombo(dummyCombo);
+
+  // 1. Live Stock Box
+  if (liveStockBox) {
+    liveStockBox.style.display = 'flex';
+    const liveIcon = document.getElementById('cmLiveStockIcon');
+    const liveTitle = document.getElementById('cmLiveStockTitle');
+    const liveDetail = document.getElementById('cmLiveStockDetail');
+
+    if (calc.stockDisponible > 0) {
+      liveStockBox.className = 'combo-live-stock-box';
+      if (liveIcon) {
+        liveIcon.textContent = 'check_circle';
+        liveIcon.style.color = '#ea580c';
+      }
+      if (liveTitle) liveTitle.textContent = `${calc.stockDisponible} paquetes disponibles con stock actual`;
+      if (liveDetail) {
+        liveDetail.innerHTML = `Stock calculado automáticamente según las existencias registradas en bodega.`;
+      }
+    } else {
+      liveStockBox.className = 'combo-live-stock-box agotado';
+      if (liveIcon) {
+        liveIcon.textContent = 'block';
+        liveIcon.style.color = '#dc2626';
+      }
+      if (liveTitle) liveTitle.textContent = `Sin existencias (0 paquetes disponibles)`;
+      if (liveDetail) {
+        liveDetail.innerHTML = `No hay existencias suficientes en bodega para armar este producto.`;
+      }
+    }
+  }
+
+  // 2. Resumen financiero
+  if (resumen) {
+    resumen.style.display = 'block';
+    const costoTotal = calc.costoTotal;
+    let precioRegularSuelto = 0;
+    comboComponents.forEach(c => {
+      const p = (window.productos || []).find(x => x.id === c.productoId);
+      const pr = p ? (typeof getPrecioVentaEfectivo === 'function' ? getPrecioVentaEfectivo(p) : safeNum(p.venta)) : 0;
+      precioRegularSuelto += pr * (c.cantidad || 1);
+    });
+
+    const ganancia = precioVenta > 0 ? (precioVenta - costoTotal) : 0;
+    const margen = (costoTotal > 0 && precioVenta > 0) ? ((ganancia / costoTotal) * 100) : 0;
+
+    const elCosto = document.getElementById('cmCostoTotal');
+    const elReg = document.getElementById('cmPrecioRegular');
+    const elGanancia = document.getElementById('cmGanancia');
+    const elMargen = document.getElementById('cmMargen');
+
+    if (elCosto) elCosto.textContent = 'Bs. ' + costoTotal.toFixed(2);
+    if (elReg) elReg.textContent = 'Bs. ' + precioRegularSuelto.toFixed(2);
+    if (elGanancia) {
+      elGanancia.textContent = 'Bs. ' + ganancia.toFixed(2);
+      elGanancia.style.color = ganancia >= 0 ? '#ea580c' : '#dc2626';
+    }
+    if (elMargen) {
+      elMargen.textContent = margen.toFixed(1) + '%';
+      elMargen.style.color = margen >= 0 ? 'var(--inv-primary)' : '#dc2626';
+    }
+
+    const inputPrecio = document.getElementById('cmPrecio');
+    if (inputPrecio && (!inputPrecio.value || parseFloat(inputPrecio.value) === 0) && precioRegularSuelto > 0) {
+      inputPrecio.placeholder = precioRegularSuelto.toFixed(2);
+    }
+
+    if (elGanancia) elGanancia.style.color = ganancia >= 0 ? '#ea580c' : '#dc2626';
+    if (elMargen) elMargen.style.color = margen >= 30 ? '#ea580c' : (margen >= 15 ? '#d97706' : '#dc2626');
+  }
+}
+
+// Búsqueda en modal
 const cmSearchInput = document.getElementById('cmSearchInput');
 if (cmSearchInput) {
   cmSearchInput.addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase().trim();
     const res = document.getElementById('cmSearchResults');
+    if (!res) return;
     if (!q) { res.style.display = 'none'; return; }
-    
-    const matches = (window.productos||[]).filter(p => (p.nombre+' '+(p.marca||'')).toLowerCase().includes(q)).slice(0, 10);
+
+    const matches = (window.productos || []).filter(p => (p.nombre + ' ' + (p.marca || '')).toLowerCase().includes(q)).slice(0, 10);
     if (!matches.length) {
-      res.innerHTML = '<div style="padding:12px; color:var(--text3); font-size:0.85rem; text-align:center;">No se encontraron productos</div>';
+      res.innerHTML = '<div class="cm-search-empty">No se encontraron productos</div>';
       res.style.display = 'block';
       return;
     }
-    
+
     res.innerHTML = matches.map(p => {
-      const stock = typeof getStockTotal === 'function' ? getStockTotal(p) : (typeof getTotalUnidadesBase === 'function' ? getTotalUnidadesBase(p) : (p.stock || 0));
-      const precioV = typeof getPrecioVentaEfectivo === 'function' ? getPrecioVentaEfectivo(p) : (p.venta || 0);
-      return `<div style="padding:12px; border-bottom:1px solid var(--border); cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:var(--trans);" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='transparent'" onclick="addCompFromSearch('${p.id}', '${p.nombre.replace(/'/g,"\\'")}')">
-        <div style="display:flex; flex-direction:column; gap:2px;">
-          <span style="font-weight:600; font-size:0.85rem; color:var(--text);">${escHTML(p.nombre)} ${p.marca?' - '+escHTML(p.marca):''}</span>
-          <span style="font-size:0.75rem; color:var(--text3)">Disp: <b>${stock} u.</b> | Costo: Bs.${(p.costo||0).toFixed(2)} | Venta: Bs.${precioV.toFixed(2)}</span>
-        </div>
-        <span style="font-size:1.2rem; color:var(--primary); font-weight:bold;">+</span>
-      </div>`;
+      const stock = typeof getTotalUnidadesBase === 'function' ? getTotalUnidadesBase(p) : (p.stock || 0);
+      const precioV = typeof getPrecioVentaEfectivo === 'function' ? getPrecioVentaEfectivo(p) : (p.venta || p.precioVenta || 0);
+      const costo = typeof getCostoPromedio === 'function' ? getCostoPromedio(p) : (p.costo || 0);
+
+      return `
+        <div class="cm-search-item" onclick="addCompFromSearch('${p.id}', '${p.nombre.replace(/'/g, "\\'")}')">
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <span style="font-weight:600; font-size:0.88rem; color:var(--inv-on-surface);">${escHTML(p.nombre)} ${p.marca ? ' - ' + escHTML(p.marca) : ''}</span>
+            <span style="font-size:0.75rem; color:var(--inv-on-surface-variant)">Disp: <b style="color:${stock > 0 ? '#ea580c' : '#dc2626'}">${stock} u.</b> &middot; Costo: Bs.${costo.toFixed(2)} &middot; Venta: Bs.${precioV.toFixed(2)}</span>
+          </div>
+          <span style="font-size:1.3rem; color:var(--inv-primary); font-weight:bold;">&plus;</span>
+        </div>`;
     }).join('');
     res.style.display = 'block';
   });
 }
 
 window.addCompFromSearch = function(pid, nombre) {
-  // Evitar duplicados
   const exists = comboComponents.find(c => c.productoId === pid);
   if (exists) {
     exists.cantidad++;
   } else {
-    comboComponents.push({productoId: pid, nombreRef: nombre, cantidad: 1});
+    comboComponents.push({ productoId: pid, nombreRef: nombre, cantidad: 1 });
   }
   const input = document.getElementById('cmSearchInput');
   if (input) input.value = '';
   const res = document.getElementById('cmSearchResults');
   if (res) res.style.display = 'none';
+
+  // Sugerir nombre automáticamente si está vacío o auto-generado
+  const nombreInput = document.getElementById('cmNombre');
+  if (nombreInput && (!nombreInput.value.trim() || nombreInput.dataset.autogenerated === 'true')) {
+    if (comboComponents.length === 1) {
+      const cant = comboComponents[0].cantidad;
+      nombreInput.value = cant > 1 ? `Paquete ${nombre} (${cant} u.)` : `Combo ${nombre}`;
+      nombreInput.dataset.autogenerated = 'true';
+    } else if (comboComponents.length > 1) {
+      const names = comboComponents.map(c => `${c.cantidad > 1 ? c.cantidad + 'x ' : ''}${c.nombreRef || 'Item'}`);
+      nombreInput.value = 'Combo ' + names.join(' + ');
+      nombreInput.dataset.autogenerated = 'true';
+    }
+  }
+
   renderComboComponentes();
 };
 
@@ -479,43 +901,81 @@ document.addEventListener('click', (e) => {
   }
 });
 
-document.getElementById('comboModalSave').addEventListener('click', () => {
+// Guardar Combo
+document.getElementById('comboModalSave')?.addEventListener('click', () => {
   const nombre = document.getElementById('cmNombre').value.trim();
   const desc = document.getElementById('cmDesc').value.trim();
-  const precio = parseFloat(document.getElementById('cmPrecio').value)||0;
-  if (!nombre) { toast('Ingresa un nombre para el combo','error'); return; }
-  if (!comboComponents.length || !comboComponents.some(c=>c.productoId)) { toast('Agrega al menos un producto','error'); return; }
-  const validos = comboComponents.filter(c=>c.productoId);
+  const precio = parseFloat(document.getElementById('cmPrecio').value) || 0;
+  if (!nombre) { toast('Ingresa un nombre para el combo', 'error'); return; }
+  if (precio <= 0) { toast('Ingresa un precio de venta válido para el combo', 'error'); return; }
+  if (!comboComponents.length || !comboComponents.some(c => c.productoId)) { toast('Agrega al menos un producto componente', 'error'); return; }
+
+  const validos = comboComponents.filter(c => c.productoId).map(c => ({
+    productoId: c.productoId,
+    nombreRef: c.nombreRef || '',
+    cantidad: Math.max(1, parseInt(c.cantidad) || 1)
+  }));
+
   if (editingComboId) {
-    const idx = (window.combos||[]).findIndex(c=>c.id===editingComboId);
-    if (idx>-1) { window.combos[idx] = {...window.combos[idx], nombre, descripcion:desc, precioVenta:precio, componentes:validos}; }
+    const idx = (window.combos || []).findIndex(c => c.id === editingComboId);
+    if (idx > -1) {
+      window.combos[idx] = {
+        ...window.combos[idx],
+        nombre,
+        descripcion: desc,
+        precioVenta: precio,
+        componentes: validos,
+        updatedAt: Date.now()
+      };
+    }
   } else {
     if (!window.combos) window.combos = [];
-    window.combos.unshift({id:genId(),nombre,descripcion:desc,precioVenta:precio,activo:true,componentes:validos});
+    window.combos.unshift({
+      id: typeof genId === 'function' ? genId() : ('c_' + Date.now()),
+      nombre,
+      descripcion: desc,
+      precioVenta: precio,
+      activo: true,
+      componentes: validos,
+      fechaCreacion: new Date().toISOString()
+    });
   }
+
   if (typeof setCombosGlobal === 'function') setCombosGlobal(window.combos);
   if (typeof saveCombos === 'function') saveCombos();
-  document.getElementById('comboModalOverlay').style.display='none';
+  document.getElementById('comboModalOverlay').style.display = 'none';
+
   renderCombosManager();
   if (typeof renderCombosVenta === 'function') renderCombosVenta();
-  toast(editingComboId?'Combo actualizado':'Combo creado', 'success');
+  toast(editingComboId ? 'Combo actualizado exitosamente' : 'Combo creado exitosamente', 'success');
 });
 
 function eliminarCombo(id) {
-  if (!confirm('¿Eliminar este combo?')) return;
-  window.combos = (window.combos||[]).filter(c=>c.id!==id);
+  if (!confirm('¿Estás seguro de que deseas eliminar este combo promocional?')) return;
+  window.combos = (window.combos || []).filter(c => c.id !== id);
   if (typeof setCombosGlobal === 'function') setCombosGlobal(window.combos);
   if (typeof saveCombos === 'function') saveCombos();
   if (window.syncDeleteCombo) window.syncDeleteCombo(id);
   renderCombosManager();
-  if (typeof renderCombosVenta==='function') renderCombosVenta();
-  toast('Combo eliminado','warning');
+  if (typeof renderCombosVenta === 'function') renderCombosVenta();
+  toast('Combo eliminado', 'warning');
 }
 
-document.getElementById('comboModalClose').addEventListener('click',()=>{document.getElementById('comboModalOverlay').style.display='none';});
-document.getElementById('comboModalCancel').addEventListener('click',()=>{document.getElementById('comboModalOverlay').style.display='none';});
-document.getElementById('comboModalOverlay').addEventListener('click',function(e){if(e.target===this)this.style.display='none';});
-document.getElementById('btnNuevoCombo').addEventListener('click',()=>abrirModalCombo());
+document.getElementById('comboModalClose')?.addEventListener('click', () => {
+  document.getElementById('comboModalOverlay').style.display = 'none';
+});
+document.getElementById('comboModalCancel')?.addEventListener('click', () => {
+  document.getElementById('comboModalOverlay').style.display = 'none';
+});
+document.getElementById('comboModalOverlay')?.addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+document.getElementById('btnNuevoCombo')?.addEventListener('click', () => abrirModalCombo());
+
+// Filtros y buscador dinámico de Combos Manager
+document.getElementById('combosSearchInput')?.addEventListener('input', renderCombosManager);
+document.getElementById('combosFilterEstado')?.addEventListener('change', renderCombosManager);
+document.getElementById('combosFilterOrden')?.addEventListener('change', renderCombosManager);
 
 // ── CATEGORY GRID in dashboard ──
 function renderCategoryGrid() {
@@ -693,20 +1153,71 @@ window.importarDatos = function(event) {
         const localMap = new Map(local.map(item => [item[idKey], item]));
         const remoteMap = new Map(remote.map(item => [item[idKey], item]));
         
-        // Add new items from remote
+        // Add new items from remote or update existing with newer version
         remote.forEach(item => {
-          if (!localMap.has(item[idKey])) {
+          const localItem = localMap.get(item[idKey]);
+          if (!localItem) {
             localMap.set(item[idKey], item);
+          } else {
+            // Compare updatedAt to keep the newer version
+            const localUpdated = localItem.updatedAt || localItem.fechaRegistro || 0;
+            const remoteUpdated = item.updatedAt || item.fechaRegistro || 0;
+            if (remoteUpdated > localUpdated) {
+              localMap.set(item[idKey], item);
+            }
+            // If local is newer, keep local (preserve unsynced changes)
           }
         });
         
-        // Keep local items not in remote (preserve unsynced changes)
+        return Array.from(localMap.values());
+      }
+      
+      // Deep merge for products (preserve local lotes changes if newer)
+      function mergeProductosDeep(local, remote) {
+        const localMap = new Map(local.map(p => [p.id, p]));
+        const remoteMap = new Map(remote.map(p => [p.id, p]));
+        
+        remote.forEach(remoteProd => {
+          const localProd = localMap.get(remoteProd.id);
+          if (!localProd) {
+            localMap.set(remoteProd.id, remoteProd);
+          } else {
+            // Compare updatedAt
+            const localUpdated = localProd.updatedAt || localProd.fechaRegistro || 0;
+            const remoteUpdated = remoteProd.updatedAt || remoteProd.fechaRegistro || 0;
+            
+            if (remoteUpdated > localUpdated) {
+              // Remote is newer, but preserve local lotes if they have newer data
+              const mergedProd = { ...remoteProd };
+              // Merge lotes arrays by ID, keeping newer entries
+              if (localProd.lotes && remoteProd.lotes) {
+                const localLotesMap = new Map(localProd.lotes.map(l => [l.id, l]));
+                const remoteLotesMap = new Map(remoteProd.lotes.map(l => [l.id, l]));
+                
+                remoteProd.lotes.forEach(l => {
+                  const localLote = localLotesMap.get(l.id);
+                  if (!localLote || (l.updatedAt || 0) >= (localLote.updatedAt || 0)) {
+                    localLotesMap.set(l.id, l);
+                  } else {
+                    localLotesMap.set(l.id, localLote);
+                  }
+                });
+                mergedProd.lotes = Array.from(localLotesMap.values());
+              } else if (localProd.lotes && !remoteProd.lotes) {
+                mergedProd.lotes = localProd.lotes;
+              }
+              localMap.set(remoteProd.id, mergedProd);
+            }
+            // If local is newer, keep local entirely
+          }
+        });
+        
         return Array.from(localMap.values());
       }
 
-      // Merge productos
+      // Merge productos (deep merge to preserve lotes)
       if (datos.productos) {
-        const mergedProductos = mergeArrays(window.productos || [], datos.productos);
+        const mergedProductos = mergeProductosDeep(window.productos || [], datos.productos);
         localStorage.setItem('tiaeli_v2', JSON.stringify(mergedProductos));
         window.productos = mergedProductos;
         if (window.setProductosGlobal) window.setProductosGlobal(mergedProductos);
@@ -915,4 +1426,88 @@ window.initQRPreviews = function() {
 // Llamar a la inicialización al cargar
 setTimeout(window.initQRPreviews, 600);
 
+// ═══════════════════════════════════════════
+// MEJORAS ADICIONALES - UX/ACCESIBILIDAD
+// ═══════════════════════════════════════════
+
+// Theme transition suave al cambiar
+(function initThemeTransition() {
+  const style = document.createElement('style');
+  style.textContent = '*, *::before, *::after { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease !important; }';
+  let timeout;
+  const origApply = window.applyTheme;
+  if (typeof origApply === 'function') {
+    window.applyTheme = function(theme) {
+      origApply(theme);
+      document.head.appendChild(style);
+      clearTimeout(timeout);
+      timeout = setTimeout(() => style.remove(), 400);
+    };
+  }
+})();
+
+// Auto-focus search inputs al cambiar de sección
+(function initAutoFocusSearch() {
+  const sectionSearchMap = {
+    inventario: 'searchInput',
+    pos: 'posSearchInput',
+    historial: 'hSearch',
+    fiados: 'fiadoSearch'
+  };
+  const observer = new MutationObserver(() => {
+    for (const [section, inputId] of Object.entries(sectionSearchMap)) {
+      const sec = document.getElementById('section-' + section);
+      if (sec && sec.style.display !== 'none' && getComputedStyle(sec).display !== 'none') {
+        const input = document.getElementById(inputId);
+        if (input) setTimeout(() => input.focus(), 100);
+        break;
+      }
+    }
+  });
+  document.querySelectorAll('[data-section]').forEach(sec => {
+    observer.observe(sec, { attributes: true, attributeFilter: ['style'] });
+  });
+})();
+
+// Smooth scroll en tablas con scroll horizontal
+document.querySelectorAll('.table-responsive, .inv-table-wrap').forEach(wrap => {
+  wrap.style.scrollBehavior = 'smooth';
+});
+
+// Confirmation antes de salir con datos sin guardar
+(function initBeforeUnload() {
+  let dirty = false;
+  document.getElementById('productForm')?.addEventListener('input', () => { dirty = true; });
+  document.getElementById('productForm')?.addEventListener('submit', () => { dirty = false; });
+  window.addEventListener('beforeunload', (e) => {
+    if (dirty) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+})();
+
+// PWA install prompt mejorado
+(function initPWABanner() {
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const banner = document.getElementById('pwaBanner');
+    if (banner) {
+      banner.style.display = 'flex';
+      const installBtn = document.getElementById('pwaBannerInstall');
+      const closeBtn = document.getElementById('pwaBannerClose');
+      if (installBtn) installBtn.onclick = async () => {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') banner.style.display = 'none';
+        deferredPrompt = null;
+      };
+      if (closeBtn) closeBtn.onclick = () => { banner.style.display = 'none'; };
+    }
+  });
+})();
+
+console.log('[Extras] Mejoras UX cargadas');
 

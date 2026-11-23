@@ -22,15 +22,29 @@
     pagos:     'pagos_fiados_tiaeli',
     salidas:   'salidas_tiaeli',
     entradas:  'entradas_tiaeli',
-    historialPrecios: 'historial_precios_tiaeli'
+    historialPrecios: 'historial_precios_tiaeli',
+    gastos:    'gastos_tiaeli'
   };
 
   // ── HELPERS DE UI ──
   function setStatus(state, text) {
     const dot   = document.getElementById('syncDot');
+    const ring  = document.getElementById('syncPulseRing');
     const txt   = document.getElementById('syncText');
     const label = document.getElementById('syncLabel');
-    if (dot)   dot.className = 'sync-dot ' + state;
+    const container = document.getElementById('posStatusIndicator');
+    
+    if (dot)   dot.className = 'pos-status-dot ' + state;
+    if (ring)  ring.className = 'pos-pulse-ring ' + state;
+    if (container) {
+      if (state === 'online') {
+        container.title = 'Conectado al POS (En línea)';
+      } else if (state === 'syncing') {
+        container.title = 'Sincronizando datos con el servidor...';
+      } else {
+        container.title = 'Sin conexión al servidor / Error de sincronización';
+      }
+    }
     if (txt)   txt.textContent = text;
     if (label) label.textContent = state === 'syncing' ? 'Sincronizando...' : 'Sincronizar';
   }
@@ -58,7 +72,7 @@
 
       _syncReady = true;
       window.db = _db;
-      setStatus('online', 'Conectado ☁️');
+      setStatus('online', 'Conectado');
       _iniciarListeners();
     } catch (e) {
       console.error('[Sync] Error inicializando Firebase:', e);
@@ -73,48 +87,68 @@
     _listeners.forEach(unsub => unsub());
     _listeners = [];
 
-    function smartMerge(collection, remoteArray, setterFn) {
-      const merged = remoteArray.map(remoteDoc => {
-        const key = `${collection}:${remoteDoc.id}`;
-        const localChange = _localChanges.get(key);
+function smartMerge(collection, remoteArray, setterFn) {
+      try {
+        if (!Array.isArray(remoteArray)) {
+          console.warn(`[Sync] smartMerge: remoteArray no es un array para ${collection}`);
+          return;
+        }
         
-        if (localChange && localChange.type !== 'delete') {
-          const localData = localChange.data;
-          const remoteUpdated = remoteDoc.updatedAt || remoteDoc.fechaRegistro || 0;
-          const localUpdated = localData.updatedAt || localData.fechaRegistro || 0;
+        const merged = remoteArray.map(remoteDoc => {
+          if (!remoteDoc || !remoteDoc.id) {
+            console.warn(`[Sync] Documento sin ID en ${collection}, omitiendo`);
+            return null;
+          }
+          const key = `${collection}:${remoteDoc.id}`;
+          const localChange = _localChanges.get(key);
           
-          if (localUpdated >= remoteUpdated) return localData;
-          return { ...remoteDoc, ...localData, updatedAt: Math.max(remoteUpdated, localUpdated) };
-        }
-        return remoteDoc;
-      });
-      
-      _localChanges.forEach((change, key) => {
-        if (key.startsWith(collection + ':') && change.type === 'create') {
-          if (!merged.some(d => d.id === change.data.id)) merged.push(change.data);
-        }
-      });
-      
-      const filtered = merged.filter(doc => {
-        const key = `${collection}:${doc.id}`;
-        const localChange = _localChanges.get(key);
-        return !(localChange && localChange.type === 'delete');
-      });
+          if (localChange && localChange.type !== 'delete') {
+            const localData = localChange.data;
+            const remoteUpdated = remoteDoc.updatedAt || remoteDoc.fechaRegistro || 0;
+            const localUpdated = localData.updatedAt || localData.fechaRegistro || 0;
+            
+            if (localUpdated >= remoteUpdated) return localData;
+            return { ...remoteDoc, ...localData, updatedAt: Math.max(remoteUpdated, localUpdated) };
+          }
+          return remoteDoc;
+        }).filter(Boolean); // Remove null entries
+        
+        _localChanges.forEach((change, key) => {
+          if (key.startsWith(collection + ':') && change.type === 'create') {
+            if (!merged.some(d => d.id === change.data.id)) merged.push(change.data);
+          }
+        });
+        
+        const filtered = merged.filter(doc => {
+          if (!doc || !doc.id) return false;
+          const key = `${collection}:${doc.id}`;
+          const localChange = _localChanges.get(key);
+          return !(localChange && localChange.type === 'delete');
+        });
 
-      setterFn(filtered);
-      const LS_KEYS = {
-        [COLS.productos]: 'tiaeli_v2',
-        [COLS.ventas]:    'tiaeli_ventas',
-        [COLS.combos]:    'tiaeli_combos',
-        [COLS.clientes]:  'tiaeli_clientes',
-        [COLS.fiados]:    'tiaeli_fiados',
-        [COLS.pagos]:     'tiaeli_pagos',
-        [COLS.salidas]:   'tiaeli_salidas',
-        [COLS.entradas]:  'tiaeli_entradas',
-        [COLS.historialPrecios]: 'tiaeli_historial_precios'
-      };
-      const lsKey = LS_KEYS[collection];
-      if (lsKey) localStorage.setItem(lsKey, JSON.stringify(filtered));
+        setterFn(filtered);
+        const LS_KEYS = {
+          [COLS.productos]: 'tiaeli_v2',
+          [COLS.ventas]:    'tiaeli_ventas',
+          [COLS.combos]:    'tiaeli_combos',
+          [COLS.clientes]:  'tiaeli_clientes',
+          [COLS.fiados]:    'tiaeli_fiados',
+          [COLS.pagos]:     'tiaeli_pagos',
+          [COLS.salidas]:   'tiaeli_salidas',
+          [COLS.entradas]:  'tiaeli_entradas',
+          [COLS.historialPrecios]: 'tiaeli_historial_precios'
+        };
+        const lsKey = LS_KEYS[collection];
+        if (lsKey) localStorage.setItem(lsKey, JSON.stringify(filtered));
+      } catch (err) {
+        console.error(`[Sync] Error en smartMerge para ${collection}:`, err);
+        // Fallback: use remote data as-is
+        try {
+          setterFn(remoteArray.filter(d => d && d.id));
+        } catch (e) {
+          console.error('[Sync] Fallback también falló:', e);
+        }
+      }
     }
 
     // ── Productos ──
@@ -248,6 +282,20 @@
         });
         console.log('[Sync] Historial de precios actualizado desde nube:', remoto.length);
       }, err => console.error('[Sync] Error listener historial precios:', err));
+
+    // ── Gastos de Tienda ──
+    const unsubGastos = _db.collection(COLS.gastos)
+      .onSnapshot({ includeMetadataChanges: false }, snap => {
+        const remoto = snap.docs.map(d => d.data());
+        smartMerge(COLS.gastos, remoto, (merged) => {
+          localStorage.setItem('tiaeli_gastos', JSON.stringify(merged));
+          if (window.setGastosGlobal) window.setGastosGlobal(merged);
+          else window.gastos = merged;
+          if (typeof renderGastos === 'function') renderGastos();
+          if (typeof renderDashboard === 'function') renderDashboard();
+        });
+        console.log('[Sync] Gastos actualizados desde nube:', remoto.length);
+      }, err => console.error('[Sync] Error listener gastos:', err));
 
     // ── QRs (Configuración global) ──
     const unsubConfig = _db.collection(COLS.config).doc('qrs')
@@ -414,6 +462,18 @@
     _subirDoc(COLS.historialPrecios, registro);
   };
 
+  // ── Gastos de Tienda ──
+  window.syncSaveGasto = function(gasto) {
+    if (!gasto || !gasto.id) return;
+    _trackLocalChange(COLS.gastos, gasto, 'update');
+    _subirDoc(COLS.gastos, gasto);
+  };
+  window.syncDeleteGasto = function(id) {
+    if (!id) return;
+    _trackLocalChange(COLS.gastos, { id }, 'delete');
+    _eliminarDoc(COLS.gastos, id);
+  };
+
   // Guardar QR Global
   window.syncSaveQRsGlobal = function(qrData) {
     if (!_db) return;
@@ -468,7 +528,7 @@
 
       const now = new Date();
       const timeStr = now.toLocaleTimeString('es-BO');
-      setStatus('online', '☁️ Sync ' + timeStr);
+      setStatus('online', 'Sync ' + timeStr);
       toast('✅ Sincronización completa — todos los dispositivos actualizados', 'success');
       const info = document.getElementById('headerSyncInfo');
       if (info) info.textContent = 'Última sync: ' + timeStr;
@@ -481,7 +541,7 @@
   };
 
   // Indicador online/offline del navegador
-  window.addEventListener('online',  () => setStatus('online',  '☁️ Online'));
-  window.addEventListener('offline', () => setStatus('offline', '📴 Sin internet'));
+  window.addEventListener('online',  () => setStatus('online',  'Online'));
+  window.addEventListener('offline', () => setStatus('offline', 'Sin internet'));
 
 })();
