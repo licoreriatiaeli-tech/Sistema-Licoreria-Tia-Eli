@@ -52,7 +52,7 @@
   --btn-radius-pill: 9999px;
   --btn-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   --btn-shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
-  --btn-shadow-cta: 0 4px 16px rgba(0, 105, 72, 0.28);
+  --btn-shadow-cta: 0 4px 16px rgba(234, 88, 12, 0.28);
 
   /* Tipografías */
   --btn-font-family: 'Hanken Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
@@ -159,7 +159,7 @@
 
 .btn-primary:hover {
   background: var(--btn-primary-hover);
-  box-shadow: 0 6px 20px rgba(0, 105, 72, 0.35);
+  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.35);
   transform: translateY(-1px);
 }
 
@@ -380,8 +380,8 @@
 /* Variantes semánticas de botón icono */
 .btn-icon.entrada {
   color: var(--btn-primary);
-  background: rgba(0, 105, 72, 0.1);
-  border-color: rgba(0, 105, 72, 0.25);
+  background: rgba(234, 88, 12, 0.1);
+  border-color: rgba(234, 88, 12, 0.25);
 }
 
 .btn-icon.entrada:hover {
@@ -444,7 +444,7 @@
   background: var(--btn-primary) !important;
   color: #ffffff !important;
   border-color: var(--btn-primary) !important;
-  box-shadow: 0 2px 8px rgba(0, 105, 72, 0.3);
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
 }
 
 /* Conmutador de vista segmentado */
@@ -620,7 +620,7 @@
   background: var(--btn-primary);
   border-color: var(--btn-primary);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 105, 72, 0.25);
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
 }
 
 .pos-bill-btn:hover .pos-bill-btn-lbl,

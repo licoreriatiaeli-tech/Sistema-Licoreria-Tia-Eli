@@ -346,7 +346,7 @@ html.dark,
   font-weight: 700;
   letter-spacing: 0.01em;
   border: none;
-  box-shadow: 0 2px 6px rgba(0, 105, 72, 0.25);
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.25);
   cursor: pointer;
   transition: all 0.15s ease;
   user-select: none;
@@ -356,7 +356,7 @@ html.dark,
 
 .inv-btn-primary:hover {
   background-color: var(--inv-primary-hover);
-  box-shadow: 0 4px 10px rgba(0, 105, 72, 0.35);
+  box-shadow: 0 4px 10px rgba(234, 88, 12, 0.35);
 }
 
 .inv-btn-primary:active {
@@ -623,7 +623,7 @@ html.dark,
 .inv-search-input:focus {
   background-color: var(--inv-surface-lowest);
   border-color: var(--inv-primary);
-  box-shadow: 0 0 0 3px rgba(0, 105, 72, 0.12);
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
 }
 
 .inv-search-btn-right {
@@ -760,7 +760,7 @@ html.dark,
   background-color: var(--inv-primary);
   color: var(--inv-on-primary);
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 105, 72, 0.2);
+  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.2);
 }
 
 .inv-pill-count {
@@ -1557,7 +1557,7 @@ html.dark,
   border: none;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 1px 3px rgba(0, 105, 72, 0.2);
+  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.2);
 }
 
 .inv-modal-ok-btn:hover {
@@ -1635,7 +1635,7 @@ html.dark,
 .combo-manager-card-modern:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  border-color: rgba(0, 105, 72, 0.3);
+  border-color: rgba(234, 88, 12, 0.3);
 }
 
 [data-theme="dark"] .combo-manager-card-modern,
@@ -1736,8 +1736,8 @@ html.dark .combo-stock-hero-pill.agotado {
 }
 
 .combo-bottleneck-alert.disponible {
-  background: rgba(0, 105, 72, 0.06);
-  border: 1px solid rgba(0, 105, 72, 0.15);
+  background: rgba(234, 88, 12, 0.06);
+  border: 1px solid rgba(234, 88, 12, 0.15);
   color: var(--inv-on-surface);
 }
 
@@ -1940,7 +1940,7 @@ html.dark .combo-price-stat-val.success {
 }
 
 .combo-live-stock-box {
-  background: linear-gradient(135deg, rgba(234, 88, 12, 0.08), rgba(0, 105, 72, 0.03));
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.08), rgba(234, 88, 12, 0.03));
   border: 1px solid rgba(234, 88, 12, 0.25);
   border-radius: 0.85rem;
   padding: 0.85rem 1rem;

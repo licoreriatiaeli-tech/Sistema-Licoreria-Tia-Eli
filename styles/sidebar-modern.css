@@ -774,12 +774,13 @@ html:not(.dark) #btn-theme-day,
     transform: translateX(-100%) !important;
     width: 280px !important;
     min-width: 280px !important;
-    z-index: 500 !important;
+    z-index: 1050 !important;
     box-shadow: none;
     transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
   #sidebar.sidebar.open {
     transform: translateX(0) !important;
+    z-index: 1050 !important;
     box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5) !important;
   }
   .main-content {

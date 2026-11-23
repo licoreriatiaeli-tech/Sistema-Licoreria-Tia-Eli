@@ -1176,7 +1176,7 @@ input[type="number"] {
   color: #ffffff;
   border-color: #c2410c;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 105, 72, 0.25);
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
 }
 .pos-bill-btn:active {
   transform: scale(0.96);
@@ -1233,12 +1233,12 @@ input[type="number"] {
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0, 105, 72, 0.35);
+  box-shadow: 0 4px 16px rgba(234, 88, 12, 0.35);
   transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .pos-btn-cobrar-gigante:hover:not(:disabled) {
   background: #ea580c;
-  box-shadow: 0 6px 20px rgba(0, 105, 72, 0.45);
+  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.45);
   transform: translateY(-1px);
 }
 .pos-btn-cobrar-gigante:active:not(:disabled) {
@@ -1654,8 +1654,8 @@ input[type="number"] {
     gap: 6px;
     padding: 2px 8px;
     border-radius: 9999px;
-    background: rgba(0, 105, 72, 0.1);
-    border: 1px solid rgba(0, 105, 72, 0.2);
+    background: rgba(234, 88, 12, 0.1);
+    border: 1px solid rgba(234, 88, 12, 0.2);
     color: var(--mobile-pos-primary);
     font-size: 11px;
     font-weight: 700;
@@ -1897,7 +1897,7 @@ input[type="number"] {
     justify-content: center;
   }
   [data-theme="dark"] .pos-combo-icon-box {
-    background: rgba(0, 105, 72, 0.3);
+    background: rgba(234, 88, 12, 0.3);
     color: var(--mobile-pos-primary-fixed);
   }
   .pos-combo-icon-box .material-symbols-outlined {
@@ -2031,7 +2031,7 @@ input[type="number"] {
     justify-content: center;
   }
   [data-theme="dark"] .pos-card-icon-box {
-    background: rgba(0, 105, 72, 0.25);
+    background: rgba(234, 88, 12, 0.25);
   }
   .pos-card-icon-box .material-symbols-outlined {
     font-size: 16px;
@@ -2299,7 +2299,7 @@ input[type="number"] {
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    background: rgba(0, 105, 72, 0.1);
+    background: rgba(234, 88, 12, 0.1);
     color: var(--mobile-pos-primary);
     display: flex;
     align-items: center;
@@ -2565,7 +2565,7 @@ input[type="number"] {
     margin-bottom: 12px;
   }
   [data-theme="dark"] .pos-mobile-change-card {
-    background: rgba(0, 105, 72, 0.2);
+    background: rgba(234, 88, 12, 0.2);
     border-color: rgba(104, 219, 169, 0.3);
   }
   .pos-mobile-change-card .change-left {
