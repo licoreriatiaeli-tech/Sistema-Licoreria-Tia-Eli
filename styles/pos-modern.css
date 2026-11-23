@@ -744,6 +744,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.pos-ticket-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 .pos-ticket-header-title {
   display: flex;
@@ -752,7 +759,7 @@
 }
 .pos-ticket-header-title strong {
   font-family: var(--pos-font);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 800;
   color: #0f172a;
 }
@@ -760,11 +767,63 @@
   padding: 2px 7px;
   border-radius: 5px;
   font-size: 0.72rem;
-  font-family: monospace;
+  font-family: var(--pos-font);
+  font-variant-numeric: tabular-nums;
   font-weight: 700;
   background: #e2e8f0;
   color: #334155;
 }
+.pos-ticket-customer-sub {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  color: #64748b;
+  margin-top: 1px;
+}
+.pos-ticket-customer-sub .pos-customer-sub-lbl {
+  font-weight: 500;
+  color: #64748b;
+}
+.pos-ticket-customer-sub .pos-customer-name {
+  font-weight: 700;
+  color: #0f172a;
+  max-width: 155px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pos-ticket-customer-sub .pos-btn-change-customer {
+  background: none;
+  border: none;
+  color: #c2410c;
+  font-weight: 700;
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 0 4px;
+  text-decoration: underline;
+  margin-left: 2px;
+}
+.pos-ticket-customer-sub .pos-btn-change-customer:hover {
+  color: #ea580c;
+}
+[data-theme="dark"] .pos-ticket-customer-sub,
+.dark .pos-ticket-customer-sub {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .pos-ticket-customer-sub .pos-customer-sub-lbl,
+.dark .pos-ticket-customer-sub .pos-customer-sub-lbl {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .pos-ticket-customer-sub .pos-customer-name,
+.dark .pos-ticket-customer-sub .pos-customer-name {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .pos-ticket-customer-sub .pos-btn-change-customer,
+.dark .pos-ticket-customer-sub .pos-btn-change-customer {
+  color: #fb923c !important;
+}
+
 .pos-cashier-sub {
   display: none !important;
 }
@@ -787,38 +846,9 @@
   border-color: #fca5a5;
 }
 
-/* Selector de Cliente */
+/* Selector de Cliente separado eliminado para optimizar espacio */
 .pos-customer-bar {
-  padding: 9px 16px;
-  border-bottom: 1px solid #f1f5f9;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #ffffff;
-  font-size: 0.75rem;
-}
-.pos-customer-left {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #475569;
-}
-.pos-customer-name {
-  font-weight: 700;
-  color: #0f172a;
-}
-.pos-btn-change-customer {
-  background: none;
-  border: none;
-  color: #9a3412;
-  font-weight: 600;
-  font-size: 0.72rem;
-  text-decoration: underline;
-  cursor: pointer;
-  padding: 0;
-}
-.pos-btn-change-customer:hover {
-  color: #7c2d12;
+  display: none !important;
 }
 
 /* Lista de Ítems en el Ticket */
@@ -1128,13 +1158,14 @@
   width: 90px;
   text-align: right;
   padding: 2px 0;
-  font-size: 0.92rem;
-  font-weight: 800;
+  font-size: 0.95rem;
+  font-weight: 700;
   border: none !important;
   background: transparent !important;
   outline: none !important;
   box-shadow: none !important;
-  font-family: 'JetBrains Mono', var(--pos-font);
+  font-family: var(--pos-font) !important;
+  font-variant-numeric: tabular-nums;
   color: inherit;
 }
 .pos-cash-input-field::-webkit-outer-spin-button,
@@ -1151,35 +1182,12 @@ input[type="number"] {
   appearance: textfield !important;
 }
 
-/* Billetes rápidos bolivianos */
+/* Billetes rápidos bolivianos ocultados a petición para mayor espacio */
 .pos-bills-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  display: none !important;
 }
 .pos-bill-btn {
-  padding: 8px 4px;
-  border-radius: 10px;
-  font-size: 0.78rem;
-  font-family: 'JetBrains Mono', var(--pos-font);
-  font-weight: 700;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #1e293b;
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.15s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-.pos-bill-btn:hover {
-  background: #c2410c;
-  color: #ffffff;
-  border-color: #c2410c;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
-}
-.pos-bill-btn:active {
-  transform: scale(0.96);
+  display: none !important;
 }
 
 /* Visualizador de Vuelto / Cambio */
@@ -1196,7 +1204,7 @@ input[type="number"] {
 }
 .pos-change-display-card .label {
   font-weight: 700;
-  color: #166534;
+  color: #c2410c;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -1205,7 +1213,8 @@ input[type="number"] {
   letter-spacing: 0.04em;
 }
 .pos-change-display-card .change-val {
-  font-family: 'JetBrains Mono', var(--pos-font);
+  font-family: var(--pos-font) !important;
+  font-variant-numeric: tabular-nums;
   font-size: 1.05rem;
   font-weight: 800;
   color: #ea580c;
@@ -3284,8 +3293,10 @@ input[type="number"] {
 
 [data-theme="dark"] .pos-change-display-card .change-val,
 .dark .pos-change-display-card .change-val {
+  font-family: var(--pos-font) !important;
+  font-variant-numeric: tabular-nums;
   color: #fdba74 !important;
-  text-shadow: 0 0 12px rgba(52, 211, 153, 0.3) !important;
+  text-shadow: 0 0 12px rgba(234, 88, 12, 0.3) !important;
 }
 
 [data-theme="dark"] .pos-change-display-card .change-val.missing,
@@ -3356,7 +3367,8 @@ input[type="number"] {
 [data-theme="dark"] .pos-item-total-val,
 .dark .pos-item-total-val {
   color: #fdba74 !important;
-  font-family: 'JetBrains Mono', var(--pos-font) !important;
+  font-family: var(--pos-font) !important;
+  font-variant-numeric: tabular-nums;
   font-weight: 800 !important;
 }
 

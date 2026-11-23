@@ -24,20 +24,20 @@
   <meta name="version" content="v10" />
   <title>TIA ELI LICORERIA &ndash; Sistema de Inventario</title>
   <meta name="description" content="Sistema de control de inventario y ventas para TIA ELI LICORERIA." />
-  <link rel="manifest" href="manifest.json?v=28" />
+  <link rel="manifest" href="manifest.json?v=29" />
   <link rel="icon" type="image/png" href="icon-192.png" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles/tokens.css?v=28" />
-  <link rel="stylesheet" href="style.css?v=28" />
-  <link rel="stylesheet" href="styles/pos-modern.css?v=28" />
-  <link rel="stylesheet" href="styles/buttons.css?v=28" />
+  <link rel="stylesheet" href="styles/tokens.css?v=29" />
+  <link rel="stylesheet" href="style.css?v=29" />
+  <link rel="stylesheet" href="styles/pos-modern.css?v=29" />
+  <link rel="stylesheet" href="styles/buttons.css?v=29" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-  <link rel="stylesheet" href="styles/inventario-modern.css?v=28" />
-  <link rel="stylesheet" href="styles/actividad-modern.css?v=28" />
-  <link rel="stylesheet" href="styles/dashboard-modern.css?v=28" />
-  <link rel="stylesheet" href="styles/sidebar-modern.css?v=28" />
+  <link rel="stylesheet" href="styles/inventario-modern.css?v=29" />
+  <link rel="stylesheet" href="styles/actividad-modern.css?v=29" />
+  <link rel="stylesheet" href="styles/dashboard-modern.css?v=29" />
+  <link rel="stylesheet" href="styles/sidebar-modern.css?v=29" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script id="tailwind-config">
     tailwind.config = {
@@ -1036,28 +1036,24 @@
             <strong id="mobile-ticket-total">Bs. 0.00</strong>
           </div>
 
-          <!-- Encabezado de Venta Actual -->
+          <!-- Encabezado de Venta Actual con Cliente Integrado Debajo -->
           <div class="pos-ticket-header">
-            <div>
+            <div class="pos-ticket-header-info">
               <div class="pos-ticket-header-title">
                 <strong>Ticket Actual</strong>
                 <span class="pos-ticket-id-tag" id="current-ticket-id">#1043</span>
+              </div>
+              <div class="pos-ticket-customer-sub">
+                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                <span class="pos-customer-sub-lbl">Cliente:</span>
+                <span class="pos-customer-name" id="ticket-client-name">Consumidor Final (S/N)</span>
+                <button type="button" class="pos-btn-change-customer" onclick="changeCustomerName()">Cambiar</button>
               </div>
               <p class="pos-cashier-sub" style="display:none;" aria-hidden="true">Cajero: <span id="pos-cashier-name">Turno Activo</span></p>
             </div>
             <button class="pos-btn-trash" onclick="clearPOSCart()" title="Vaciar Carrito">
               <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
             </button>
-          </div>
-
-          <!-- Selector Rápido de Cliente -->
-          <div class="pos-customer-bar">
-            <div class="pos-customer-left">
-              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-              <span>Cliente:</span>
-              <span class="pos-customer-name" id="ticket-client-name">Consumidor Final (S/N)</span>
-            </div>
-            <button class="pos-btn-change-customer" onclick="changeCustomerName()">Cambiar</button>
           </div>
 
           <!-- Lista de Ítems en el Ticket -->
@@ -1074,7 +1070,7 @@
           <!-- Resumen de Totales y Descuentos -->
           <div class="pos-ticket-checkout-footer">
             <div class="pos-summary-lines">
-              <div class="pos-summary-row">
+              <div class="pos-summary-row" style="display:none;" id="row-ticket-subtotal">
                 <span>Subtotal</span>
                 <span style="font-weight:600" id="ticket-subtotal">Bs. 0.00</span>
               </div>
@@ -1121,12 +1117,6 @@
                   <span class="pos-cash-currency">Bs.</span>
                   <input class="pos-cash-input-field" id="cash-received-input" min="0" oninput="calculateChange()" placeholder="0.00" step="any" type="number" />
                 </div>
-              </div>
-              <div class="pos-bills-grid">
-                <button class="pos-bill-btn" onclick="setExactPayment()">Exacto</button>
-                <button class="pos-bill-btn" onclick="addCashQuick(50)">Bs. 50</button>
-                <button class="pos-bill-btn" onclick="addCashQuick(100)">Bs. 100</button>
-                <button class="pos-bill-btn" onclick="addCashQuick(200)">Bs. 200</button>
               </div>
               <div class="pos-change-display-card">
                 <span class="label">
@@ -3006,22 +2996,22 @@
   </div>
 
 <!-- ══ SCRIPTS ══ -->
-  <script src="utils-bundle.js?v=28" defer></script>
-  <script type="module" src="services/event-bus.js?v=28"></script>
-  <script type="module" src="services/storage-service.js?v=28"></script>
-  <script type="module" src="schemas/index.js?v=28"></script>
-  <script src="lucide.min.js?v=28" defer></script>
+  <script src="utils-bundle.js?v=29" defer></script>
+  <script type="module" src="services/event-bus.js?v=29"></script>
+  <script type="module" src="services/storage-service.js?v=29"></script>
+  <script type="module" src="schemas/index.js?v=29"></script>
+  <script src="lucide.min.js?v=29" defer></script>
   <script src="libs/firebase-app-compat.js"></script>
   <script src="libs/firebase-firestore-compat.js"></script>
   <script src="libs/chart.umd.min.js"></script>
-  <script src="firebase-config.js?v=28" defer></script>
-  <script src="sync.js?v=28" defer></script>
-  <script src="app.js?v=28" defer></script>
-  <script src="charts.js?v=28" defer></script>
-  <script src="ventas.js?v=28" defer></script>
-  <script src="extras.js?v=28" defer></script>
-  <script src="gestion.js?v=28" defer></script>
-  <script src="services/sidebar-modern.js?v=28" defer></script>
+  <script src="firebase-config.js?v=29" defer></script>
+  <script src="sync.js?v=29" defer></script>
+  <script src="app.js?v=29" defer></script>
+  <script src="charts.js?v=29" defer></script>
+  <script src="ventas.js?v=29" defer></script>
+  <script src="extras.js?v=29" defer></script>
+  <script src="gestion.js?v=29" defer></script>
+  <script src="services/sidebar-modern.js?v=29" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       if (window.lucide && window.lucide.createIcons) {
@@ -3036,7 +3026,7 @@
     // Estrategia network-first: siempre descarga lo nuevo si hay internet.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('sw.js?v=28', { updateViaCache: 'none' }).then(function(reg) {
+        navigator.serviceWorker.register('sw.js?v=29', { updateViaCache: 'none' }).then(function(reg) {
           reg.addEventListener('updatefound', function() {
             var newWorker = reg.installing;
             if (!newWorker) return;
