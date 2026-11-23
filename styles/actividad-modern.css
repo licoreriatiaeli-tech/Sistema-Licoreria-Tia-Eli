@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
    AUDITORÍA & LOGIN / REGISTRO DE ACTIVIDAD MODERNO
-   Sistema Licorería Tía Eli — Emerald Retail System Design
+   Sistema Licorería Tía Eli — Orange Retail System Design
    ═══════════════════════════════════════════════════════════════ */
 
 :root,
@@ -17,12 +17,12 @@
   --act-text-muted: #64748b;
   --act-text-light: #94a3b8;
   
-  --act-emerald: #ea580c;
-  --act-emerald-dark: #c2410c;
-  --act-emerald-hover: #047857;
-  --act-emerald-light: #ecfdf5;
-  --act-emerald-border: #a7f3d0;
-  --act-emerald-text: #065f46;
+  --act-brand: #ea580c;
+  --act-brand-dark: #c2410c;
+  --act-brand-hover: #9a3412;
+  --act-brand-light: #fff7ed;
+  --act-brand-border: #fdba74;
+  --act-brand-text: #7c2d12;
   
   --act-blue: #2563eb;
   --act-blue-light: #eff6ff;
@@ -74,9 +74,9 @@
   --act-text-muted: #a1a1aa;
   --act-text-light: #71717a;
   
-  --act-emerald-light: rgba(5, 150, 105, 0.15);
-  --act-emerald-border: rgba(5, 150, 105, 0.35);
-  --act-emerald-text: #fdba74;
+  --act-brand-light: rgba(234, 88, 12, 0.15);
+  --act-brand-border: rgba(234, 88, 12, 0.35);
+  --act-brand-text: #fdba74;
   
   --act-blue-light: rgba(37, 99, 235, 0.15);
   --act-blue-border: rgba(37, 99, 235, 0.35);
@@ -160,7 +160,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--act-emerald);
+  color: var(--act-brand);
   flex-shrink: 0;
 }
 
@@ -187,13 +187,13 @@
 }
 
 .audit-live-badge {
-  background-color: var(--act-emerald-light);
-  color: var(--act-emerald-text);
+  background-color: var(--act-brand-light);
+  color: var(--act-brand-text);
   font-size: 11px;
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 9999px;
-  border: 1px solid var(--act-emerald-border);
+  border: 1px solid var(--act-brand-border);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -203,7 +203,7 @@
   width: 6px;
   height: 6px;
   border-radius: 9999px;
-  background-color: var(--act-emerald);
+  background-color: var(--act-brand);
   display: inline-block;
   animation: actPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -289,7 +289,7 @@
 
 .audit-btn-export .material-symbols-outlined {
   font-size: 18px;
-  color: var(--act-emerald);
+  color: var(--act-brand);
 }
 
 .audit-btn-clean {
@@ -412,13 +412,13 @@
 }
 
 .audit-pill-green {
-  background-color: var(--act-emerald-light);
-  color: var(--act-emerald-text);
+  background-color: var(--act-brand-light);
+  color: var(--act-brand-text);
   font-size: 10px;
   font-weight: 700;
   padding: 1px 6px;
   border-radius: 9999px;
-  border: 1px solid var(--act-emerald-border);
+  border: 1px solid var(--act-brand-border);
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -448,9 +448,9 @@
 }
 
 .audit-kpi-icon-box.green {
-  background-color: var(--act-emerald-light);
-  color: var(--act-emerald);
-  border-color: var(--act-emerald-border);
+  background-color: var(--act-brand-light);
+  color: var(--act-brand);
+  border-color: var(--act-brand-border);
 }
 
 .audit-kpi-icon-box.blue {
@@ -536,8 +536,8 @@
 
 .audit-search-input:focus {
   background-color: var(--act-card-bg);
-  border-color: var(--act-emerald);
-  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+  border-color: var(--act-brand);
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
 }
 
 .audit-search-kbd {
@@ -573,8 +573,8 @@
 
 .audit-filter-select:focus,
 .audit-filter-date:focus {
-  border-color: var(--act-emerald);
-  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+  border-color: var(--act-brand);
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
 }
 
 /* Quick Filter Pills Row */
@@ -632,11 +632,11 @@
 
 .audit-pill.active,
 .audit-pill-filter.active {
-  background-color: var(--act-emerald);
-  border-color: var(--act-emerald);
+  background-color: var(--act-brand);
+  border-color: var(--act-brand);
   color: #ffffff;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.32);
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.32);
 }
 
 .audit-pill-icon {
@@ -756,11 +756,11 @@
 }
 
 /* Borde izquierdo dinámico según tipo de evento */
-.audit-row.type-login { border-left-color: var(--act-emerald); }
-.audit-row.type-venta { border-left-color: var(--act-emerald-dark); }
+.audit-row.type-login { border-left-color: var(--act-brand); }
+.audit-row.type-venta { border-left-color: var(--act-brand-dark); }
 .audit-row.type-stock { border-left-color: var(--act-blue); }
 .audit-row.type-merma { border-left-color: var(--act-rose); }
-.audit-row.type-entrada { border-left-color: var(--act-emerald); }
+.audit-row.type-entrada { border-left-color: var(--act-brand); }
 .audit-row.type-salida { border-left-color: var(--act-amber); }
 .audit-row.type-fiado { border-left-color: var(--act-purple); }
 
@@ -791,9 +791,9 @@
 }
 
 .audit-avatar-box.green {
-  background-color: var(--act-emerald-light);
-  color: var(--act-emerald-text);
-  border-color: var(--act-emerald-border);
+  background-color: var(--act-brand-light);
+  color: var(--act-brand-text);
+  border-color: var(--act-brand-border);
 }
 
 .audit-avatar-box.rose {
@@ -819,7 +819,7 @@
   width: 10px;
   height: 10px;
   border-radius: 9999px;
-  background-color: var(--act-emerald);
+  background-color: var(--act-brand);
   border: 2px solid var(--act-card-bg);
 }
 
@@ -875,9 +875,9 @@
 
 .audit-chip-activo,
 .audit-chip-badge.green {
-  background-color: var(--act-emerald-light);
-  color: var(--act-emerald-text);
-  border: 1px solid var(--act-emerald-border);
+  background-color: var(--act-brand-light);
+  color: var(--act-brand-text);
+  border: 1px solid var(--act-brand-border);
 }
 
 .audit-chip-merma,
@@ -932,7 +932,7 @@
 }
 
 .audit-row-desc .success {
-  color: var(--act-emerald);
+  color: var(--act-brand);
   font-weight: 700;
 }
 
@@ -1005,15 +1005,15 @@
   background-color: #ffe4e6;
 }
 
-.audit-btn-detail.btn-emerald {
-  background-color: var(--act-emerald);
+.audit-btn-detail.btn-orange {
+  background-color: var(--act-brand);
   color: #ffffff;
   border: none;
   font-weight: 700;
 }
 
-.audit-btn-detail.btn-emerald:hover {
-  background-color: var(--act-emerald-hover);
+.audit-btn-detail.btn-orange:hover {
+  background-color: var(--act-brand-hover);
 }
 
 /* ── 5. Pagination Footer ── */
@@ -1090,7 +1090,7 @@
 }
 
 .audit-rows-btn.active {
-  background-color: var(--act-emerald);
+  background-color: var(--act-brand);
   color: #ffffff;
   font-weight: 700;
 }
@@ -1129,7 +1129,7 @@
 }
 
 .audit-nav-btn.active {
-  background-color: var(--act-emerald);
+  background-color: var(--act-brand);
   color: #ffffff;
   font-weight: 700;
 }
@@ -1198,9 +1198,9 @@
 }
 
 .audit-modal-badge {
-  background-color: var(--act-emerald-light);
-  color: var(--act-emerald-text);
-  border: 1px solid var(--act-emerald-border);
+  background-color: var(--act-brand-light);
+  color: var(--act-brand-text);
+  border: 1px solid var(--act-brand-border);
   font-size: 10px;
   font-weight: 700;
   padding: 2px 9px;
@@ -1235,10 +1235,10 @@
 }
 
 .audit-modal-badge.green,
-.audit-modal-badge.emerald {
-  background-color: var(--act-emerald-light);
-  color: var(--act-emerald-text);
-  border-color: var(--act-emerald-border);
+.audit-modal-badge.orange {
+  background-color: var(--act-brand-light);
+  color: var(--act-brand-text);
+  border-color: var(--act-brand-border);
 }
 
 .audit-modal-title {
@@ -1354,7 +1354,7 @@
 
 .audit-modal-btn-verify {
   padding: 0.5rem 1.1rem;
-  background-color: var(--act-emerald);
+  background-color: var(--act-brand);
   color: #ffffff;
   border: none;
   font-family: var(--act-font);
@@ -1367,7 +1367,7 @@
 }
 
 .audit-modal-btn-verify:hover {
-  background-color: var(--act-emerald-hover);
+  background-color: var(--act-brand-hover);
 }
 
 /* Empty State */

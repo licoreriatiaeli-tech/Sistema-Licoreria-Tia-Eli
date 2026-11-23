@@ -14,7 +14,7 @@ function getChartColors() {
     text: dark ? '#94a3b8' : '#52525b',
     grid: dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
     bar: dark ? '#f97316' : '#ea580c',
-    barAlpha: dark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(5, 150, 105, 0.12)',
+    barAlpha: dark ? 'rgba(234, 88, 12, 0.2)' : 'rgba(234, 88, 12, 0.12)',
     green: dark ? '#fdba74' : '#ea580c',
     red: dark ? '#f87171' : '#dc2626',
     palette: dark

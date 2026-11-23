@@ -1426,7 +1426,7 @@ function eliminarCliente(clienteId) {
 }
 window.eliminarCliente = eliminarCliente;
 
-// ==== ACTIVIDAD & AUDITORÍA (EMERALD RETAIL MODERN) ====
+// ==== ACTIVIDAD & AUDITORÍA (ORANGE RETAIL MODERN) ====
 
 const auditState = {
   search: '',
@@ -1901,7 +1901,7 @@ function renderActividad() {
       `;
       subDescHtml = (a.subdetalle && a.subdetalle !== a.detalle) ? a.subdetalle : ((a.extraDesc && a.extraDesc !== a.detalle) ? a.extraDesc : 'Ticket de venta cobrado y emitido en mostrador');
       actionBtnHtml = `
-        <button class="audit-btn-detail btn-emerald" type="button" onclick="openAuditModalById('${a.id}')">
+        <button class="audit-btn-detail btn-orange" type="button" onclick="openAuditModalById('${a.id}')">
           <span class="material-symbols-outlined" style="font-size:16px;">receipt_long</span>
           <span>Ver Ticket</span>
         </button>
@@ -2013,7 +2013,7 @@ function openAuditModalById(id) {
   let typeBadgeText = 'REGISTRO';
   let badgeColorClass = '';
   if (cat === 'session') { typeBadgeText = 'AUTENTICACIÓN'; badgeColorClass = 'green'; }
-  else if (cat === 'sale') { typeBadgeText = 'VENTA POS'; badgeColorClass = 'emerald'; }
+  else if (cat === 'sale') { typeBadgeText = 'VENTA POS'; badgeColorClass = 'orange'; }
   else if (cat === 'stock') { typeBadgeText = 'AJUSTE STOCK'; badgeColorClass = 'blue'; }
   else if (cat === 'merma') { typeBadgeText = 'MERMA / RETIRO'; badgeColorClass = 'rose'; }
   else if (cat === 'entrada') { typeBadgeText = 'ENTRADA STOCK'; badgeColorClass = 'green'; }

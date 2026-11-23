@@ -880,7 +880,7 @@ function getProductCategoryIcon(categoria, nombre) {
   if (cat.includes('soda') || cat.includes('refresco') || nom.includes('coca') || nom.includes('sprite') || nom.includes('fanta') || nom.includes('agua')) return { icon: 'water_bottle', color: '#dc2626' };
   if (cat.includes('snack') || cat.includes('galleta') || nom.includes('nacho') || nom.includes('papas') || nom.includes('mani')) return { icon: 'bakery_dining', color: '#ea580c' };
   if (nom.includes('whisky') || nom.includes('johnnie') || nom.includes('black label') || nom.includes('red label') || nom.includes('chivas') || nom.includes('jack')) return { icon: 'liquor', color: '#b45309' };
-  if (nom.includes('fernet') || nom.includes('aperitivo') || nom.includes('campari') || nom.includes('jagermeister')) return { icon: 'local_bar', color: '#047857' };
+  if (nom.includes('fernet') || nom.includes('aperitivo') || nom.includes('campari') || nom.includes('jagermeister')) return { icon: 'local_bar', color: '#9a3412' };
   if (cat.includes('cigarro') || nom.includes('cigarro') || nom.includes('camel') || nom.includes('marlboro')) return { icon: 'smoking_rooms', color: '#475569' };
   return { icon: 'wine_bar', color: '#c2410c' };
 }
@@ -1717,21 +1717,21 @@ window.calculateChange = function() {
 
   if (posPaymentMethod !== 'efectivo') {
     changeDisplay.textContent = 'Bs. 0.00';
-    changeDisplay.style.color = 'var(--pos-emerald)';
+    changeDisplay.style.color = 'var(--pos-orange)';
     return;
   }
 
   const received = parseFloat(cashInput?.value) || 0;
   if (received <= 0) {
     changeDisplay.textContent = 'Bs. 0.00';
-    changeDisplay.style.color = 'var(--pos-emerald)';
+    changeDisplay.style.color = 'var(--pos-orange)';
     return;
   }
 
   const diff = received - total;
   if (diff >= 0) {
     changeDisplay.textContent = 'Bs. ' + diff.toFixed(2);
-    changeDisplay.style.color = 'var(--pos-emerald)';
+    changeDisplay.style.color = 'var(--pos-orange)';
   } else {
     changeDisplay.textContent = 'Faltan Bs. ' + Math.abs(diff).toFixed(2);
     changeDisplay.style.color = '#ef4444';

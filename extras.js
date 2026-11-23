@@ -88,16 +88,50 @@ window.playTitleAnimation = function() {
 //             Cierre de Caja, Confetti, Photo
 // ═══════════════════════════════════════════
 
-// ── THEME ──
+// ── THEME ENGINE (View Transitions API + High Performance Fluid Fallback) ──
 let _themeTransitionTimer = null;
 
-function applyTheme(newTheme) {
+function prefersReducedMotion() {
+  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
+function syncThemeControls(newTheme) {
+  const isDark = newTheme === 'dark';
+  const nextLabel = isDark ? 'Cambiar a Modo Día' : 'Cambiar a Modo Noche';
+
+  // Botones que alternan el tema (sidebar, topbar y micro-switch colapsado)
+  ['btn-theme-toggle', 'btn-theme-collapsed', 'topbar-theme-toggle'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.setAttribute('title', nextLabel);
+    btn.setAttribute('aria-label', nextLabel);
+    btn.setAttribute('aria-pressed', String(isDark));
+  });
+
+  const topbarBtn = document.querySelector('.topbar-theme-btn');
+  if (topbarBtn) {
+    topbarBtn.setAttribute('title', nextLabel);
+    topbarBtn.setAttribute('aria-label', nextLabel);
+  }
+
+  // Barra del navegador / PWA
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', isDark ? '#0e0e10' : '#f8fafc');
+}
+
+function applyTheme(newTheme, options) {
   const isDark = newTheme === 'dark';
   const html = document.documentElement;
+  const animate = !(options && options.animate === false) && !prefersReducedMotion();
 
-  // Activa clase de transición ligera y controlada (hardware acceleration)
-  html.classList.add('theme-transitioning');
-  clearTimeout(_themeTransitionTimer);
+  if (animate) {
+    html.classList.add('theme-transitioning');
+    // Forzar reflow en el motor de render para registrar la transición antes de mutar variables CSS
+    void html.offsetHeight;
+    clearTimeout(_themeTransitionTimer);
+  } else {
+    html.classList.remove('theme-transitioning');
+  }
 
   html.dataset.theme = newTheme;
   html.classList.toggle('dark', isDark);
@@ -105,49 +139,59 @@ function applyTheme(newTheme) {
     localStorage.setItem('tiaeli_theme', newTheme);
   } catch (e) {}
 
-  // Actualiza ambos toggles de tema
-  const chk1 = document.getElementById('themeToggle');
-  const chk2 = document.getElementById('themeToggleFooter');
-  if (chk1) chk1.checked = isDark;
-  if (chk2) chk2.checked = isDark;
-  
-  // Iconos barra superior móvil
-  const topbarSun = document.querySelector('.topbar-theme-btn .theme-icon-sun');
-  const topbarMoon = document.querySelector('.topbar-theme-btn .theme-icon-moon');
-  if (topbarSun) topbarSun.style.display = isDark ? 'none' : 'block';
-  if (topbarMoon) topbarMoon.style.display = isDark ? 'block' : 'none';
-  
-  // Iconos footer barra lateral
-  const thumbSun = document.querySelector('.theme-icon-sun');
-  const thumbMoon = document.querySelector('.theme-icon-moon');
-  if (thumbSun) thumbSun.style.display = isDark ? 'none' : 'block';
-  if (thumbMoon) thumbMoon.style.display = isDark ? 'block' : 'none';
-  
-  const label = document.getElementById('themeLabel');
-  const thumb = document.getElementById('themeThumb');
-  if (label) label.textContent = isDark ? 'Modo oscuro' : 'Modo claro';
-  if (thumb) thumb.textContent = isDark ? '☾' : '☼';
+  syncThemeControls(newTheme);
 
-  // Notificar al sistema
+  // Notificar al sistema (DOM + EventBus)
   document.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
+  if (window.EventBus) window.EventBus.emit('theme:changed', newTheme);
 
-  // Retirar clase tras completar los 190ms para no penalizar la GPU
-  _themeTransitionTimer = setTimeout(() => {
-    html.classList.remove('theme-transitioning');
-  }, 190);
+  if (animate) {
+    // Retirar la clase al terminar la transición de color fluida (400ms)
+    _themeTransitionTimer = setTimeout(() => {
+      html.classList.remove('theme-transitioning');
+    }, 450);
+  }
 }
 
 window.applyTheme = applyTheme;
 
-function toggleTheme() {
+function toggleTheme(event) {
   const isDark = document.documentElement.dataset.theme === 'dark' || document.documentElement.classList.contains('dark');
-  applyTheme(isDark ? 'light' : 'dark');
+  const nextTheme = isDark ? 'light' : 'dark';
+
+  // Coordenadas del clic para el barrido radial desde el cursor
+  if (event) {
+    const x = ((event.clientX ?? window.innerWidth / 2) / window.innerWidth  * 100).toFixed(1) + '%';
+    const y = ((event.clientY ?? window.innerHeight / 2) / window.innerHeight * 100).toFixed(1) + '%';
+    document.documentElement.style.setProperty('--vt-x', x);
+    document.documentElement.style.setProperty('--vt-y', y);
+  }
+
+  // View Transitions API — barrido radial clip-path
+  if (typeof document.startViewTransition === 'function' && !prefersReducedMotion()) {
+    try {
+      const transition = document.startViewTransition(() => {
+        applyTheme(nextTheme, { animate: false });
+      });
+      transition.ready.catch(() => {});
+      return;
+    } catch (err) {
+      // Fallback seguro
+    }
+  }
+
+  // Fallback universal: transición de colores en elementos clave
+  applyTheme(nextTheme, { animate: true });
 }
 window.toggleTheme = toggleTheme;
 
 function initTheme() {
-  const saved = localStorage.getItem('tiaeli_theme') || 'light';
-  applyTheme(saved);
+  let saved = 'dark';
+  try {
+    saved = localStorage.getItem('tiaeli_theme') || 'dark';
+  } catch (e) {}
+  // Sin animación en el arranque para evitar parpadeos en el primer render
+  applyTheme(saved === 'light' ? 'light' : 'dark', { animate: false });
 }
 initTheme();
 
@@ -374,7 +418,7 @@ function exportarInventarioCSV() {
   toast('Inventario exportado', 'success');
 }
 
-// ── COMBOS MANAGER (EMERALD RETAIL) ──
+// ── COMBOS MANAGER (ORANGE RETAIL) ──
 let editingComboId = null;
 let comboComponents = [];
 

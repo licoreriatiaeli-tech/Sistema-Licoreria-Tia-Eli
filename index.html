@@ -24,20 +24,20 @@
   <meta name="version" content="v10" />
   <title>TIA ELI LICORERIA &ndash; Sistema de Inventario</title>
   <meta name="description" content="Sistema de control de inventario y ventas para TIA ELI LICORERIA." />
-  <link rel="manifest" href="manifest.json?v=16" />
+  <link rel="manifest" href="manifest.json?v=24" />
   <link rel="icon" type="image/png" href="icon-192.png" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles/tokens.css?v=1" />
-  <link rel="stylesheet" href="style.css?v=19" />
-  <link rel="stylesheet" href="styles/pos-modern.css?v=3" />
-  <link rel="stylesheet" href="styles/buttons.css?v=2" />
+  <link rel="stylesheet" href="styles/tokens.css?v=24" />
+  <link rel="stylesheet" href="style.css?v=24" />
+  <link rel="stylesheet" href="styles/pos-modern.css?v=24" />
+  <link rel="stylesheet" href="styles/buttons.css?v=24" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-  <link rel="stylesheet" href="styles/inventario-modern.css?v=2" />
-  <link rel="stylesheet" href="styles/actividad-modern.css?v=2" />
-  <link rel="stylesheet" href="styles/dashboard-modern.css?v=2" />
-  <link rel="stylesheet" href="styles/sidebar-modern.css?v=2" />
+  <link rel="stylesheet" href="styles/inventario-modern.css?v=24" />
+  <link rel="stylesheet" href="styles/actividad-modern.css?v=24" />
+  <link rel="stylesheet" href="styles/dashboard-modern.css?v=24" />
+  <link rel="stylesheet" href="styles/sidebar-modern.css?v=24" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script id="tailwind-config">
     tailwind.config = {
@@ -47,14 +47,14 @@
         extend: {
           colors: {
             brand: {
-              50: '#ecfdf5',
-              100: '#d1fae5',
+              50: '#fff7ed',
+              100: '#ffedd5',
               400: '#fdba74',
               500: '#f97316',
               600: '#ea580c',
-              700: '#047857',
-              800: '#065f46',
-              900: '#064e3b'
+              700: '#9a3412',
+              800: '#7c2d12',
+              900: '#431407'
             },
             sidebar: {
               dark: '#141417',
@@ -63,7 +63,7 @@
             }
           },
           boxShadow: {
-            'glow-emerald': '0 0 16px -2px rgba(16, 185, 129, 0.35)',
+            'glow-orange': '0 0 16px -2px rgba(234, 88, 12, 0.35)',
             'soft-dark': '0 8px 30px rgba(0, 0, 0, 0.45)',
             'glow-amber': '0 0 12px 1px rgba(245, 158, 11, 0.45)',
             'glow-indigo': '0 0 12px 1px rgba(129, 140, 248, 0.45)'
@@ -102,14 +102,14 @@
 <body>
 
   <!-- ══ SIDEBAR ══ -->
-  <!-- ══ NUEVA BARRA LATERAL (EMERALD RETAIL SYSTEM) ══ -->
+  <!-- ══ NUEVA BARRA LATERAL (ORANGE RETAIL SYSTEM) ══ -->
   <aside class="sidebar w-64 lg:w-72 flex-shrink-0 flex flex-col h-screen border-r border-slate-200 dark:border-slate-800/80 bg-white dark:bg-sidebar-dark transition-[width] duration-300 ease-in-out z-30 select-none relative shadow-sm" data-purpose="main-navigation" id="sidebar">
     <!-- Header: Logo, Brand & Action buttons -->
     <header class="p-4 pb-3.5 flex items-center justify-between border-b border-slate-100 dark:border-slate-800/60">
       <div class="flex items-center gap-2.5 overflow-hidden mx-auto md:mx-0">
         <!-- Logo Icon Container -->
         <button class="w-10 h-10 flex-shrink-0 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center shadow-sm group cursor-pointer focus:outline-none" id="btn-sidebar-logo" title="Alternar Menú" type="button">
-          <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+          <svg class="w-5 h-5 text-orange-600 dark:text-orange-400 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
             <path d="M7 21h10a2 2 0 0 0 2-2V9.5a2.5 2.5 0 0 0-2.5-2.5H16V3a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v4h-.5A2.5 2.5 0 0 0 5 9.5V19a2 2 0 0 0 2 2z"></path>
             <path d="M9 13l3-2 3 2"></path>
             <path d="M10 2v2"></path>
@@ -122,7 +122,7 @@
           <div class="flex items-center gap-2.5 leading-none">
             <h1 class="text-sm font-black tracking-wider text-slate-900 dark:text-white uppercase leading-none">
               <div>TIA ELI</div>
-              <div class="text-[11px] font-black tracking-widest text-emerald-600 dark:text-emerald-400 uppercase mt-0.5">LICORERIA</div>
+              <div class="text-[11px] font-black tracking-widest text-orange-600 dark:text-orange-400 uppercase mt-0.5">LICORERIA</div>
             </h1>
             <!-- Signal Indicator Dot: Green (online) / Red (offline/error) with pulse animation -->
             <div class="relative flex items-center justify-center w-3.5 h-3.5 cursor-pointer select-none flex-shrink-0" id="posStatusIndicator" onclick="sincronizar()" title="Sistema Conectado al POS (En línea)">
@@ -136,7 +136,7 @@
       <!-- Top Right Action Controls: Sync & Theme Toggle (Día / Noche fluido) -->
       <div class="flex items-center gap-1.5 sidebar-text-hide" id="sidebar-header-actions">
         <!-- Sync / Refresh Button (Hidden when collapsed) -->
-        <button class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 hover:text-emerald-700 dark:text-slate-300 dark:hover:text-emerald-400 transition-all duration-200 active:scale-90 cursor-pointer" id="btn-sync" onclick="sincronizar()" title="Sincronizar Datos" type="button">
+        <button class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 hover:text-orange-700 dark:text-slate-300 dark:hover:text-orange-400 transition-all duration-200 active:scale-90 cursor-pointer" id="btn-sync" onclick="sincronizar()" title="Sincronizar Datos" type="button">
           <svg class="w-4 h-4 transition-transform duration-500" fill="none" id="sync-icon" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24">
             <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
             <path d="M3 3v5h5"></path>
@@ -145,14 +145,14 @@
           </svg>
         </button>
         <!-- Fluid Day / Night Theme Button -->
-        <button class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 hover:text-amber-500 dark:text-slate-300 dark:hover:text-amber-400 transition-all duration-200 active:scale-90 cursor-pointer" id="btn-theme-toggle" title="Cambiar modo Día / Noche" aria-label="Cambiar modo Día / Noche" type="button">
+        <button class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 hover:text-amber-500 dark:text-slate-300 dark:hover:text-amber-400 transition-all duration-200 active:scale-90 cursor-pointer relative overflow-hidden" id="btn-theme-toggle" title="Cambiar modo Día / Noche" aria-label="Cambiar modo Día / Noche" type="button">
           <!-- Sun Icon (Visible in dark mode) -->
-          <svg class="w-4 h-4 hidden dark:block text-amber-400 transition-transform duration-300" id="header-theme-sun" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 text-amber-400 theme-icon-sun-svg" id="header-theme-sun" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="4.2"></circle>
             <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2m-15.66 5.66-1.41 1.41m14.14-14.14-1.41 1.41"></path>
           </svg>
           <!-- Moon Icon (Visible in light mode) -->
-          <svg class="w-4 h-4 block dark:hidden text-slate-600 hover:text-indigo-600 transition-transform duration-300" id="header-theme-moon" fill="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 text-slate-600 hover:text-indigo-600 theme-icon-moon-svg" id="header-theme-moon" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
           </svg>
         </button>
@@ -161,12 +161,12 @@
 
     <!-- Compact Micro-Switch for Collapsed Sidebar Only (Right under logo) -->
     <div class="hidden collapsed-show-flex justify-center py-2 border-b border-slate-100 dark:border-slate-800/50" id="theme-collapsed-micro">
-      <button class="w-7 h-7 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer" id="btn-theme-collapsed" title="Cambiar tema Día / Noche" aria-label="Cambiar tema Día / Noche" type="button">
-        <svg class="w-3.5 h-3.5 hidden dark:block text-amber-400" id="micro-sun-icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" viewbox="0 0 24 24">
+      <button class="w-7 h-7 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer relative overflow-hidden" id="btn-theme-collapsed" title="Cambiar tema Día / Noche" aria-label="Cambiar tema Día / Noche" type="button">
+        <svg class="w-3.5 h-3.5 text-amber-400 theme-icon-sun-svg" id="micro-sun-icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" viewbox="0 0 24 24">
           <circle cx="12" cy="12" r="4"></circle>
           <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2m-15.66 5.66-1.41 1.41m14.14-14.14-1.41 1.41"></path>
         </svg>
-        <svg class="w-3.5 h-3.5 block dark:hidden text-slate-600" id="micro-moon-icon" fill="currentColor" viewbox="0 0 24 24">
+        <svg class="w-3.5 h-3.5 text-slate-600 theme-icon-moon-svg" id="micro-moon-icon" fill="currentColor" viewbox="0 0 24 24">
           <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
         </svg>
       </button>
@@ -185,9 +185,9 @@
         <div class="hidden collapsed-category-line h-px w-6 mx-auto bg-slate-200 dark:bg-slate-800 my-2"></div>
         <ul class="space-y-1">
           <li class="relative group">
-            <a class="nav-btn nav-item flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:text-emerald-700 dark:text-slate-200 dark:hover:text-white hover:bg-emerald-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all active" data-section="dashboard" id="nav-dashboard" href="#dashboard">
-              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-600 dark:bg-emerald-500 shadow-glow-emerald"></span>
-              <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-emerald-600 dark:text-slate-400 dark:group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+            <a class="nav-btn nav-item flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:text-orange-700 dark:text-slate-200 dark:hover:text-white hover:bg-orange-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all active" data-section="dashboard" id="nav-dashboard" href="#dashboard">
+              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-orange-600 dark:bg-orange-500 shadow-glow-orange"></span>
+              <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-orange-600 dark:text-slate-400 dark:group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
                 <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
               </svg>
@@ -199,10 +199,10 @@
             </div>
           </li>
           <li class="relative group">
-            <a class="nav-btn nav-item flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 hover:text-emerald-700 dark:text-slate-200 dark:hover:text-white hover:bg-emerald-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="inventario" id="nav-inventario" href="#inventario">
-              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-600 dark:bg-emerald-500 shadow-glow-emerald"></span>
+            <a class="nav-btn nav-item flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 hover:text-orange-700 dark:text-slate-200 dark:hover:text-white hover:bg-orange-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="inventario" id="nav-inventario" href="#inventario">
+              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-orange-600 dark:bg-orange-500 shadow-glow-orange"></span>
               <div class="flex items-center gap-3">
-                <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-emerald-600 dark:text-slate-400 dark:group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+                <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-orange-600 dark:text-slate-400 dark:group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
                   <path d="m7.5 4.27 9 5.15"></path>
                   <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
                   <path d="m3.3 7 8.7 5 8.7-5"></path>
@@ -215,7 +215,7 @@
             <!-- Tooltip (Collapsed) -->
             <div class="sidebar-tooltip absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-slate-900 text-white text-xs rounded-lg shadow-xl font-semibold whitespace-nowrap border border-slate-700 flex items-center gap-1.5">
               <span>Inventario</span>
-              <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-1.5 py-0.5 rounded" id="sidebar-inv-count-tip">0</span>
+              <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-1.5 py-0.5 rounded" id="sidebar-inv-count-tip">0</span>
             </div>
           </li>
         </ul>
@@ -229,30 +229,30 @@
         <div class="hidden collapsed-category-line h-px w-6 mx-auto bg-slate-200 dark:bg-slate-800 my-2"></div>
         <ul class="space-y-1">
           <li class="relative group">
-            <a class="nav-btn nav-item flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 hover:text-emerald-700 dark:text-slate-200 dark:hover:text-white hover:bg-emerald-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="pos" id="nav-pos" href="#pos">
-              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-600 dark:bg-emerald-500 shadow-glow-emerald"></span>
+            <a class="nav-btn nav-item flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 hover:text-orange-700 dark:text-slate-200 dark:hover:text-white hover:bg-orange-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="pos" id="nav-pos" href="#pos">
+              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-orange-600 dark:bg-orange-500 shadow-glow-orange"></span>
               <div class="flex items-center gap-3">
-                <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-emerald-600 dark:text-slate-400 dark:group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24">
+                <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-orange-600 dark:text-slate-400 dark:group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24">
                   <circle cx="8" cy="21" r="1"></circle>
                   <circle cx="19" cy="21" r="1"></circle>
                   <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
                 </svg>
                 <span class="tracking-wide sidebar-text-hide">Registrar Venta</span>
               </div>
-              <span class="sidebar-text-hide inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-200 text-emerald-900 border border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30 uppercase">
+              <span class="sidebar-text-hide inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-200 text-orange-900 border border-orange-300 dark:bg-orange-500/20 dark:text-orange-400 dark:border-orange-500/30 uppercase">
                 POS
               </span>
             </a>
             <!-- Tooltip (Collapsed) -->
-            <div class="sidebar-tooltip absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-emerald-950 text-emerald-200 text-xs rounded-lg shadow-xl font-bold whitespace-nowrap border border-emerald-600/40 flex items-center gap-1.5">
+            <div class="sidebar-tooltip absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-orange-950 text-orange-200 text-xs rounded-lg shadow-xl font-bold whitespace-nowrap border border-orange-600/40 flex items-center gap-1.5">
               <span>Registrar Venta</span>
-              <span class="text-[9px] bg-emerald-500/20 text-emerald-300 px-1 py-0.5 rounded font-black">POS</span>
+              <span class="text-[9px] bg-orange-500/20 text-orange-300 px-1 py-0.5 rounded font-black">POS</span>
             </div>
           </li>
           <li class="relative group">
-            <a class="nav-btn nav-item flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:text-emerald-700 dark:text-slate-200 dark:hover:text-white hover:bg-emerald-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="historial" id="nav-historial" href="#historial">
-              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-600 dark:bg-emerald-500 shadow-glow-emerald"></span>
-              <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-emerald-600 dark:text-slate-400 dark:group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+            <a class="nav-btn nav-item flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:text-orange-700 dark:text-slate-200 dark:hover:text-white hover:bg-orange-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="historial" id="nav-historial" href="#historial">
+              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-orange-600 dark:bg-orange-500 shadow-glow-orange"></span>
+              <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-orange-600 dark:text-slate-400 dark:group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
@@ -264,9 +264,9 @@
             </div>
           </li>
           <li class="relative group">
-            <a class="nav-btn nav-item flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:text-emerald-700 dark:text-slate-200 dark:hover:text-white hover:bg-emerald-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="analytics" id="nav-analytics" href="#analytics">
-              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-600 dark:bg-emerald-500 shadow-glow-emerald"></span>
-              <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-emerald-600 dark:text-slate-400 dark:group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+            <a class="nav-btn nav-item flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:text-orange-700 dark:text-slate-200 dark:hover:text-white hover:bg-orange-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="analytics" id="nav-analytics" href="#analytics">
+              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-orange-600 dark:bg-orange-500 shadow-glow-orange"></span>
+              <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-orange-600 dark:text-slate-400 dark:group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
                 <line x1="18" x2="18" y1="20" y2="10"></line>
                 <line x1="12" x2="12" y1="20" y2="4"></line>
                 <line x1="6" x2="6" y1="20" y2="14"></line>
@@ -289,10 +289,10 @@
         <div class="hidden collapsed-category-line h-px w-6 mx-auto bg-slate-200 dark:bg-slate-800 my-2"></div>
         <ul class="space-y-1">
           <li class="relative group">
-            <a class="nav-btn nav-item flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 hover:text-emerald-700 dark:text-slate-200 dark:hover:text-white hover:bg-emerald-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="combos" id="nav-combos" href="#combos">
-              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-600 dark:bg-emerald-500 shadow-glow-emerald"></span>
+            <a class="nav-btn nav-item flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 hover:text-orange-700 dark:text-slate-200 dark:hover:text-white hover:bg-orange-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="combos" id="nav-combos" href="#combos">
+              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-orange-600 dark:bg-orange-500 shadow-glow-orange"></span>
               <div class="flex items-center gap-3">
-                <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-emerald-600 dark:text-slate-400 dark:group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+                <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-orange-600 dark:text-slate-400 dark:group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
                   <polyline points="20 12 20 22 4 22 4 12"></polyline>
                   <rect height="5" width="20" x="2" y="7"></rect>
                   <line x1="12" x2="12" y1="22" y2="7"></line>
@@ -310,10 +310,10 @@
             </div>
           </li>
           <li class="relative group">
-            <a class="nav-btn nav-item flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 hover:text-emerald-700 dark:text-slate-200 dark:hover:text-white hover:bg-emerald-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="vencimientos" id="nav-vencimientos" href="#vencimientos">
-              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-600 dark:bg-emerald-500 shadow-glow-emerald"></span>
+            <a class="nav-btn nav-item flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 hover:text-orange-700 dark:text-slate-200 dark:hover:text-white hover:bg-orange-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="vencimientos" id="nav-vencimientos" href="#vencimientos">
+              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-orange-600 dark:bg-orange-500 shadow-glow-orange"></span>
               <div class="flex items-center gap-3">
-                <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-emerald-600 dark:text-slate-400 dark:group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+                <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-orange-600 dark:text-slate-400 dark:group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
                   <path d="M8 2v4"></path>
                   <path d="M16 2v4"></path>
                   <rect height="18" rx="2" width="18" x="3" y="4"></rect>
@@ -331,9 +331,9 @@
             </div>
           </li>
           <li class="relative group">
-            <a class="nav-btn nav-item flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:text-emerald-700 dark:text-slate-200 dark:hover:text-white hover:bg-emerald-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="agregar" id="nav-agregar" href="#agregar">
-              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-600 dark:bg-emerald-500 shadow-glow-emerald"></span>
-              <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-emerald-600 dark:text-slate-400 dark:group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+            <a class="nav-btn nav-item flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:text-orange-700 dark:text-slate-200 dark:hover:text-white hover:bg-orange-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="agregar" id="nav-agregar" href="#agregar">
+              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-orange-600 dark:bg-orange-500 shadow-glow-orange"></span>
+              <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-orange-600 dark:text-slate-400 dark:group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
                 <circle cx="12" cy="12" r="10"></circle>
                 <path d="M8 12h8"></path>
                 <path d="M12 8v8"></path>
@@ -346,9 +346,9 @@
             </div>
           </li>
           <li class="relative group">
-            <a class="nav-btn nav-item flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:text-emerald-700 dark:text-slate-200 dark:hover:text-white hover:bg-emerald-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="qr" id="nav-qr" href="#qr">
-              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-600 dark:bg-emerald-500 shadow-glow-emerald"></span>
-              <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-emerald-600 dark:text-slate-400 dark:group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+            <a class="nav-btn nav-item flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:text-orange-700 dark:text-slate-200 dark:hover:text-white hover:bg-orange-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="qr" id="nav-qr" href="#qr">
+              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-orange-600 dark:bg-orange-500 shadow-glow-orange"></span>
+              <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-orange-600 dark:text-slate-400 dark:group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
                 <rect height="5" rx="1" width="5" x="3" y="3"></rect>
                 <rect height="5" rx="1" width="5" x="16" y="3"></rect>
                 <rect height="5" rx="1" width="5" x="3" y="16"></rect>
@@ -370,9 +370,9 @@
             </div>
           </li>
           <li class="relative group">
-            <a class="nav-btn nav-item flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:text-emerald-700 dark:text-slate-200 dark:hover:text-white hover:bg-emerald-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="gastos" id="nav-gastos" href="#gastos">
-              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-600 dark:bg-emerald-500 shadow-glow-emerald"></span>
-              <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-emerald-600 dark:text-slate-400 dark:group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+            <a class="nav-btn nav-item flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:text-orange-700 dark:text-slate-200 dark:hover:text-white hover:bg-orange-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="gastos" id="nav-gastos" href="#gastos">
+              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-orange-600 dark:bg-orange-500 shadow-glow-orange"></span>
+              <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-orange-600 dark:text-slate-400 dark:group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
                 <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -397,10 +397,10 @@
         <div class="hidden collapsed-category-line h-px w-6 mx-auto bg-slate-200 dark:bg-slate-800 my-2"></div>
         <ul class="space-y-1">
           <li class="relative group">
-            <a class="nav-btn nav-item flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 hover:text-emerald-700 dark:text-slate-200 dark:hover:text-white hover:bg-emerald-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="fiados" id="nav-fiados" href="#fiados">
-              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-600 dark:bg-emerald-500 shadow-glow-emerald"></span>
+            <a class="nav-btn nav-item flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 hover:text-orange-700 dark:text-slate-200 dark:hover:text-white hover:bg-orange-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="fiados" id="nav-fiados" href="#fiados">
+              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-orange-600 dark:bg-orange-500 shadow-glow-orange"></span>
               <div class="flex items-center gap-3">
-                <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-emerald-600 dark:text-slate-400 dark:group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+                <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-orange-600 dark:text-slate-400 dark:group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
                   <path d="m11 17 2 2a1 1 0 0 0 1.4 0l6.6-6.6a2 2 0 0 0 0-2.8l-4.6-4.6a2 2 0 0 0-2.8 0L7 11.6"></path>
                   <path d="m3 7 3 3"></path>
                   <path d="M6 10l-3 3"></path>
@@ -418,10 +418,10 @@
             </div>
           </li>
           <li class="relative group">
-            <a class="nav-btn nav-item flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 hover:text-emerald-700 dark:text-slate-200 dark:hover:text-white hover:bg-emerald-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="actividad" id="nav-actividad" href="#actividad">
-              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-600 dark:bg-emerald-500 shadow-glow-emerald"></span>
+            <a class="nav-btn nav-item flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 hover:text-orange-700 dark:text-slate-200 dark:hover:text-white hover:bg-orange-50/70 dark:hover:bg-sidebar-hoverDark font-medium text-sm transition-all" data-section="actividad" id="nav-actividad" href="#actividad">
+              <span class="nav-active-bar absolute left-0 top-0 bottom-0 w-1.5 bg-orange-600 dark:bg-orange-500 shadow-glow-orange"></span>
               <div class="flex items-center gap-3">
-                <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-emerald-600 dark:text-slate-400 dark:group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+                <svg class="nav-item-icon w-5 h-5 flex-shrink-0 text-slate-500 group-hover:text-orange-600 dark:text-slate-400 dark:group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                   <path d="m9 12 2 2 4-4"></path>
                 </svg>
@@ -444,13 +444,13 @@
       <!-- Current User Pill Card (Sin bordes negros de navegador) -->
       <div class="sidebar-user-card flex items-center justify-between p-2.5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800 shadow-sm relative group cursor-pointer collapsed-user-container" data-purpose="user-card" id="sidebarUserContainer" onclick="mostrarLogin(true)" title="Cambiar usuario o turno">
         <div class="flex items-center gap-2.5 overflow-hidden">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-500 flex-shrink-0 flex items-center justify-center text-white font-black text-sm shadow-sm ring-2 ring-emerald-500/20" id="sidebarUserAvatar" title="ELI - Administrador">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-600 to-orange-500 flex-shrink-0 flex items-center justify-center text-white font-black text-sm shadow-sm ring-2 ring-orange-500/20" id="sidebarUserAvatar" title="ELI - Administrador">
             E
           </div>
           <div class="sidebar-text-hide overflow-hidden">
             <div class="text-xs font-bold text-slate-900 dark:text-white leading-tight truncate flex items-center gap-1.5" id="sidebarUserName">
               ELI
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block"></span>
             </div>
             <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate block mt-0.5" id="sidebarUserRole">Administrador &bull; Turno Activo</span>
           </div>
@@ -465,7 +465,7 @@
         </div>
         <!-- Tooltip in collapsed -->
         <div class="sidebar-tooltip absolute left-full ml-3 px-2.5 py-1.5 bg-slate-900 text-white text-xs rounded-lg shadow-xl font-medium whitespace-nowrap border border-slate-700">
-          <p class="font-bold text-emerald-400" id="sidebarUserTipName">ELI</p>
+          <p class="font-bold text-orange-400" id="sidebarUserTipName">ELI</p>
           <p class="text-[10px] text-slate-300" id="sidebarUserTipRole">Administrador</p>
         </div>
       </div>
@@ -479,8 +479,8 @@
           </svg>
           <span>Exportar</span>
         </button>
-        <label class="nav-btn flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border border-emerald-300 dark:border-emerald-600/40 bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-xs font-bold text-emerald-800 dark:text-emerald-400 transition-colors shadow-sm cursor-pointer" title="Cargar copia de seguridad">
-          <svg class="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24">
+        <label class="nav-btn flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border border-orange-300 dark:border-orange-600/40 bg-orange-50 dark:bg-orange-950/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 text-xs font-bold text-orange-800 dark:text-orange-400 transition-colors shadow-sm cursor-pointer" title="Cargar copia de seguridad">
+          <svg class="w-3.5 h-3.5 text-orange-700 dark:text-orange-400" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="17 8 12 3 7 8"></polyline>
             <line x1="12" x2="12" y1="3" y2="15"></line>
@@ -497,7 +497,7 @@
     <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú"><i data-lucide="menu"></i></button>
     <div class="topbar-brand">TIA ELI LICORERIA</div>
     <div class="topbar-right">
-      <button class="topbar-theme-btn" onclick="toggleTheme()" title="Cambiar tema" aria-label="Cambiar tema">
+      <button class="topbar-theme-btn" onclick="toggleTheme(event)" title="Cambiar tema" aria-label="Cambiar tema">
         <i data-lucide="sun" class="theme-icon-sun"></i>
         <i data-lucide="moon" class="theme-icon-moon"></i>
       </button>
@@ -570,12 +570,12 @@
             <span class="dash-exec-kpi-label">Venta de hoy y ganancia</span>
           </div>
           <div class="dash-exec-kpi-value-row">
-            <span class="dash-exec-kpi-num text-emerald" id="stat-ventas-hoy">0</span>
+            <span class="dash-exec-kpi-num text-orange" id="stat-ventas-hoy">0</span>
           </div>
           <div class="dash-exec-kpi-footer" style="display:flex;flex-direction:column;gap:2px;">
             <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
               <span style="font-size:0.8rem;color:var(--dash-on-surface-variant);font-weight:600;">Ganancia neta:</span>
-              <span id="stat-ganancia-hoy" class="text-emerald" style="font-size:0.95rem;font-weight:800;">Bs. 0.00</span>
+              <span id="stat-ganancia-hoy" class="text-orange" style="font-size:0.95rem;font-weight:800;">Bs. 0.00</span>
             </div>
             <div id="stat-ganancia-hoy-detalles" style="font-size:0.72rem;color:var(--text3);text-align:right;display:none;"></div>
           </div>
@@ -592,7 +592,7 @@
           </div>
           <div class="dash-exec-kpi-footer">
             <span class="dash-exec-kpi-hint">
-              <strong id="stat-total" class="font-tabular">0</strong> productos activos &bull; <span id="stat-stock" class="font-tabular text-emerald">0</span> en stock
+              <strong id="stat-total" class="font-tabular">0</strong> productos activos &bull; <span id="stat-stock" class="font-tabular text-orange">0</span> en stock
             </span>
           </div>
         </div>
@@ -666,7 +666,7 @@
       </div>
     </section>
 
-    <!-- ══ INVENTARIO (NUEVO DISEÑO EMERALD RETAIL) ══ -->
+    <!-- ══ INVENTARIO (NUEVO DISEÑO ORANGE RETAIL) ══ -->
     <section class="section" id="section-inventario">
       <div class="inv-main-wrap">
         <!-- 1. Encabezado de la Página y Acciones Rápidas -->
@@ -1289,7 +1289,7 @@
       </div>
     </section>
 
-    <!-- ══ HISTORIAL (EMERALD RETAIL) ══ -->
+    <!-- ══ HISTORIAL (ORANGE RETAIL) ══ -->
     <section class="section" id="section-historial">
       <div class="inv-main-wrap">
         <!-- 1. Encabezado de Historial -->
@@ -1371,7 +1371,7 @@
       </div>
     </section>
 
-    <!-- ══ ANALYTICS (EMERALD RETAIL) ══ -->
+    <!-- ══ ANALYTICS (ORANGE RETAIL) ══ -->
     <section class="section" id="section-analytics">
       <div class="inv-main-wrap">
         <!-- 1. Encabezado de Analítica -->
@@ -1453,7 +1453,7 @@
       </div>
     </section>
 
-    <!-- ══ COMBOS MANAGER (EMERALD RETAIL) ══ -->
+    <!-- ══ COMBOS MANAGER (ORANGE RETAIL) ══ -->
     <section class="section" id="section-combos">
       <div class="inv-main-wrap">
         <!-- 1. Encabezado y Acciones Rápidas -->
@@ -1927,7 +1927,7 @@
       </div>
     </section>
 
-    <!-- ══ SECCIÓN AUDITORÍA Y LOGIN / REGISTRO DE ACTIVIDAD (EMERALD RETAIL) ══ -->
+    <!-- ══ SECCIÓN AUDITORÍA Y LOGIN / REGISTRO DE ACTIVIDAD (ORANGE RETAIL) ══ -->
     <section class="section" id="section-actividad">
       <div class="audit-container">
         <!-- 1. Encabezado de la Página y Acciones Rápidas -->
@@ -2109,7 +2109,7 @@
         <div class="audit-stream-wrap">
           <div class="audit-stream-header">
             <div class="audit-stream-header-left" style="display:flex;align-items:center;gap:6px;">
-              <span class="material-symbols-outlined" style="font-size:16px;color:var(--act-emerald);">stream</span>
+              <span class="material-symbols-outlined" style="font-size:16px;color:var(--act-brand);">stream</span>
               <span>Mostrando eventos auditados recientes</span>
             </div>
             <div class="audit-stream-header-right" style="display:flex;align-items:center;gap:4px;">
@@ -2194,11 +2194,11 @@
       </div>
       <div style="margin-top:14px;display:flex;flex-direction:column;gap:6px;">
         <div class="pos-close-row"><span style="color:#64748b">Fondo Inicial en Caja:</span><strong id="close-initial-cash">Bs. 300.00</strong></div>
-        <div class="pos-close-row"><span style="color:#64748b">Ventas en Efectivo hoy:</span><strong style="color:var(--pos-emerald)" id="close-cash-sales">Bs. 0.00</strong></div>
+        <div class="pos-close-row"><span style="color:#64748b">Ventas en Efectivo hoy:</span><strong style="color:var(--pos-orange)" id="close-cash-sales">Bs. 0.00</strong></div>
         <div class="pos-close-row"><span style="color:#64748b">Ventas Digitales (QR/Tarjeta):</span><strong id="close-digital-sales">Bs. 0.00</strong></div>
         <div class="pos-close-row highlight">
           <span>Total en Efectivo a Entregar:</span>
-          <strong style="color:var(--pos-emerald)" id="close-total-cash">Bs. 0.00</strong>
+          <strong style="color:var(--pos-orange)" id="close-total-cash">Bs. 0.00</strong>
         </div>
       </div>
       <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:8px;">
@@ -2234,7 +2234,7 @@
       <div class="login-modal-header">
         <div class="flex items-center gap-3">
           <div class="login-modal-badge">
-            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
               <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -2359,7 +2359,7 @@
     </div>
   </div>
 
-  <!-- ══ MODAL NUEVO COMBO (EMERALD RETAIL) ══ -->
+  <!-- ══ MODAL NUEVO COMBO (ORANGE RETAIL) ══ -->
   <div class="modal-overlay" id="comboModalOverlay" style="display:none">
     <div class="modal" style="max-width:620px; border-radius:1.25rem; overflow:hidden;">
       <div class="modal-header" style="padding:1.25rem 1.5rem; border-bottom:1px solid var(--inv-border);">
@@ -3018,22 +3018,22 @@
   </div>
 
 <!-- ══ SCRIPTS ══ -->
-  <script src="utils-bundle.js?v=16" defer></script>
-  <script type="module" src="services/event-bus.js?v=16"></script>
-  <script type="module" src="services/storage-service.js?v=16"></script>
-  <script type="module" src="schemas/index.js?v=16"></script>
-  <script src="lucide.min.js?v=16" defer></script>
+  <script src="utils-bundle.js?v=24" defer></script>
+  <script type="module" src="services/event-bus.js?v=24"></script>
+  <script type="module" src="services/storage-service.js?v=24"></script>
+  <script type="module" src="schemas/index.js?v=24"></script>
+  <script src="lucide.min.js?v=24" defer></script>
   <script src="libs/firebase-app-compat.js"></script>
   <script src="libs/firebase-firestore-compat.js"></script>
   <script src="libs/chart.umd.min.js"></script>
-  <script src="firebase-config.js?v=16" defer></script>
-  <script src="sync.js?v=16" defer></script>
-  <script src="app.js?v=16" defer></script>
-  <script src="charts.js?v=17" defer></script>
-  <script src="ventas.js?v=16" defer></script>
-  <script src="extras.js?v=17" defer></script>
-  <script src="gestion.js?v=16" defer></script>
-  <script src="services/sidebar-modern.js?v=2" defer></script>
+  <script src="firebase-config.js?v=24" defer></script>
+  <script src="sync.js?v=24" defer></script>
+  <script src="app.js?v=24" defer></script>
+  <script src="charts.js?v=24" defer></script>
+  <script src="ventas.js?v=24" defer></script>
+  <script src="extras.js?v=24" defer></script>
+  <script src="gestion.js?v=24" defer></script>
+  <script src="services/sidebar-modern.js?v=24" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       if (window.lucide && window.lucide.createIcons) {
@@ -3048,7 +3048,7 @@
     // Estrategia network-first: siempre descarga lo nuevo si hay internet.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('sw.js?v=16', { updateViaCache: 'none' }).then(function(reg) {
+        navigator.serviceWorker.register('sw.js?v=24', { updateViaCache: 'none' }).then(function(reg) {
           reg.addEventListener('updatefound', function() {
             var newWorker = reg.installing;
             if (!newWorker) return;
@@ -3165,7 +3165,7 @@
     </div>
   </div>
 
-  <!-- ══ MODAL DE DETALLE DE AUDITORÍA (EMERALD RETAIL) ══ -->
+  <!-- ══ MODAL DE DETALLE DE AUDITORÍA (ORANGE RETAIL) ══ -->
   <div class="hidden" id="auditModal" onclick="if(event.target === this) closeAuditModal()">
     <div class="audit-modal-backdrop" onclick="closeAuditModal()"></div>
     <div class="audit-modal-box">

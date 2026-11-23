@@ -547,7 +547,7 @@ function renderDashboard() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// INVENTARIO MODERNO — EMERALD RETAIL SYSTEM (LOGIC & RENDERING)
+// INVENTARIO MODERNO — ORANGE RETAIL SYSTEM (LOGIC & RENDERING)
 // ═══════════════════════════════════════════════════════════════
 
 let invCurrentPage = 1;
@@ -867,7 +867,7 @@ window.openInvRowMenu = function(e, prodId) {
       <span>Poner en Oferta</span>
     </button>
     ${(p.activo === false || p.archivado) ? `
-    <button class="inv-dropdown-item" onclick="reactivarProducto('${p.id}'); document.getElementById('invRowMenuDropdown')?.remove();" style="color:var(--emerald-600, #ea580c);font-weight:600">
+    <button class="inv-dropdown-item" onclick="reactivarProducto('${p.id}'); document.getElementById('invRowMenuDropdown')?.remove();" style="color:var(--orange-600, #ea580c);font-weight:600">
       <span class="material-symbols-outlined">unarchive</span>
       <span>Reactivar Producto</span>
     </button>` : `

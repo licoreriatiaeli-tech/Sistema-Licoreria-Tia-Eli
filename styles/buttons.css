@@ -1,11 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   EMERALD RETAIL SYSTEM — MASTER BUTTON DESIGN SYSTEM
+   ORANGE RETAIL SYSTEM — MASTER BUTTON DESIGN SYSTEM
    Basado en la especificación oficial de 'DISEÑO DE BOTONES' (DESIGN.md / code.html)
    Estandarización definitiva para POS, Inventario, Modales, Steppers y Acciones
    ═══════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Paleta Emerald Retail */
+  /* Paleta Orange Retail */
   --btn-primary: #c2410c;
   --btn-primary-hover: #ea580c;
   --btn-primary-active: #9a3412;
@@ -146,7 +146,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   2. BOTÓN PRIMARIO (CTA - EMERALD RETAIL)
+   2. BOTÓN PRIMARIO (CTA - ORANGE RETAIL)
    Regla: Máximo 1 CTA por viewport
    ═══════════════════════════════════════════════════════════════════════ */
 .btn-primary {

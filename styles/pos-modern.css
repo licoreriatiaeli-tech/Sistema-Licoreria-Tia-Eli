@@ -15,12 +15,12 @@
   --pos-text-main: #0f172a;
   --pos-text-muted: #64748b;
   --pos-text-light: #94a3b8;
-  --pos-emerald: #ea580c;
-  --pos-emerald-hover: #047857;
-  --pos-emerald-active: #065f46;
-  --pos-emerald-light: #f97316;
-  --pos-emerald-bg: #ecfdf5;
-  --pos-emerald-border: #a7f3d0;
+  --pos-orange: #ea580c;
+  --pos-orange-hover: #9a3412;
+  --pos-orange-active: #7c2d12;
+  --pos-orange-light: #f97316;
+  --pos-orange-bg: #fff7ed;
+  --pos-orange-border: #fdba74;
   --pos-amber-bg: #fef3c7;
   --pos-amber-text: #92400e;
   --pos-danger: #ef4444;
@@ -125,12 +125,12 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: var(--pos-emerald);
+  background: var(--pos-orange);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  box-shadow: 0 1px 3px 0 rgba(5, 150, 105, 0.3);
+  box-shadow: 0 1px 3px 0 rgba(234, 88, 12, 0.3);
 }
 .pos-logo-badge svg {
   width: 20px;
@@ -184,9 +184,9 @@
   gap: 6px;
   padding: 3px 10px;
   border-radius: 9999px;
-  color: #065f46;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
+  color: #7c2d12;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
   font-weight: 700;
   font-size: 0.75rem;
 }
@@ -308,7 +308,7 @@
 .pos-search-input-field:focus {
   background: #ffffff;
   border-color: #f97316;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.2);
 }
 .pos-search-shortcuts {
   position: absolute;
@@ -433,7 +433,7 @@
 }
 .pos-combo-card {
   background: #ffffff;
-  border: 1px solid #d1fae5;
+  border: 1px solid #ffedd5;
   border-radius: 12px;
   padding: 11px 13px;
   display: flex;
@@ -500,8 +500,8 @@
   align-self: flex-start;
   font-size: 0.65rem;
   font-weight: 600;
-  color: #047857;
-  background: #ecfdf5;
+  color: #9a3412;
+  background: #fff7ed;
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -533,11 +533,11 @@
   padding: 4px 11px;
   border-radius: 6px;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(5, 150, 105, 0.2);
+  box-shadow: 0 1px 2px rgba(234, 88, 12, 0.2);
   transition: background 0.15s;
 }
 .pos-combo-price-action .btn-add:hover {
-  background: #047857;
+  background: #9a3412;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -593,7 +593,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--pos-emerald);
+  color: var(--pos-orange);
 }
 .pos-card-icon-box .material-symbols-outlined {
   font-size: 16px;
@@ -619,7 +619,7 @@
   width: 28px;
   height: 28px;
   border-radius: 6px;
-  background: var(--pos-emerald);
+  background: var(--pos-orange);
   color: #ffffff;
   border: none;
   display: flex;
@@ -686,7 +686,7 @@
   font-size: 0.65rem;
   font-weight: 700;
   color: #ea580c;
-  background: #ecfdf5;
+  background: #fff7ed;
   padding: 1px 5px;
   border-radius: 4px;
   margin-top: 3px;
@@ -810,7 +810,7 @@
 .pos-btn-change-customer {
   background: none;
   border: none;
-  color: #047857;
+  color: #9a3412;
   font-weight: 600;
   font-size: 0.72rem;
   text-decoration: underline;
@@ -818,7 +818,7 @@
   padding: 0;
 }
 .pos-btn-change-customer:hover {
-  color: #065f46;
+  color: #7c2d12;
 }
 
 /* Lista de Ítems en el Ticket */
@@ -1000,12 +1000,12 @@
   align-items: center;
 }
 .pos-summary-discount {
-  color: #047857;
+  color: #9a3412;
 }
 .pos-btn-edit-discount {
   font-size: 0.65rem;
-  background: #d1fae5;
-  color: #065f46;
+  background: #ffedd5;
+  color: #7c2d12;
   border: none;
   padding: 1px 6px;
   border-radius: 4px;
@@ -1013,7 +1013,7 @@
   cursor: pointer;
 }
 .pos-btn-edit-discount:hover {
-  background: #a7f3d0;
+  background: #fdba74;
 }
 .pos-total-row {
   padding-top: 6px;
@@ -1116,7 +1116,7 @@
 }
 .pos-cash-input-field-wrap:focus-within {
   border-color: #f97316;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.18);
+  box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.18);
 }
 .pos-cash-currency {
   font-size: 0.82rem;
@@ -1186,8 +1186,8 @@ input[type="number"] {
 .pos-change-display-card {
   padding: 10px 14px;
   border-radius: 10px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1215,7 +1215,7 @@ input[type="number"] {
   font-size: 0.82rem;
 }
 
-/* Botón Gigante de Cobrar (CTA Emerald Oficial) */
+/* Botón Gigante de Cobrar (CTA Orange Oficial) */
 .pos-btn-cobrar-gigante {
   width: 100%;
   padding: 14px 16px;
@@ -1294,7 +1294,7 @@ input[type="number"] {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: #d1fae5;
+  background: #ffedd5;
   color: #ea580c;
   display: flex;
   align-items: center;
@@ -1339,7 +1339,7 @@ input[type="number"] {
 .pos-receipt-row.change {
   border-top: 1px solid #e2e8f0;
   padding-top: 6px;
-  color: #047857;
+  color: #9a3412;
   font-weight: 700;
 }
 .pos-modal-actions-grid {
@@ -1384,7 +1384,7 @@ input[type="number"] {
   transition: all 0.15s ease;
 }
 .pos-btn-modal-prim:hover {
-  background: #047857;
+  background: #9a3412;
 }
 
 /* Modal Cierre de Caja */
@@ -1477,7 +1477,7 @@ input[type="number"] {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   8. RESPONSIVE MOBILE & TOUCH DEVICES (EMERALD RETAIL SYSTEM)
+   8. RESPONSIVE MOBILE & TOUCH DEVICES (ORANGE RETAIL SYSTEM)
    Diseño fiel a 'DISEÑO DE POS VENTA PARA CELULAR'
    ═══════════════════════════════════════════════════════════════ */
 
@@ -2558,7 +2558,7 @@ input[type="number"] {
     padding: 10px;
     border-radius: 12px;
     background: rgba(236, 253, 245, 0.8);
-    border: 1px solid #a7f3d0;
+    border: 1px solid #fdba74;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2757,7 +2757,7 @@ input[type="number"] {
   --pos-text-light: #64748b;
   --pos-card-bg: #141418;
   --pos-border: #26262e;
-  --pos-emerald: #fdba74;
+  --pos-orange: #fdba74;
   color-scheme: dark;
 }
 
@@ -2769,7 +2769,7 @@ input[type="number"] {
 
 [data-theme="dark"] .pos-live-pill,
 .dark .pos-live-pill {
-  background: rgba(16, 185, 129, 0.12) !important;
+  background: rgba(234, 88, 12, 0.12) !important;
   color: #fdba74 !important;
   border: 1px solid rgba(52, 211, 153, 0.25) !important;
 }
@@ -2794,9 +2794,9 @@ input[type="number"] {
 }
 [data-theme="dark"] .pos-btn-edit-discount,
 .dark .pos-btn-edit-discount {
-  background: rgba(16, 185, 129, 0.15) !important;
+  background: rgba(234, 88, 12, 0.15) !important;
   color: #fdba74 !important;
-  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  border: 1px solid rgba(234, 88, 12, 0.3) !important;
 }
 
 [data-theme="dark"] .pos-brand-left,
@@ -2964,13 +2964,13 @@ input[type="number"] {
 
 [data-theme="dark"] .pos-card-format-pill,
 .dark .pos-card-format-pill {
-  background: rgba(16, 185, 129, 0.15) !important;
+  background: rgba(234, 88, 12, 0.15) !important;
   color: #fdba74 !important;
 }
 
 [data-theme="dark"] .pos-card-icon-box,
 .dark .pos-card-icon-box {
-  background: rgba(16, 185, 129, 0.15) !important;
+  background: rgba(234, 88, 12, 0.15) !important;
   color: #fdba74 !important;
 }
 
@@ -3010,9 +3010,9 @@ input[type="number"] {
 
 [data-theme="dark"] .pos-combo-stock-badge,
 .dark .pos-combo-stock-badge {
-  background: rgba(16, 185, 129, 0.15) !important;
+  background: rgba(234, 88, 12, 0.15) !important;
   color: #fdba74 !important;
-  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  border: 1px solid rgba(234, 88, 12, 0.3) !important;
 }
 
 [data-theme="dark"] .pos-combo-stock-badge.out,
@@ -3240,7 +3240,7 @@ input[type="number"] {
 [data-theme="dark"] .pos-cash-input-field-wrap:focus-within,
 .dark .pos-cash-input-field-wrap:focus-within {
   border-color: #f97316 !important;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.22) !important;
+  box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.22) !important;
 }
 
 [data-theme="dark"] .pos-cash-currency,
@@ -3273,7 +3273,7 @@ input[type="number"] {
 [data-theme="dark"] .pos-change-display-card,
 .dark .pos-change-display-card {
   background: #181820 !important;
-  border: 1px solid rgba(16, 185, 129, 0.25) !important;
+  border: 1px solid rgba(234, 88, 12, 0.25) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
 }
 

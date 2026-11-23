@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════
    INVENTARIO MODERNO — CONTROL DE STOCK & GESTIÓN DE CATÁLOGO
-   Sistema Licorería Tía Eli — Emerald Retail System Design
+   Sistema Licorería Tía Eli — Orange Retail System Design
    ═══════════════════════════════════════════════════════════════ */
 
-/* Variables del Sistema Emerald Retail para Inventario, Combos y Vistas Modernas */
+/* Variables del Sistema Orange Retail para Inventario, Combos y Vistas Modernas */
 :root {
   --inv-primary: #c2410c;
   --inv-primary-hover: #ea580c;
@@ -50,7 +50,7 @@ html.dark,
   --inv-surface-lowest: #16161c;
   
   --inv-primary: #fdba74;
-  --inv-primary-container: rgba(16, 185, 129, 0.15);
+  --inv-primary-container: rgba(234, 88, 12, 0.15);
   --inv-on-primary-container: #fdba74;
   --inv-secondary: #38bdf8;
   --inv-secondary-container: rgba(56, 189, 248, 0.15);
@@ -117,16 +117,16 @@ html.dark,
 
 [data-theme="dark"] #section-analytics .inv-kpi-icon-box.tint-mint,
 .dark #section-analytics .inv-kpi-icon-box.tint-mint {
-  background: rgba(16, 185, 129, 0.15) !important;
+  background: rgba(234, 88, 12, 0.15) !important;
   color: #fdba74 !important;
-  border: 1px solid rgba(16, 185, 129, 0.28) !important;
+  border: 1px solid rgba(234, 88, 12, 0.28) !important;
 }
 
 [data-theme="dark"] #section-analytics .inv-badge-mint,
 .dark #section-analytics .inv-badge-mint {
-  background: rgba(16, 185, 129, 0.15) !important;
+  background: rgba(234, 88, 12, 0.15) !important;
   color: #fdba74 !important;
-  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  border: 1px solid rgba(234, 88, 12, 0.3) !important;
   font-weight: 700 !important;
 }
 
@@ -1061,7 +1061,7 @@ html.dark,
 .inv-btn-add-stock:hover {
   background-color: var(--inv-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 2px 4px rgba(234, 88, 12, 0.2);
 }
 
 .inv-btn-add-stock .material-symbols-outlined {
@@ -1602,7 +1602,7 @@ html.dark,
 }
 
 /* ══════════════════════════════════════════════════════════
-   ESTILOS MODERNOS PARA GESTIÓN DE COMBOS (EMERALD RETAIL)
+   ESTILOS MODERNOS PARA GESTIÓN DE COMBOS (ORANGE RETAIL)
    ══════════════════════════════════════════════════════════ */
 .combos-modern-grid {
   display: grid;
@@ -1701,13 +1701,13 @@ html.dark .combo-card-title {
 }
 
 .combo-stock-hero-pill.disponible {
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(234, 88, 12, 0.12);
   color: #ea580c;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(234, 88, 12, 0.3);
 }
 
 html.dark .combo-stock-hero-pill.disponible {
-  background: rgba(16, 185, 129, 0.2);
+  background: rgba(234, 88, 12, 0.2);
   color: #fdba74;
   border-color: rgba(52, 211, 153, 0.35);
 }
@@ -1815,15 +1815,15 @@ html.dark .combo-comps-wrapper {
 }
 
 .combo-comp-stock-badge.ok {
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(234, 88, 12, 0.12);
   color: #ea580c;
 }
 
 [data-theme="dark"] .combo-comp-stock-badge.ok,
 html.dark .combo-comp-stock-badge.ok {
-  background: rgba(16, 185, 129, 0.12) !important;
+  background: rgba(234, 88, 12, 0.12) !important;
   color: #fdba74 !important;
-  border: 1px solid rgba(16, 185, 129, 0.25) !important;
+  border: 1px solid rgba(234, 88, 12, 0.25) !important;
   border-radius: 6px !important;
 }
 
@@ -1940,8 +1940,8 @@ html.dark .combo-price-stat-val.success {
 }
 
 .combo-live-stock-box {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(0, 105, 72, 0.03));
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.08), rgba(0, 105, 72, 0.03));
+  border: 1px solid rgba(234, 88, 12, 0.25);
   border-radius: 0.85rem;
   padding: 0.85rem 1rem;
   margin-bottom: 1rem;

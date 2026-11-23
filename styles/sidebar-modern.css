@@ -1,6 +1,6 @@
 /* ==========================================================================
    SIDEBAR MODERNO - TIA ELI LICORERIA
-   Diseño Emerald Retail System - Animaciones fluidas a 60 FPS
+   Diseño Orange Retail System - Animaciones fluidas a 60 FPS
    ========================================================================== */
 
 /* ── Reseteo Universal de Botones en Sidebar (Elimina bordes negros de navegador) ── */
@@ -97,7 +97,7 @@ nav.sidebar-nav-list li {
   border-radius: 9999px;
 }
 #sidebar:not(.sidebar-collapsed) .sidebar-scroll:hover::-webkit-scrollbar-thumb {
-  background: rgba(16, 185, 129, 0.5);
+  background: rgba(234, 88, 12, 0.5);
 }
 
 /* ── Control de Texto en Colapso (Sin salto ni envoltorio feo) ── */
@@ -162,9 +162,9 @@ nav.sidebar-nav-list li {
 }
 #btn-sync:hover,
 #btn-toggle-sidebar:hover {
-  background-color: #ecfdf5 !important;
+  background-color: #fff7ed !important;
   color: #ea580c !important;
-  border-color: #a7f3d0 !important;
+  border-color: #fdba74 !important;
 }
 #btn-theme-toggle:hover {
   background-color: #fef3c7 !important;
@@ -191,7 +191,7 @@ nav.sidebar-nav-list li {
 [data-theme="dark"] #btn-toggle-sidebar:hover {
   background-color: #24242d !important;
   color: #fdba74 !important;
-  border-color: rgba(16, 185, 129, 0.35) !important;
+  border-color: rgba(234, 88, 12, 0.35) !important;
 }
 .dark #btn-theme-toggle:hover,
 [data-theme="dark"] #btn-theme-toggle:hover {
@@ -356,7 +356,7 @@ html:not(.dark) #btn-theme-day,
 }
 
 #sidebar .sidebar-nav-list .nav-btn:not(.active):hover {
-  color: #047857 !important;
+  color: #9a3412 !important;
   background-color: rgba(236, 253, 245, 0.9) !important;
 }
 
@@ -385,9 +385,9 @@ html:not(.dark) #btn-theme-day,
   color: #fdba74 !important;
 }
 
-/* ── Estado ACTIVO - Emerald Accent ── */
+/* ── Estado ACTIVO - Orange Accent ── */
 #sidebar .sidebar-nav-list .nav-btn.active {
-  background-color: #d1fae5 !important;
+  background-color: #ffedd5 !important;
   color: #022c22 !important;
   border: 1px solid rgba(52, 211, 153, 0.8) !important;
   font-weight: 600 !important;
@@ -398,7 +398,7 @@ html:not(.dark) #btn-theme-day,
 [data-theme="dark"] #sidebar .sidebar-nav-list .nav-btn.active {
   background-color: rgba(6, 78, 59, 0.35) !important;
   color: #ffffff !important;
-  border: 1px solid rgba(16, 185, 129, 0.4) !important;
+  border: 1px solid rgba(234, 88, 12, 0.4) !important;
   box-shadow: 0 4px 12px -2px rgba(6, 78, 59, 0.4) !important;
 }
 
@@ -419,11 +419,11 @@ html:not(.dark) #btn-theme-day,
 .dark #sidebar .sidebar-nav-list .nav-btn.active .nav-active-bar,
 [data-theme="dark"] #sidebar .sidebar-nav-list .nav-btn.active .nav-active-bar {
   background-color: #f97316;
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+  box-shadow: 0 0 10px rgba(234, 88, 12, 0.6);
 }
 
 #sidebar .sidebar-nav-list .nav-btn.active .nav-item-icon {
-  color: #047857 !important;
+  color: #9a3412 !important;
   transform: scale(1.08) !important;
 }
 
@@ -463,7 +463,7 @@ html:not(.dark) #btn-theme-day,
 .pos-status-dot.online,
 .pos-status-dot:not(.offline):not(.error):not(.syncing) {
   background-color: #f97316 !important;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.75) !important;
+  box-shadow: 0 0 8px rgba(234, 88, 12, 0.75) !important;
 }
 
 /* Rojo: Desconectado / Error */
@@ -545,8 +545,8 @@ html:not(.dark) #btn-theme-day,
 }
 .sidebar-user-card:hover {
   border-color: #f97316 !important;
-  background-color: #f0fdf4 !important;
-  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.1) !important;
+  background-color: #fff7ed !important;
+  box-shadow: 0 3px 10px rgba(234, 88, 12, 0.1) !important;
 }
 
 .dark .sidebar-user-card,
@@ -556,7 +556,7 @@ html:not(.dark) #btn-theme-day,
 }
 .dark .sidebar-user-card:hover,
 [data-theme="dark"] .sidebar-user-card:hover {
-  border-color: rgba(16, 185, 129, 0.4) !important;
+  border-color: rgba(234, 88, 12, 0.4) !important;
   background-color: #22222a !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
 }

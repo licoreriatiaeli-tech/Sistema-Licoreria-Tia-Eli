@@ -21,41 +21,18 @@
     function syncThemeUI() {
       const isDark = document.documentElement.dataset.theme === 'dark' ||
                      document.documentElement.classList.contains('dark');
+      const nextLabel = isDark ? 'Cambiar a Modo Día' : 'Cambiar a Modo Noche';
 
-      // Botón fluido en header (Día / Noche)
-      if (headerSunIcon && headerMoonIcon) {
-        if (isDark) {
-          headerSunIcon.style.display = 'block';
-          headerMoonIcon.style.display = 'none';
-          headerSunIcon.classList.remove('hidden');
-          headerMoonIcon.classList.add('hidden');
-        } else {
-          headerSunIcon.style.display = 'none';
-          headerMoonIcon.style.display = 'block';
-          headerSunIcon.classList.add('hidden');
-          headerMoonIcon.classList.remove('hidden');
-        }
-      }
       if (btnThemeToggle) {
-        btnThemeToggle.setAttribute('title', isDark ? 'Cambiar a Modo Día' : 'Cambiar a Modo Noche');
+        btnThemeToggle.setAttribute('title', nextLabel);
+        btnThemeToggle.setAttribute('aria-label', nextLabel);
+        btnThemeToggle.setAttribute('aria-pressed', String(isDark));
       }
 
-      // Micro botón para modo colapsado
-      if (microSunIcon && microMoonIcon) {
-        if (isDark) {
-          microSunIcon.style.display = 'block';
-          microMoonIcon.style.display = 'none';
-          microSunIcon.classList.remove('hidden');
-          microMoonIcon.classList.add('hidden');
-        } else {
-          microSunIcon.style.display = 'none';
-          microMoonIcon.style.display = 'block';
-          microSunIcon.classList.add('hidden');
-          microMoonIcon.classList.remove('hidden');
-        }
-      }
       if (btnThemeCollapsed) {
-        btnThemeCollapsed.setAttribute('title', isDark ? 'Cambiar a Modo Día' : 'Cambiar a Modo Noche');
+        btnThemeCollapsed.setAttribute('title', nextLabel);
+        btnThemeCollapsed.setAttribute('aria-label', nextLabel);
+        btnThemeCollapsed.setAttribute('aria-pressed', String(isDark));
       }
     }
 
@@ -66,11 +43,11 @@
         e.stopPropagation();
       }
       const now = Date.now();
-      if (now - _lastThemeToggleTime < 180) return;
+      if (now - _lastThemeToggleTime < 400) return;
       _lastThemeToggleTime = now;
 
       if (typeof window.toggleTheme === 'function') {
-        window.toggleTheme();
+        window.toggleTheme(e);
       } else {
         const isDark = document.documentElement.dataset.theme === 'dark' || document.documentElement.classList.contains('dark');
         const next = isDark ? 'light' : 'dark';
