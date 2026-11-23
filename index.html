@@ -24,20 +24,20 @@
   <meta name="version" content="v10" />
   <title>TIA ELI LICORERIA &ndash; Sistema de Inventario</title>
   <meta name="description" content="Sistema de control de inventario y ventas para TIA ELI LICORERIA." />
-  <link rel="manifest" href="manifest.json?v=29" />
+  <link rel="manifest" href="manifest.json?v=30" />
   <link rel="icon" type="image/png" href="icon-192.png" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles/tokens.css?v=29" />
-  <link rel="stylesheet" href="style.css?v=29" />
-  <link rel="stylesheet" href="styles/pos-modern.css?v=29" />
-  <link rel="stylesheet" href="styles/buttons.css?v=29" />
+  <link rel="stylesheet" href="styles/tokens.css?v=30" />
+  <link rel="stylesheet" href="style.css?v=30" />
+  <link rel="stylesheet" href="styles/pos-modern.css?v=30" />
+  <link rel="stylesheet" href="styles/buttons.css?v=30" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-  <link rel="stylesheet" href="styles/inventario-modern.css?v=29" />
-  <link rel="stylesheet" href="styles/actividad-modern.css?v=29" />
-  <link rel="stylesheet" href="styles/dashboard-modern.css?v=29" />
-  <link rel="stylesheet" href="styles/sidebar-modern.css?v=29" />
+  <link rel="stylesheet" href="styles/inventario-modern.css?v=30" />
+  <link rel="stylesheet" href="styles/actividad-modern.css?v=30" />
+  <link rel="stylesheet" href="styles/dashboard-modern.css?v=30" />
+  <link rel="stylesheet" href="styles/sidebar-modern.css?v=30" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script id="tailwind-config">
     tailwind.config = {
@@ -2996,22 +2996,22 @@
   </div>
 
 <!-- ══ SCRIPTS ══ -->
-  <script src="utils-bundle.js?v=29" defer></script>
-  <script type="module" src="services/event-bus.js?v=29"></script>
-  <script type="module" src="services/storage-service.js?v=29"></script>
-  <script type="module" src="schemas/index.js?v=29"></script>
-  <script src="lucide.min.js?v=29" defer></script>
+  <script src="utils-bundle.js?v=30" defer></script>
+  <script type="module" src="services/event-bus.js?v=30"></script>
+  <script type="module" src="services/storage-service.js?v=30"></script>
+  <script type="module" src="schemas/index.js?v=30"></script>
+  <script src="lucide.min.js?v=30" defer></script>
   <script src="libs/firebase-app-compat.js"></script>
   <script src="libs/firebase-firestore-compat.js"></script>
   <script src="libs/chart.umd.min.js"></script>
-  <script src="firebase-config.js?v=29" defer></script>
-  <script src="sync.js?v=29" defer></script>
-  <script src="app.js?v=29" defer></script>
-  <script src="charts.js?v=29" defer></script>
-  <script src="ventas.js?v=29" defer></script>
-  <script src="extras.js?v=29" defer></script>
-  <script src="gestion.js?v=29" defer></script>
-  <script src="services/sidebar-modern.js?v=29" defer></script>
+  <script src="firebase-config.js?v=30" defer></script>
+  <script src="sync.js?v=30" defer></script>
+  <script src="app.js?v=30" defer></script>
+  <script src="charts.js?v=30" defer></script>
+  <script src="ventas.js?v=30" defer></script>
+  <script src="extras.js?v=30" defer></script>
+  <script src="gestion.js?v=30" defer></script>
+  <script src="services/sidebar-modern.js?v=30" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       if (window.lucide && window.lucide.createIcons) {
@@ -3026,7 +3026,7 @@
     // Estrategia network-first: siempre descarga lo nuevo si hay internet.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('sw.js?v=29', { updateViaCache: 'none' }).then(function(reg) {
+        navigator.serviceWorker.register('sw.js?v=30', { updateViaCache: 'none' }).then(function(reg) {
           reg.addEventListener('updatefound', function() {
             var newWorker = reg.installing;
             if (!newWorker) return;

@@ -444,28 +444,32 @@ html.dark,
 }
 
 .inv-kpi-number {
-  font-family: var(--inv-font-mono);
-  font-size: 20px;
-  line-height: 1.2;
-  font-weight: 700;
+  font-family: var(--inv-font-sans);
+  font-size: 21px;
+  line-height: 1.35;
+  font-weight: 800;
   color: var(--inv-on-surface);
+  font-variant-numeric: tabular-nums;
 }
 
 .inv-kpi-number .odo-counter {
-  height: 1.2em;
-  line-height: 1.2em;
+  height: 1.35em;
+  line-height: 1.35em;
   overflow: hidden;
   display: inline-flex;
   vertical-align: middle;
+  padding: 0 3px;
+  box-sizing: content-box;
 }
 
 .inv-kpi-number .odo-digit span,
 .inv-kpi-number .odo-char {
-  height: 1.2em;
-  line-height: 1.2em;
+  height: 1.35em;
+  line-height: 1.35em;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .inv-kpi-number.text-primary {

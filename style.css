@@ -175,7 +175,8 @@ body, .sidebar, .main-content { will-change: background-color, color; }
 /* 1. Taste Skill: Precision Tabular Numbers */
 .stat-val, .stat-value, .kpi-value, .metric-value, .product-price, .pos-price,
 .badge-price, .total-monto, .table-monto, .odometer, .odometer-inside,
-[data-currency], td.text-right, .num-tabular, .dash-stat-val {
+.odo-counter, .odo-digit, .odo-digit span, .odo-char, .hres-val, .inv-kpi-number,
+[data-currency], td.text-right, .num-tabular, .dash-stat-val, .dash-exec-kpi-num {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
@@ -911,7 +912,7 @@ select.form-input{cursor:pointer}
 .historial-resumen{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:4px}
 .hres-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px;text-align:center;transition:var(--trans)}
 .hres-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
-.hres-val{font-family:'Outfit',sans-serif;font-weight:900;font-size:1.2rem;color:var(--text)}
+.hres-val{font-family:'Outfit','Plus Jakarta Sans',sans-serif;font-weight:900;font-size:1.2rem;line-height:1.35;color:var(--text);font-variant-numeric:tabular-nums}
 .hres-lbl{font-size:.7rem;color:var(--text3);margin-top:2px}
 .oferta-info{background:var(--orange-bg);border:1px solid var(--orange-border);border-radius:var(--radius-sm);padding:12px;font-size:.84rem;margin-bottom:4px}
 .oferta-info strong{display:block;margin-bottom:4px;color:var(--orange)}
@@ -1132,13 +1133,15 @@ select.form-input{cursor:pointer}
 /* ════════════════ ODOMETER PREMIUM (ROLLING COUNTER) ════════════════ */
 .odo-counter {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   overflow: hidden;
-  line-height: 1.15em;
-  height: 1.15em;
-  vertical-align: text-bottom;
+  line-height: 1.35em;
+  height: 1.35em;
+  vertical-align: middle;
   font-variant-numeric: tabular-nums;
   position: relative;
+  padding: 0 3px;
+  box-sizing: content-box;
 }
 
 .odo-counter.updated {
@@ -1147,7 +1150,7 @@ select.form-input{cursor:pointer}
 
 @keyframes numberPulse {
   0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  50% { transform: scale(1.02); }
   100% { transform: scale(1); }
 }
 
@@ -1155,34 +1158,40 @@ select.form-input{cursor:pointer}
   display: inline-flex;
   flex-direction: column;
   will-change: transform;
+  min-width: 0.62em;
+  text-align: center;
 }
 
 .odo-digit span {
-  height: 1.15em;
+  height: 1.35em;
+  line-height: 1.35em;
   display: flex;
   align-items: center;
   justify-content: center;
   font-variant-numeric: tabular-nums;
+  padding: 0 1px;
+  box-sizing: border-box;
 }
 
 .odo-char {
   display: inline-flex;
   align-items: center;
-  height: 1.15em;
+  height: 1.35em;
+  line-height: 1.35em;
   font-weight: inherit;
 }
 
 .odo-char.odo-sep {
-  width: 0.35em;
+  width: 0.45em;
   justify-content: center;
 }
 
 .odo-char.odo-prefix {
-  margin-right: 4px;
+  margin-right: 5px;
 }
 
 .odo-char.odo-suffix {
-  margin-left: 4px;
+  margin-left: 5px;
 }
 
 /* ════════════════ COMPACT TABLE FIX ════════════════ */
@@ -3924,11 +3933,12 @@ html.dark #histResumen .hres-card {
 }
 
 #histResumen .hres-val {
-  font-family: 'JetBrains Mono', 'Outfit', sans-serif !important;
+  font-family: 'Outfit', 'Plus Jakarta Sans', -apple-system, sans-serif !important;
   font-weight: 800 !important;
-  font-size: 1.15rem !important;
-  line-height: 1.15 !important;
+  font-size: 1.18rem !important;
+  line-height: 1.35 !important;
   color: var(--text) !important;
+  font-variant-numeric: tabular-nums !important;
 }
 
 [data-theme="dark"] #histResumen .hres-val,
