@@ -388,38 +388,31 @@ html:not(.dark) #btn-theme-day,
 /* ── Estado ACTIVO - Orange Accent ── */
 #sidebar .sidebar-nav-list .nav-btn.active {
   background-color: #ffedd5 !important;
-  color: #022c22 !important;
-  border: 1px solid rgba(52, 211, 153, 0.8) !important;
+  color: #9a3412 !important;
+  border: 1px solid rgba(249, 115, 22, 0.35) !important;
   font-weight: 600 !important;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06) !important;
 }
 
 .dark #sidebar .sidebar-nav-list .nav-btn.active,
 [data-theme="dark"] #sidebar .sidebar-nav-list .nav-btn.active {
-  background-color: rgba(6, 78, 59, 0.35) !important;
+  background-color: rgba(234, 88, 12, 0.16) !important;
   color: #ffffff !important;
-  border: 1px solid rgba(234, 88, 12, 0.4) !important;
-  box-shadow: 0 4px 12px -2px rgba(6, 78, 59, 0.4) !important;
+  border: 1px solid rgba(234, 88, 12, 0.35) !important;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.3) !important;
 }
 
-#sidebar .sidebar-nav-list .nav-btn .nav-active-bar {
-  display: none;
-}
-
-#sidebar .sidebar-nav-list .nav-btn.active .nav-active-bar {
-  display: block !important;
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3.5px;
-  background-color: #ea580c;
-  border-radius: 0 4px 4px 0;
-}
+/* Barra lateral activa eliminada: solo se mantiene el cuadro seleccionado */
+.nav-active-bar,
+#sidebar .sidebar-nav-list .nav-btn .nav-active-bar,
+#sidebar .sidebar-nav-list .nav-btn.active .nav-active-bar,
 .dark #sidebar .sidebar-nav-list .nav-btn.active .nav-active-bar,
 [data-theme="dark"] #sidebar .sidebar-nav-list .nav-btn.active .nav-active-bar {
-  background-color: #f97316;
-  box-shadow: 0 0 10px rgba(234, 88, 12, 0.6);
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
 
 #sidebar .sidebar-nav-list .nav-btn.active .nav-item-icon {
