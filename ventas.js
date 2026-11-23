@@ -330,40 +330,84 @@ window.revertirStockVenta = revertirStockVenta;
 // ── ANULACIÓN Y ELIMINACIÓN DE VENTA ──
 function eliminarVenta(id) {
   const ventaEliminada = ventas.find(v => v.id === id);
-  if (!ventaEliminada) {
-    toast('Venta no encontrada', 'error');
-    return;
-  }
+  if (!ventaEliminada) { toast('Venta no encontrada', 'error'); return; }
 
   const cantTexto = ventaEliminada.cantidadPacks && ventaEliminada.cantidadPacks > 0
     ? `${ventaEliminada.cantidadPacks} ${ventaEliminada.packLabel || 'pack(s)'} (${ventaEliminada.cantidad} unidades)`
     : `${ventaEliminada.cantidad} unidades`;
 
-  const confMsg = `¿Anular y eliminar esta venta de Bs. ${safeNum(ventaEliminada.total).toFixed(2)}?\n\n` +
-    `📦 Producto: ${ventaEliminada.productoNombre}\n` +
-    `🔄 Stock a reintegrar al inventario: ${cantTexto}\n\n` +
-    `Los lotes y costos se restaurarán de forma automática.`;
+  // ── Modal de confirmación con campo de motivo ────────────────────────────
+  const overlayId = 'modal-anular-venta-overlay';
+  document.getElementById(overlayId)?.remove();
 
-  if (!confirm(confMsg)) return;
+  const overlay = document.createElement('div');
+  overlay.id = overlayId;
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:36px;height:36px;border-radius:8px;background:rgba(186,26,26,.12);display:flex;align-items:center;justify-content:center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ba1a1a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </div>
+          <div>
+            <h3 style="margin:0;font-size:.95rem">Anular venta</h3>
+            <p style="margin:0;font-size:.76rem;color:var(--text3)">${ventaEliminada.productoNombre} · Bs. ${safeNum(ventaEliminada.total).toFixed(2)}</p>
+          </div>
+        </div>
+        <button class="modal-close" onclick="document.getElementById('${overlayId}').remove()">✕</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:.82rem;color:var(--text2)">
+          🔄 El stock de <b>${cantTexto}</b> se reintegrará automáticamente al inventario.
+        </div>
+        <div>
+          <label style="font-size:.8rem;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">
+            Motivo de anulación <span style="color:var(--red)">*</span>
+          </label>
+          <textarea id="motivo-anular-venta" class="form-input form-textarea"
+            placeholder="Ej: Error de cobro, devolución del cliente, registro duplicado…"
+            rows="3" style="resize:none;min-height:72px"></textarea>
+          <div id="motivo-anular-error" style="color:var(--red);font-size:.75rem;margin-top:4px;display:none">Ingresa un motivo antes de continuar.</div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn btn-secondary" onclick="document.getElementById('${overlayId}').remove()">Cancelar</button>
+          <button class="btn btn-danger" id="btn-confirmar-anulacion">Anular venta</button>
+        </div>
+      </div>
+    </div>`;
 
-  // 1. Revertir el stock en los lotes exactos
+  document.body.appendChild(overlay);
+  overlay.querySelector('#btn-confirmar-anulacion').addEventListener('click', () => {
+    const motivo = overlay.querySelector('#motivo-anular-venta').value.trim();
+    if (!motivo) {
+      overlay.querySelector('#motivo-anular-error').style.display = 'block';
+      overlay.querySelector('#motivo-anular-venta').focus();
+      return;
+    }
+    overlay.remove();
+    _ejecutarAnulacion(id, ventaEliminada, cantTexto, motivo);
+  });
+  // Cerrar al hacer clic fuera
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  setTimeout(() => overlay.querySelector('#motivo-anular-venta').focus(), 80);
+}
+
+function _ejecutarAnulacion(id, ventaEliminada, cantTexto, motivo) {
   const resReversion = revertirStockVenta(ventaEliminada);
-
-  // 2. Eliminar la venta de la colección
   ventas = ventas.filter(v => v.id !== id);
   window.ventas = ventas;
   saveVentas();
-
-  // 3. Sincronizar eliminación en Firestore
   if (window.syncDeleteVenta) window.syncDeleteVenta(id);
 
-  // 4. Registrar en historial de auditoría
   if (window.registrarActividad) {
     const detalleDevolucion = resReversion.ok ? `Stock reintegrado (${cantTexto})` : `Sin devolución de stock`;
-    registrarActividad('venta', `Venta ANULADA: ${ventaEliminada.productoNombre} — Bs. ${safeNum(ventaEliminada.total).toFixed(2)}. ${detalleDevolucion}.`);
+    registrarActividad('venta',
+      `Venta ANULADA: ${ventaEliminada.productoNombre} — Bs. ${safeNum(ventaEliminada.total).toFixed(2)}. Motivo: "${motivo}". ${detalleDevolucion}.`,
+      { tipo: 'anulacion', productoNombre: ventaEliminada.productoNombre, total: ventaEliminada.total, motivo }
+    );
   }
 
-  // 5. Refrescar todas las pantallas (Ventas, Dashboard, POS e Inventario)
   renderVentasHoy();
   renderVentasStats();
   renderHistorial();
@@ -375,6 +419,7 @@ function eliminarVenta(id) {
 
   toast(`Venta anulada. Se devolvió el stock (${cantTexto}) al inventario.`, 'success');
 }
+
 window.eliminarVenta = eliminarVenta;
 
 // ── CALCULAR STOCK COMBO ──
@@ -533,6 +578,9 @@ window.renderCombosVenta = renderCombosVenta;
 
 
 // \u2500\u2500 HISTORIAL \u2500\u2500
+// ── Estado colapsado de grupos de fecha (guardado en memoria por sesión)
+const _histDateCollapsed = {};
+
 function renderHistorial() {
   const q=(document.getElementById('hSearch')?.value||'').toLowerCase();
   const desde=document.getElementById('hFechaDesde')?.value;
@@ -577,85 +625,122 @@ function renderHistorial() {
     }).join('');
   }
   if(window.initOdometers) window.initOdometers();
-  
-  const tbody=document.getElementById('histTableBody');
-  const mobileCards=document.getElementById('histMobileCards');
-  
+
+  const tbody = document.getElementById('histTableBody');
+  const mobileCards = document.getElementById('histMobileCards');
   if (!tbody) return;
+
   if (!lista.length) {
-    tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><span class="es-icon">&#8212;</span><p>Sin ventas en este per\u00edodo.</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><span class="es-icon">&#8212;</span><p>Sin ventas en este período.</p></div></td></tr>';
     if (mobileCards) mobileCards.innerHTML = '';
     return;
   }
-  
-let mobileHtml = [];
-  let lastDateStr = null;
-  tbody.innerHTML = lista.map((v, i) => {
+
+  // ── Agrupar por fecha (día) ──────────────────────────────────────────────
+  const groups = []; // [ { dateKey, dateLabel, ventas:[] } ]
+  lista.forEach(v => {
     const fd = new Date(typeof v.fecha === 'number' ? v.fecha : v.fecha);
-    const fs = fd.toLocaleDateString('es-BO') + ' ' + fd.toLocaleTimeString('es-BO', {hour:'2-digit',minute:'2-digit'});
-    const dateOnly = fd.toLocaleDateString('es-BO');
-    const etq = v.tipo === 'combo' ? ' <span class="combo-tag">COMBO</span>' : (v.packLabel ? ' <span class="pack-tag">' + v.packLabel + '</span>' : (v.presentacion ? ' <span class="pack-tag">' + escHTML(v.presentacion) + '</span>' : ''));
-    const prod = (window.productos || []).find(x => x.id === v.productoId || x.nombre === v.productoNombre);
-    const fotoUrl = v.foto || prod?.foto;
-    const histThumbHtml = fotoUrl
-      ? `<img src="${fotoUrl}" class="hist-prod-thumb" alt="${escHTML(v.productoNombre)}">`
-      : `<div class="hist-prod-thumb-icon"><span class="material-symbols-outlined">${v.tipo === 'combo' ? 'local_mall' : 'liquor'}</span></div>`;
+    const dateKey = fd.toLocaleDateString('es-BO');
+    let g = groups.find(x => x.dateKey === dateKey);
+    if (!g) { g = { dateKey, ventas: [] }; groups.push(g); }
+    g.ventas.push({ v, fd });
+  });
 
-    let lotesInfo = '';
-    if (v.lotesAfectados && v.lotesAfectados.length) {
-      lotesInfo = '<ul class="lotes-afectados-list">' + v.lotesAfectados.map(la => `<li>Lote ${la.loteIndex+1} (${la.cantidadDescontada} ud) ${la.vencimiento ? '- ' + la.vencimiento : ''}</li>`).join('') + '</ul>';
+  // Hoy: nunca colapsado por defecto
+  const todayKey = new Date().toLocaleDateString('es-BO');
+
+  let tableRows = '';
+  let mobileHtml = '';
+
+  groups.forEach((group, gi) => {
+    const isToday = group.dateKey === todayKey;
+    // Primera vez que se ve este grupo: colapsar si no es hoy
+    if (_histDateCollapsed[group.dateKey] === undefined) {
+      _histDateCollapsed[group.dateKey] = !isToday;
     }
+    const collapsed = _histDateCollapsed[group.dateKey];
+    const groupTotal = group.ventas.reduce((s,{v})=>s+v.total,0);
+    const groupCount = group.ventas.length;
+    const chevron = collapsed ? '▶' : '▼';
+    const labelDate = isToday ? `Hoy — ${group.dateKey}` : group.dateKey;
 
-    // Separador de fecha si cambia
-    let dateSeparatorRow = '';
-    let dateSeparatorMobile = '';
-    if (dateOnly !== lastDateStr) {
-      dateSeparatorRow = `<tr class="hist-date-separator"><td colspan="10"><span>${dateOnly}</span></td></tr>`;
-      dateSeparatorMobile = `<div class="hist-date-header">${dateOnly}</div>`;
-      lastDateStr = dateOnly;
-    }
+    // Header de fecha colapsable (tabla)
+    tableRows += `
+      <tr class="hist-date-separator hist-date-toggle${collapsed?' hist-group-collapsed':''}" data-date-key="${escHTML(group.dateKey)}" onclick="window._histToggleDate('${escHTML(group.dateKey)}')">
+        <td colspan="10">
+          <span class="hist-date-chevron">${chevron}</span>
+          <span class="hist-date-label">${labelDate}</span>
+          <span class="hist-date-meta">${groupCount} venta${groupCount!==1?'s':''} · Bs. ${groupTotal.toFixed(2)}</span>
+        </td>
+      </tr>`;
 
-    mobileHtml.push(dateSeparatorMobile + `
-      <div class="mobile-card" style="animation-delay:${Math.min(i*30, 600)}ms">
-        <div class="mobile-card-header" style="justify-content:space-between; align-items:flex-start;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            ${histThumbHtml}
-            <div style="display:flex; flex-direction:column; gap:2px;">
-              <div class="mobile-card-name">${v.productoNombre} ${etq}</div>
-              <div style="font-size:0.75rem; color:var(--text3);">${fs}</div>
+    // Header de fecha colapsable (mobile)
+    mobileHtml += `<div class="hist-date-header hist-date-toggle${collapsed?' hist-group-collapsed':''}" data-date-key="${escHTML(group.dateKey)}" onclick="window._histToggleDate('${escHTML(group.dateKey)}')"><span class="hist-date-chevron">${chevron}</span><span>${labelDate}</span><span class="hist-date-meta">${groupCount} · Bs.${groupTotal.toFixed(2)}</span></div>`;
+
+    // Filas del grupo
+    group.ventas.forEach(({v, fd}, i) => {
+      const fs = fd.toLocaleTimeString('es-BO', {hour:'2-digit',minute:'2-digit'});
+      const etq = v.tipo==='combo' ? ' <span class="combo-tag">COMBO</span>'
+        : (v.packLabel ? ' <span class="pack-tag">'+v.packLabel+'</span>'
+        : (v.presentacion ? ' <span class="pack-tag">'+escHTML(v.presentacion)+'</span>' : ''));
+      const prod = (window.productos||[]).find(x=>x.id===v.productoId||x.nombre===v.productoNombre);
+      const fotoUrl = v.foto || prod?.foto;
+      const thumb = fotoUrl
+        ? `<img src="${fotoUrl}" class="hist-prod-thumb" alt="${escHTML(v.productoNombre)}">`
+        : `<div class="hist-prod-thumb-icon"><span class="material-symbols-outlined">${v.tipo==='combo'?'local_mall':'liquor'}</span></div>`;
+      let lotesInfo = '';
+      if (v.lotesAfectados && v.lotesAfectados.length) {
+        lotesInfo = '<ul class="lotes-afectados-list">' + v.lotesAfectados.map(la=>`<li>Lote ${la.loteIndex+1} (${la.cantidadDescontada} ud)${la.vencimiento?' - '+la.vencimiento:''}</li>`).join('') + '</ul>';
+      }
+      const notaHtml = v.nota ? `<span class="hist-nota" title="${escHTML(v.nota)}">${escHTML(v.nota)}</span>` : '';
+      const rowDisplay = collapsed ? ' style="display:none"' : '';
+
+      tableRows += `<tr class="hist-row-group" data-date-key="${escHTML(group.dateKey)}"${rowDisplay}><td style="font-size:.76rem;color:var(--text2);white-space:nowrap">${fs}</td><td><div class="hist-prod-cell">${thumb}<div><div class="prod-name">${v.productoNombre}${etq}</div>${lotesInfo}</div></div></td><td><b>${v.cantidad}</b></td><td class="price-cost">Bs.${(v.precioUnit||v.total).toFixed(2)}</td><td style="color:var(--red)">${v.descuento>0?'-Bs.'+v.descuento.toFixed(2):'-'}</td><td class="price-venta"><b>Bs.${v.total.toFixed(2)}</b></td><td>${pagoBadge(v.pago, v.pagoDetalle)}</td><td class="price-ganancia ${v.ganancia>=0?'pos':'neg'}">Bs.${v.ganancia.toFixed(2)}</td><td class="hist-nota-cell">${notaHtml}</td><td><button class="btn-icon danger" title="Anular venta" onclick="eliminarVenta('${v.id}')">✕</button></td></tr>`;
+
+      const mobileDisplay = collapsed ? ' style="display:none"' : '';
+      mobileHtml += `
+        <div class="mobile-card hist-row-group" data-date-key="${escHTML(group.dateKey)}" style="animation-delay:${Math.min(i*30,600)}ms${collapsed?';display:none':''}">
+          <div class="mobile-card-header" style="justify-content:space-between;align-items:flex-start;">
+            <div style="display:flex;align-items:center;gap:10px;">${thumb}
+              <div><div class="mobile-card-name">${v.productoNombre} ${etq}</div>
+              <div style="font-size:.75rem;color:var(--text3)">${fs}</div></div>
             </div>
+            ${pagoBadge(v.pago, v.pagoDetalle)}
           </div>
-          ${pagoBadge(v.pago, v.pagoDetalle)}
-        </div>
-        <div class="mobile-card-body" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-          <div class="mobile-card-field"><span>Cantidad</span><span><b>${v.cantidad}</b></span></div>
-          <div class="mobile-card-field"><span>Total</span><span><b>Bs.${v.total.toFixed(2)}</b></span></div>
-          <div class="mobile-card-field"><span>Descuento</span><span style="color:var(--red)">${v.descuento>0?'-Bs.'+v.descuento.toFixed(2):'-'}</span></div>
-          <div class="mobile-card-field"><span>Ganancia</span><span class="${v.ganancia>=0?'pos':'neg'}">Bs.${v.ganancia.toFixed(2)}</span></div>
-        </div>
-        ${v.lotesAfectados && v.lotesAfectados.length > 0 ? `
-        <div class="mobile-lotes" style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--border);">
-          <div style="font-size:0.75rem; color:var(--text3); margin-bottom:4px;">Lotes afectados:</div>
-          ${v.lotesAfectados.map(la => `
-            <div style="background:var(--bg3); padding:6px 8px; border-radius:4px; margin-bottom:4px; font-size:0.75rem; display:flex; justify-content:space-between; align-items:center;">
-              <span>Lote ${la.loteIndex+1} <b>(${la.cantidadDescontada} ud)</b></span>
-              <span>${la.vencimiento||'-'}</span>
-            </div>
-          `).join('')}
-        </div>` : ''}
-        ${v.nota ? `<div style="margin-top:8px; font-size:0.75rem; color:var(--text3); padding:6px; background:var(--bg3); border-radius:4px; font-style:italic;">"${v.nota}"</div>` : ''}
-        <div class="mobile-card-actions" style="margin-top:12px;">
-          <button class="btn btn-secondary btn-sm danger" style="width:100%" onclick="eliminarVenta('${v.id}')">Eliminar Venta</button>
-        </div>
-      </div>
-    `);
+          <div class="mobile-card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="mobile-card-field"><span>Cantidad</span><span><b>${v.cantidad}</b></span></div>
+            <div class="mobile-card-field"><span>Total</span><span><b>Bs.${v.total.toFixed(2)}</b></span></div>
+            <div class="mobile-card-field"><span>Descuento</span><span style="color:var(--red)">${v.descuento>0?'-Bs.'+v.descuento.toFixed(2):'-'}</span></div>
+            <div class="mobile-card-field"><span>Ganancia</span><span class="${v.ganancia>=0?'pos':'neg'}">Bs.${v.ganancia.toFixed(2)}</span></div>
+          </div>
+          ${v.nota ? `<div style="margin-top:8px;font-size:.75rem;color:var(--text3);padding:6px;background:var(--bg3);border-radius:4px;font-style:italic">"${escHTML(v.nota)}"</div>` : ''}
+          <div class="mobile-card-actions" style="margin-top:12px;">
+            <button class="btn btn-secondary btn-sm danger" style="width:100%" onclick="eliminarVenta('${v.id}')">Anular venta</button>
+          </div>
+        </div>`;
+    });
+  });
 
-
-    return dateSeparatorRow + `<tr><td style="font-size:.76rem;color:var(--text2);white-space:nowrap">${fs}</td><td><div class="hist-prod-cell">${histThumbHtml}<div><div class="prod-name">${v.productoNombre}${etq}</div>${lotesInfo}</div></div></td><td><b>${v.cantidad}</b></td><td class="price-cost">Bs.${(v.precioUnit||v.total).toFixed(2)}</td><td style="color:var(--red)">${v.descuento>0?'-Bs.'+v.descuento.toFixed(2):'-'}</td><td class="price-venta"><b>Bs.${v.total.toFixed(2)}</b></td><td>${pagoBadge(v.pago, v.pagoDetalle)}</td><td class="price-ganancia ${v.ganancia>=0?'pos':'neg'}">Bs.${v.ganancia.toFixed(2)}</td><td style="color:var(--text3);font-size:.76rem;max-width:110px">${v.nota||'-'}</td><td><button class="btn-icon danger" onclick="eliminarVenta('${v.id}')">\u2715</button></td></tr>`;
-  }).join('');
-  
-  if (mobileCards) mobileCards.innerHTML = mobileHtml.join('');
+  tbody.innerHTML = tableRows;
+  if (mobileCards) mobileCards.innerHTML = mobileHtml;
 }
+
+// Toggle colapsar/expandir grupo de fecha
+window._histToggleDate = function(dateKey) {
+  _histDateCollapsed[dateKey] = !_histDateCollapsed[dateKey];
+  const collapsed = _histDateCollapsed[dateKey];
+  // Actualizar header
+  document.querySelectorAll(`.hist-date-toggle[data-date-key="${CSS.escape(dateKey)}"]`).forEach(el => {
+    el.classList.toggle('hist-group-collapsed', collapsed);
+    const chevronEl = el.querySelector('.hist-date-chevron');
+    if (chevronEl) chevronEl.textContent = collapsed ? '▶' : '▼';
+  });
+  // Mostrar/ocultar filas
+  document.querySelectorAll(`.hist-row-group[data-date-key="${CSS.escape(dateKey)}"]`).forEach(el => {
+    el.style.display = collapsed ? 'none' : '';
+  });
+};
+
 window.renderHistorial = renderHistorial;
 
 function exportarVentas() {
