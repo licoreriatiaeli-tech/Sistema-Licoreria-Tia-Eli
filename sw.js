@@ -1,4 +1,4 @@
-const CACHE = 'tiaeli-v27';
+const CACHE = 'tiaeli-v28';
 const CACHE_IMAGES = 'tiaeli-img-v23';
 
 const ASSETS = [

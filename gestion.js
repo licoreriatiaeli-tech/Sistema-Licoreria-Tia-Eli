@@ -216,11 +216,8 @@ function generarActividadInicialDemo() {
   ];
 }
 
-if (!actividad || !actividad.length) {
-  actividad = generarActividadInicialDemo();
-  try { localStorage.setItem('tiaeli_actividad', JSON.stringify(actividad)); } catch(e){}
-}
-window.actividad = actividad;
+// Historial de auditoría limpio listo para producción
+window.actividad = actividad || [];
 
 function saveActividad() {
   localStorage.setItem('tiaeli_actividad', JSON.stringify(actividad));

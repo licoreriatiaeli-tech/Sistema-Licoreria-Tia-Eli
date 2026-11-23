@@ -20,29 +20,28 @@ window._safeImg = _safeImg;
 
 let productos = [];
 try {
-  // One-time stock reset migration requested by user
-  if (localStorage.getItem('tiaeli_stock_reset_v1') !== 'true') {
-    let prods = [];
-    try { prods = JSON.parse(localStorage.getItem('tiaeli_v2') || '[]'); } catch(e) {}
-    if (prods.length > 0) {
-      prods.forEach(p => {
-        p.stock = 0;
-        p.stockUnidades = 0;
-        if (p.lotes && Array.isArray(p.lotes)) {
-          p.lotes.forEach(l => {
-            l.cantidad = 0;
-            l.cantidadBaseUnidades = 0;
-            l.costoTotalLote = 0;
-          });
-        }
-      });
-      localStorage.setItem('tiaeli_v2', JSON.stringify(prods));
-    }
-    localStorage.setItem('tiaeli_stock_reset_v1', 'true');
+  // Limpieza total del sistema para entrega a producción al dueño
+  if (localStorage.getItem('tiaeli_prod_ready_clean_v1') !== 'true') {
+    const keysToWipe = [
+      'tiaeli_v2',
+      'tiaeli_ventas',
+      'tiaeli_combos',
+      'tiaeli_clientes',
+      'tiaeli_fiados',
+      'tiaeli_pagos',
+      'tiaeli_salidas',
+      'tiaeli_entradas',
+      'tiaeli_gastos',
+      'tiaeli_historial_precios',
+      'tiaeli_actividad'
+    ];
+    keysToWipe.forEach(k => {
+      try { localStorage.setItem(k, JSON.stringify([])); } catch(e){}
+    });
+    localStorage.setItem('tiaeli_prod_ready_clean_v1', 'true');
   }
 
   productos = JSON.parse(localStorage.getItem('tiaeli_v2') || '[]');
-  // Limpiar productos de prueba de simulacro si existieran
   if (productos.some(p => p.id && p.id.startsWith('sim_'))) {
     productos = productos.filter(p => !p.id || !p.id.startsWith('sim_'));
     localStorage.setItem('tiaeli_v2', JSON.stringify(productos));
